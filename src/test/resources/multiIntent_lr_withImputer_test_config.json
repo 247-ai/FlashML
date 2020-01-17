@@ -1,0 +1,228 @@
+{
+  "flashml": {
+    "context": "local[*]",
+    "rootDirectory": "/user/cloudera"
+  },
+  "model": {
+    "id": "MODEL_id1"
+  },
+  "project": {
+    "id": "multiIntent_nullCheck",
+    "logLevel": "ERROR",
+    "data": {
+      "location": {
+        "source": "hive://FLASHML.TITANIC_SURVIVAL_DATA",
+        "format": "",
+        "temp_table_prefix": "flashml_table_",
+        "queries": [
+        ]
+      }
+    }
+  },
+  "apollo": {
+    "api": {
+      "url": "http://localhost:8383/jobs/job1/status"
+    }
+  },
+  "job": {
+    "id": "job1"
+  },
+  "vertica": {
+    "host": {
+      "url": "jdbc:vertica://analytics04.pxoe-app.va1.247-inc.net:5433/vertica247"
+    },
+    "jdbc": {
+      "driver": "com.vertica.jdbc.Driver"
+    },
+    "user": {
+      "name": "user_name",
+      "password": "password"
+    }
+  },
+  "experiment": {
+    "variables": {
+      "scope": "noPage",
+      "text": [
+        "home_dest"
+      ],
+      "numerical": [
+        "age"
+      ],
+      "categorical": []
+    },
+    "cv": {
+      "folds": 1,
+      "predictSavepoint": false
+    },
+    "modelingMethod": [
+      "single_intent"
+    ],
+    "type": "model",
+    "algorithm": {
+      "type": "logistic_regression",
+      "build": {
+        "type": "binomial"
+      },
+      "svm": {
+        "regparam": [
+          0.01,
+          0.1
+        ],
+        "maxiter": [
+          10,
+          20
+        ],
+        "standardization": [
+          true,
+          false
+        ]
+      },
+      "logistic": {
+        "regparam": 0.01,
+        "maxiter": 10,
+        "standardization": true,
+        "elasticnetparam": 0
+      }
+    },
+    "retrainId": "original",
+    "pageLevel": {
+      "numberOfPages": 1
+    },
+    "multiIntent": {
+      "topIntentsColumn": "top_intents",
+      "maxTopIntents": 10
+    },
+    "primaryKey": [
+      "ticket"
+    ],
+    "responseVariable": "survived",
+    "pageVariable": "",
+    "dateVariable": "",
+    "randomVariable": "",
+    "data": {
+      "positivePercent": 0
+    },
+    "randomNumberGeneratorVariable": "ticket",
+    "uplift": {
+      "treatmentVariable": ""
+    },
+    "cumulativeSessionTime": "",
+    "additionalVariables": [],
+    "customFilter": "survived is not null",
+    "postPredictFilter": "",
+    "sample": {
+      "type": "random",
+      "split": [
+        100
+      ],
+      "condition": [],
+      "stratified": {
+        "minimumClassSupport": 10,
+        "otherClassValue": "other-other",
+        "minimumClassSupportRequired": false
+      }
+    },
+    "preprocessing": {
+      "scope": "noPage",
+      "steps": [
+        {
+          "inputVariable": "home_dest",
+          "outputVariable": "linetext1",
+          "transformations": [
+            {
+              "type": "nullcheck",
+              "parameter": "tempText"
+            },
+            {
+              "type": "case_normalization"
+            },
+            {
+              "type": "stopwords",
+              "parameter": "support_files/stopwords.txt"
+            },
+            {
+              "type": "stemming",
+              "parameter": []
+            },
+            {
+              "type": "contractions_replacement",
+              "parameter": "support_files/lemma.txt"
+            },
+            {
+              "type": "tokenizer",
+              "parameter": "[.,? ###_END_### !]"
+            }
+          ]
+        },
+        {
+          "inputVariable": "age",
+          "transformations": [
+            {
+              "type": "nullcheck",
+              "parameter": "0"
+            }
+          ]
+        }
+      ]
+    },
+    "featuregeneration": {
+      "scope": "noPage",
+      "binning": [],
+      "grams": [
+        {
+          "inputVariable": "linetext1",
+          "outputVariable": "linetext2",
+          "transformations": [
+            {
+              "ngram": [
+                2,
+                3
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "vectorization": {
+      "text": {
+        "scope": "noPage",
+        "steps": [
+          {
+            "inputVariable": "linetext2",
+            "method": "hashingtf",
+            "slots": 15000
+          }
+        ]
+      },
+      "categorical": {
+        "method": "hashingtf",
+        "slots": 1000
+      }
+    }
+  },
+  "hdfs": {
+    "nameNode": {
+      "uri": "hdfs://localhost:9000"
+    }
+  },
+  "hive": {
+    "thrift": {
+      "url": "thrift://localhost:9083"
+    }
+  },
+  "pipeline": {
+    "steps": [
+      "directorycreator",
+      "datareader",
+      "sampling",
+      "preprocessing",
+      "featuregeneration",
+      "vectorization",
+      "modelling",
+      "scoring"
+    ]
+  },
+  "savePointing": {
+    "required": true
+  }
+}

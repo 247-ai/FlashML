@@ -1,0 +1,255 @@
+{
+  "flashml": {
+    "context": "local[*]",
+    "rootDirectory": "/user/cloudera"
+  },
+  "model": {
+    "id": "MODEL_id1"
+  },
+  "project": {
+    "id": "multiIntent_lr_hyperband_test",
+    "logLevel": "ERROR",
+    "data": {
+      "location": {
+        "source": "hive://FLASHML.TITANIC_SURVIVAL_DATA",
+        "format": "csv",
+        "temp_table_prefix": "praas_table_",
+        "queries": []
+      },
+      "schema": {
+        "file": "flashml-core/support_files/schema.txt"
+      }
+    }
+  },
+  "apollo": {
+    "api": {
+      "url": "http://localhost:8383/jobs/job1/status"
+    }
+  },
+  "job": {
+    "id": "job1"
+  },
+  "vertica": {
+    "host": {
+      "url": "jdbc:vertica://analytics04.pxoe-app.va1.247-inc.net:5433/vertica247"
+    },
+    "jdbc": {
+      "driver": "com.vertica.jdbc.Driver"
+    },
+    "user": {
+      "name": "user_name",
+      "password": "password"
+    }
+  },
+  "experiment": {
+    "variables": {
+      "scope": "noPage",
+      "numerical": ["age"],
+      "categorical": ["pclass","sex"],
+      "text": [
+        "cabin"
+      ]
+    },
+    "cv": {
+      "folds": 2,
+      "predictSavepoint": false
+    },
+    "hyperparamop": true,
+    "hyperband":{
+      "iterations":81,
+      "iterMultiplier":1,
+      "eta":3,
+      "trainSize":0.8
+    },
+    "modelingMethod": [
+      "multi_intent"
+    ],
+    "type": "model",
+    "algorithm": {
+      "type": "logistic_regression",
+      "build": {
+        "type": "binomial"
+      },
+      "svm": {
+        "regparam": {
+          "min":0.0,
+          "max":1.0
+        }
+      ,
+        "maxiter": [
+          10
+        ],
+        "standardization": [
+          true
+        ]
+      },
+      "logistic": {
+        "regparam":{
+          "min":0.0,
+          "max":1.0
+        },
+        "maxiter":
+        10,
+        "standardization": [true],
+        "elasticnetparam": [0.5,1.0,0.3]
+      }
+    },
+    "retrainId": "original",
+    "pageLevel": {
+      "numberOfPages": 1
+    },
+    "multiIntent": {
+      "topIntentsColumn": "top_intents",
+      "maxTopIntents": 10
+    },
+    "primaryKey": [
+      "home_dest"
+    ],
+    "responseVariable": "survived",
+    "pageVariable": "",
+    "dateVariable": "",
+    "randomVariable": "",
+    "data": {
+      "positivePercent": 10
+    },
+    "randomNumberGeneratorVariable": "home_dest",
+    "uplift": {
+      "treatmentVariable": ""
+    },
+    "cumulativeSessionTime": "",
+    "additionalVariables": [],
+    "customMetrics": {
+      "type": "customProbBased",
+      "topVariable": "",
+      "topList": [],
+      "thresholds": [],
+      "npages": 4
+    },
+    "customFilter": "",
+    "postPredictFilter": "",
+    "sample": {
+      "type": "stratified",
+      "split": [
+        80,
+        20
+      ],
+      "condition": [],
+      "stratified": {
+        "minimumClassSupport": 10,
+        "otherClassValue": "other-other",
+        "minimumClassSupportRequired": false
+      }
+    },
+    "preprocessing": {
+      "scope": "noPage",
+      "steps": [
+        {
+          "inputVariable": "pclass",
+          "transformations": [
+            {
+              "type": "nullcheck",
+              "parameter": "0"
+            }
+          ]
+        },
+        {
+          "inputVariable": "age",
+          "transformations": [
+            {
+              "type": "nullcheck",
+              "parameter": 0
+            }
+          ]
+        },
+        {
+          "inputVariable": "cabin",
+          "outputVariable": "cabin1",
+          "transformations": [
+            {
+              "type": "nullcheck",
+              "parameter": "default"
+            },
+            {
+              "type": "case_normalization"
+            },
+            {
+              "type": "tokenizer",
+              "parameter": "[\\s+]"
+            }
+          ]
+        }
+      ]
+    },
+    "featuregeneration": {
+      "scope": "noPage",
+      "binning": [],
+      "grams": [
+        {
+          "inputVariable": "cabin1",
+          "outputVariable": "cabin2",
+          "transformations": [
+            {
+              "ngram": [
+
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "vectorization": {
+      "text": {
+        "scope": "noPage",
+        "steps": [
+          {
+            "inputVariable": "cabin2",
+            "method":"count_vectorizer",
+            "slots": 1500
+          }
+        ]
+      },
+      "categorical": {
+        "method": "hashingtf",
+        "slots": 1000
+      }
+    },
+    "publish": {
+      "format": "js",
+      "thresholds": [],
+      "topList": [],
+      "online": {
+        "pages": [],
+        "top": []
+      }
+    },
+    "qa": {
+      "format": "csv",
+      "dataPoints": 1000
+    }
+  },
+  "hdfs": {
+    "nameNode": {
+      "uri": "hdfs://localhost:9000"
+    }
+  },
+  "hive": {
+    "thrift": {
+      "url": "thrift://localhost:9083"
+    }
+  },
+  "pipeline": {
+    "steps": [
+      "directorycreator",
+      "datareader",
+      "sampling",
+      "preprocessing",
+      "featuregeneration",
+      "vectorization",
+      "modelling",
+      "scoring"
+    ]
+  },
+  "savePointing": {
+    "required": true
+  }
+}

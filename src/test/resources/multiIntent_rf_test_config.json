@@ -1,0 +1,183 @@
+{
+  "flashml": {
+    "context": "local[*]",
+    "rootDirectory": "/user/cloudera"
+  },
+  "model": {
+    "id": "MODEL_id1"
+  },
+  "project": {
+    "id": "multiIntent_RF_yelp",
+    "logLevel": "ERROR",
+    "data": {
+      "location": {
+        "source": "hdfs:///data/yelp-data/reviews_1k.json.gz",
+        "format": "json",
+        "temp_table_prefix": "flashml_table_",
+        "queries": [
+        ]
+      },
+      "schema": {
+        "file": "support_files/schema.txt"
+      }
+    }
+  },
+  "apollo": {
+    "api": {
+      "url": "http://localhost:8383/jobs/job1/status"
+    }
+  },
+  "job": {
+    "id": "job1"
+  },
+  "vertica": {
+    "host": {
+      "url": "jdbc:vertica://analytics04.pxoe-app.va1.247-inc.net:5433/vertica247"
+    },
+    "jdbc": {
+      "driver": "com.vertica.jdbc.Driver"
+    },
+    "user": {
+      "name": "user_name",
+      "password": "password"
+    }
+  },
+  "experiment": {
+    "variables": {
+      "scope": "noPage",
+      "text": [
+        "text"
+      ],
+      "numerical": [],
+      "categorical": []
+    },
+    "cv": {
+      "folds": 1,
+      "predictSavepoint": false
+    },
+    "modelingMethod": [
+      "multi_intent"
+    ],
+    "type": "model",
+    "algorithm": {
+      "type": "random_forest",
+      "build": {
+        "type": "ovr"
+      },
+      "random_forest": {
+        "impurity": "gini",
+        "seed": 99,
+        "maxDepth": 4,
+        "numberOfTrees": 15,
+        "featureSubsetStrategy": "auto"
+      }
+    },
+    "retrainId": "original",
+    "pageLevel": {
+      "numberOfPages": 1
+    },
+    "multiIntent": {
+      "topIntentsColumn": "top_intents",
+      "maxTopIntents": 3
+    },
+    "primaryKey": [
+      "review_id"
+    ],
+    "responseVariable": "stars",
+    "pageVariable": "",
+    "dateVariable": "",
+    "randomVariable": "",
+    "data": {
+      "positivePercent": 10
+    },
+    "randomNumberGeneratorVariable": "review_id",
+    "uplift": {
+      "treatmentVariable": ""
+    },
+    "cumulativeSessionTime": "",
+    "additionalVariables": [],
+    "customFilter": "",
+    "postPredictFilter": "",
+    "sample": {
+      "type": "random",
+      "split": [
+        70,30
+      ],
+      "condition": [],
+      "stratified": {
+        "minimumClassSupport": 10,
+        "otherClassValue": "other-other",
+        "minimumClassSupportRequired": false
+      }
+    },
+    "preprocessing": {
+      "scope": "noPage",
+      "steps": [
+        {
+          "inputVariable":"text",
+          "outputVariable": "linetext1",
+          "transformations":[
+            {
+              "type": "regex_replacement",
+              "parameter": [
+                {":": " "},
+                {",": " "},
+                {";": " "},
+                {"\n": " "}
+              ]
+            },
+            {
+              "type": "tokenizer",
+              "parameter": " "
+            }
+          ]
+        }
+      ]
+    },
+    "featuregeneration": {
+      "scope": "noPage",
+      "binning": [],
+      "grams": []
+    },
+    "vectorization": {
+      "text": {
+        "scope": "noPage",
+        "steps": [
+          {
+            "inputVariable": "linetext1",
+            "method":"count_vectorizer",
+            "slots": 15000
+          }
+        ]
+      },
+      "categorical": {
+        "method": "hashingtf",
+        "slots": 1000
+      }
+    }
+  },
+  "hdfs": {
+    "nameNode": {
+      "uri": "hdfs://localhost:9000"
+    }
+  },
+  "hive": {
+    "thrift": {
+      "url": "thrift://localhost:9083"
+    }
+  },
+  "pipeline": {
+    "steps": [
+      "datareader",
+      "sampling",
+      "preprocessing",
+      "featuregeneration",
+      "vectorization",
+      "modelling",
+      "scoring"
+    ]
+  },
+  "savePointing": {
+    "required": true
+  }
+}

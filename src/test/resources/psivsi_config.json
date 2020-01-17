@@ -1,0 +1,23 @@
+{
+  "project":{
+    "id":"randomJune15",
+    "logLevel":"OFF"
+  },
+  "apollo":{
+    "api":{
+      "url":"http://localhost:8383/jobs/job1/status"
+    }
+  },
+  "model":{
+    "id":"model1"
+  },
+  "job":{
+    "id":"job1"
+  },
+  "flashml": {"context":"local"},
+  "hive":{
+    "thrift":{
+      "url":"thrift://localhost:9083"
+    }
+  }
+}

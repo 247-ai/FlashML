@@ -1,0 +1,129 @@
+_class_debit_card's,_class_debit_card is
+account's,account
+advisor's,advisor
+ain't,am not
+aren't,are not
+'em,them
+can't,cannot
+card's,card is
+cashier's,cashier
+check's,check has
+couldn't,could not
+deposit's,deposit
+didn't,did not
+doesn't,does not
+don't,do not
+hadn't,had not
+hasn't,has not
+hasn't,has not
+haven't,have not
+he'd,he would
+he'll,he will
+he's,he has
+i'd,i would
+i'll,i will
+i'm,i am
+i've,i have
+isn't,is not
+it's,it is
+let's,let us
+mightn't,might not
+mustn't,must not
+o'clock,clock
+shan't,shall not
+she'd,she would
+she'll,she will
+she's,she is
+shouldn't,should not
+somebody's,somebody is
+that's,that is
+there's,there is
+they'd,they would
+they'll,they will
+they're,they are
+they've,they have
+today's,today
+transaction's,transaction has
+wasn't,was not
+we'd,we would
+we'll,we will
+we're,we are
+we've,we have
+weren't,were not
+what'll,what will
+what're,what are
+what's,what is
+what's,what is
+what've,what have
+when'll,when will
+when's,when is
+where's,where is
+who'd,who would
+who'll,who will
+who're,who are
+who's,who is
+who've,who have
+won't,will not
+wouldn't,would not
+y'all,you all
+ya'all,you all
+you'd,you would
+you'll,you will
+you're,you are
+you've,you have
+aint,am not
+arent,are not
+em,them
+cant,cannot
+couldnt,could not
+didnt,did not
+doesnt,does not
+dont,do not
+hadnt,had not
+hasnt,has not
+hasnt,has not
+havent,have not
+im,i am
+ive,i have
+isnt,is not
+its,it is
+lets,let us
+mightnt,might not
+mustnt,must not
+oclock,clock
+shant,shall not
+shouldnt,should not
+thats,that is
+theres,there is
+theyd,they would
+theyll,they will
+theyre,they are
+theyve,they have
+wasnt,was not
+weve,we have
+werent,were not
+whatll,what will
+whatre,what are
+whats,what is
+whatve,what have
+whenll,when will
+whens,when is
+wheres,where is
+whod,who would
+wholl,who will
+whos,who is
+whove,who have
+wont,will not
+wouldnt,would not
+yall,you all
+yaall,you all
+youd,you would
+youll,you will
+youre,you are
+youve,you have
+mths,months
+mth,month
+mbl,mobile
+wi-fi,wifi
+wi fi,wifi
+acct,account

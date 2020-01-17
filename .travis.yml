@@ -1,0 +1,14 @@
+language: java
+jdk: openjdk8
+before_install:
+## Build and test
+  - mvn clean package -DskipTests=true -Ptest
+  - cd docker
+  - ./run-docker.sh "test"
+  - cd ..
+## Import GPG keys for signing artifacts
+  - echo $GPG_SECRET_KEYS | base64 --decode | gpg --import
+  - echo $GPG_OWNERTRUST | base64 --decode | gpg --import-ownertrust
+## Build and release to maven central
+script:
+  mvn -s .maven.xml clean deploy -DskipTests=true -B -U -Prelease

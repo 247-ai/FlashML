@@ -1,0 +1,17 @@
+{
+    "a_class_email": "\\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}\\b",
+    "b_class_url": "https?:\\/\\/(www\\.)?[\\-a-zA-Z0-9@:%._\\+~#=\\/]+",
+    "c_class_date": "(\\b^\\d{1,2}\\/\\d{1,2}\\/\\d{2,4}$\\b|[0-9]+(?:\\s*[\\.,]\\s*[0-9]+)*(?:\\s*(?:nd|th|rd|st)*)(\\s|-)*(?:january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sept|sep|oct|nov|dec)(?:\\s*\\d{0,2}))",
+    "d_class_time": "(?:\\d{1,2}\\s*:?\\s*)?\\d{1,2}\\s*(?:am|pm|hrs|hours)",
+    "e_class_percentage": "(?:(?:'+'|'.join(self.numbers_in_english)+')?\\s?(?:'+'|'.join(self.numbers_in_english)+'|[0-9]+\\\\.?[0-9]*)+\\s?(?:%|percent)|percentage|percentile|%)",
+    "f_class_number _class_currency": "(\\$\\s?(X|x|\\d)*(\\s?\\,?\\s?)(X|x|\\d)*(\\s?(\\/|\\.)?\\s?)(X{1,4}|x{1,4}|\\d{1,4})|(X|x|\\d)*(\\s?\\,?\\s?)(X|x|\\d)*(\\s?(\\/|\\.)?\\s?)(X{1,4}|x{1,4}|\\d{1,4})\\s?\\$)",
+    "g_class_masked_acc_or_model_number": "\\s?\\d{0,4}(X|x){1,4}-*(X|x){1,4}\\d{0,4}\\s?",
+    "h_class_phone_number": "\\b[0-9]{5}[\\s.-]?[0-9]{5}\\b",
+    "i_class_phone_number": "\\(?([0-9]{3})?[-.\\s)]*[0-9]{3}[-.\\s]*[0-9]{4}\\b",
+    "j_class_number": "\\b[0-9]+(?:\\s*[\\.,]\\s*[0-9]+)*(?:\\s*(?:nd|th|rd|st))?\\b",
+    "k_class_number_ref": "#(?=[^a-zA-Z0-9])",
+    "m_class_radio_id": "\\b(?=[a-z]{0,7}[0-9]{1,8})([a-zA-Z0-9]{8})\\b",
+    "n_class_esn": "\\b[OoSs0-9]{12}\\b"
+    "o_class_hello": "\\b(hola|hello|hi|hey)\\b"
+}
+

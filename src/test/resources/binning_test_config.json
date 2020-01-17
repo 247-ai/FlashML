@@ -1,0 +1,233 @@
+{
+  "flashml": {
+    "context": "local[*]",
+    "rootDirectory": "/user/cloudera"
+  },
+  "model": {
+    "id": "MODEL_id1"
+  },
+  "project": {
+    "id": "singleIntent_svm_PG_Binning_Test",
+    "logLevel": "ERROR",
+    "data": {
+      "schema": {
+        "file": "support_files/schema.txt"
+      },
+      "location": {
+        "source": "hive://FLASHML.WEB_JOURNEY_DATA",
+        "format": "",
+        "temp_table_prefix": "flashml_table_",
+        "queries": []
+      }
+    }
+  },
+  "apollo": {
+    "api": {
+      "url": "http://localhost:8383/jobs/job1/status"
+    }
+  },
+  "job": {
+    "id": "job1"
+  },
+  "experiment": {
+    "variables": {
+      "scope": "allPage",
+      "text": [
+        "current_page_url",
+        "referrer"
+      ],
+      "numerical": [
+        "no_of_visits_in_last_7_days"
+      ],
+      "categorical": [
+        "initial_referrer_cat",
+        "browser_cat",
+        "isp",
+        "os_cat",
+        "dd",
+        "hour_of_day"
+      ]
+    },
+    "cv": {
+      "folds": 0,
+      "predictSavepoint": false
+    },
+    "modelingMethod": [
+      "single_intent",
+      "page_level"
+    ],
+    "type": "model",
+    "algorithm": {
+      "type": "svm",
+      "build": {
+        "type": "binomial"
+      },
+      "svm": {
+        "plattScalingEnabled": true,
+        "regparam": 0.01,
+        "maxiter": 10,
+        "standardization": true
+      }
+    },
+    "retrainId": "original",
+    "pageLevel": {
+      "numberOfPages": 4
+    },
+    "primaryKey": [
+      "vid",
+      "active_session",
+      "dt"
+    ],
+    "responseVariable": "purchase_flag",
+    "pageVariable": "nop_count",
+    "dateVariable": "dt",
+    "randomVariable": "rv",
+    "data": {
+      "positivePercent": 10
+    },
+    "randomNumberGeneratorVariable": "vid",
+    "cumulativeSessionTime": "",
+    "additionalVariables": [],
+    "customMetrics": {
+      "type": "customProbBased",
+      "topVariable": "top_current",
+      "thresholds": [
+        0.1,
+        0.1,
+        0.1,
+        0.1
+      ],
+      "topList": [
+        0.1,
+        0.1,
+        0.1,
+        0.1
+      ],
+      "npages": 4
+    },
+    "customFilter": "page_count<=10",
+    "postPredictFilter": "",
+    "sample": {
+      "type": "conditional",
+      "condition": [
+        "rv<=80",
+        "rv>80 "
+      ]
+    },
+    "preprocessing": {
+      "scope": "allPage",
+      "steps": [
+        {
+          "inputVariable": "current_page_url",
+          "outputVariable": "current_page_url1",
+          "transformations": [
+            {
+              "type": "nullcheck",
+              "parameter": ""
+            },
+            {
+              "type": "case_normalization"
+            },
+            {
+              "type": "tokenizer",
+              "parameter": "/"
+            }
+          ]
+        },
+        {
+          "inputVariable": "referrer",
+          "outputVariable": "referrer1",
+          "transformations": [
+            {
+              "type": "nullcheck",
+              "parameter": ""
+            },
+            {
+              "type": "case_normalization"
+            },
+            {
+              "type": "tokenizer",
+              "parameter": "/"
+            }
+          ]
+        }
+      ]
+    },
+    "featuregeneration": {
+      "scope": "perPage",
+      "binning": [
+        [],
+        [
+          {
+            "inputVariable": "no_of_visits_in_last_7_days",
+            "type": "intervals",
+            "parameter": [
+              0,
+              25,
+              50
+            ]
+          }
+        ],
+        [
+          {
+            "inputVariable": "no_of_visits_in_last_7_days",
+            "type": "equiDistant",
+            "parameter": 10
+          }
+        ],
+        [
+          {
+            "inputVariable": "no_of_visits_in_last_7_days",
+            "type": "equiArea",
+            "parameter": 10
+          }
+        ]
+      ],
+      "grams": [
+      ]
+    },
+    "vectorization": {
+      "text": {
+        "scope": "allPage",
+        "steps": [
+          {
+            "inputVariable": "current_page_url1",
+            "method": "hashingtf",
+            "slots": 2000
+          },
+          {
+            "inputVariable": "referrer1",
+            "method": "hashingtf",
+            "slots": 2000          }
+        ]
+      },
+      "categorical": {
+        "method": "hashingtf",
+        "slots": 1000
+      }
+    }
+  },
+  "hdfs": {
+    "nameNode": {
+      "uri": "hdfs://localhost:9000"
+    }
+  },
+  "hive": {
+    "thrift": {
+      "url": "thrift://localhost:9083"
+    }
+  },
+  "pipeline": {
+    "steps": [
+      "dataReader",
+      "sampling",
+      "preprocessing",
+      "featureGeneration",
+      "vectorization",
+      "modelling",
+      "scoring"]
+  },
+  "savePointing": {
+    "required": true
+  }
+}

@@ -1,0 +1,181 @@
+{
+  "flashml": {
+    "context": "local[*]",
+    "rootDirectory": "/user/cloudera"
+  },
+  "model": {
+    "id": "MODEL_id1"
+  },
+  "job": {
+    "id": "job1"
+  },
+  "project": {
+    "id": "binary_test_RF",
+    "logLevel": "ERROR",
+    "data": {
+      "location": {
+        "source": "hive://FLASHML.WEB_JOURNEY_DATA",
+        "format": "",
+        "temp_table_prefix": "flashml_table_",
+        "queries": []
+      },
+      "schema": {
+        "file": "flashml-core/support_files/schema.txt"
+      }
+    }
+  },
+  "experiment": {
+    "variables": {
+      "scope": "noPage",
+      "text": [
+        "current_page_url",
+        "referrer"
+      ],
+      "categorical": [
+        "initial_referrer_cat",
+        "browser_cat",
+        "nop_count",
+        "isp",
+        "os_cat",
+        "dd",
+        "hour_of_day"
+      ],
+      "numerical": [
+        "no_of_visits_in_last_7_days",
+        "session_time"
+      ]
+    },
+    "cv": {
+      "folds": 1,
+      "predictSavepoint": false
+    },
+    "modelingMethod": [
+      "single_intent"
+    ],
+    "type": "model",
+    "algorithm": {
+      "type": "random_forest",
+      "build": {
+        "type": "binary"
+      },
+      "random_forest": {
+        "impurity": "gini",
+        "maxDepth": 4,
+        "numberOfTrees": 15,
+        "featureSubsetStrategy": "auto"
+      }
+    },
+    "retrainId": "original",
+    "primaryKey": [
+      "vid",
+      "active_session",
+      "dt"
+    ],
+    "responseVariable": "purchase_flag",
+    "pageVariable": "nop_count",
+    "dateVariable": "dt",
+    "randomVariable": "rv",
+    "pageLevel": {
+      "numberOfPages": 1
+    },
+    "data": {
+      "positivePercent": 0
+    },
+    "randomNumberGeneratorVariable": "",
+    "cumulativeSessionTime": "",
+    "additionalVariables": [],
+    "customFilter": "",
+    "postPredictFilter": "",
+    "sample": {
+      "type": "conditional",
+      "condition": [
+        "rv<=80",
+        "rv>80"
+      ]
+    },
+    "preprocessing": {
+      "scope": "noPage",
+      "steps": [
+        {
+          "inputVariable": "current_page_url",
+          "outputVariable": "current_page_url1",
+          "transformations": [
+            {
+              "type": "case_normalization"
+            },
+            {
+              "type": "stopwords",
+              "parameter": "support_files/stopwords.txt"
+            },
+            {
+              "type": "stemming",
+              "parameter": []
+            },
+            {
+              "type": "contractions_replacement",
+              "parameter": "support_files/abbreviations_small.txt"
+            },
+            {
+              "type": "word_classes_replacement",
+              "parameter": "support_files/word_classes.txt"
+            },
+            {
+              "type": "tokenizer",
+              "parameter": "/"
+            }
+          ]
+        }
+      ]
+    },
+    "featuregeneration": {
+      "scope": "noPage",
+      "binning": [],
+      "grams": []
+    },
+    "vectorization": {
+      "text": {
+        "scope": "noPage",
+        "steps": [
+          {
+            "inputVariable": "current_page_url1",
+            "method": "hashingtf",
+            "slots": 2000
+          }
+        ]
+      },
+      "categorical": {
+        "method": "hashingtf",
+        "slots": 1000
+      }
+    }
+  },
+  "hdfs": {
+    "nameNode": {
+      "uri": "hdfs://localhost:9000"
+    }
+  },
+  "hive": {
+    "thrift": {
+      "url": "thrift://localhost:9083"
+    }
+  },
+  "apollo": {
+    "api": {
+      "url": "http://localhost:8383/jobs/job1/status"
+    }
+  },
+  "pipeline": {
+    "steps": [
+      "dataReader",
+      "sampling",
+      "preprocessing",
+      "featureGeneration",
+      "vectorization",
+      "modelling",
+      "scoring"
+    ]
+  },
+  "savePointing": {
+    "required": true
+  }
+}

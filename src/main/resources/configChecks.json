@@ -1,0 +1,211 @@
+{
+  "generic" : {
+    "validationList" : [
+      {
+        "path" : "flashml.rootDirectory",
+        "pattern" : "^/.*",
+        "range" : "",
+        "canBeEmpty" : false,
+        "datatype" : "string"
+      },
+      {
+        "path" : "model.id",
+        "pattern" : "[0-9a-zA-Z_]+",
+        "range" : "",
+        "canBeEmpty" : false,
+        "datatype" : "string"
+      },
+      {
+        "path" : "project.id",
+        "pattern" : "[0-9a-zA-Z_]+",
+        "range" : "",
+        "canBeEmpty" : false,
+        "datatype" : "string"
+      },
+      {
+        "path" : "project.logLevel",
+        "pattern" : "INFO|ERROR|ALL|OFF|DEBUG|FATAL|WARN|TRACE",
+        "range" : "",
+        "canBeEmpty" : false,
+        "datatype" : "string"
+      },
+      {
+        "path" : "job.id",
+        "pattern" : "[0-9a-zA-Z_]+",
+        "range" : "",
+        "canBeEmpty" : false,
+        "datatype" : "string"
+      },
+      {
+        "path" : "experiment.variables.scope",
+        "pattern" : "allPage|noPage|perPage",
+        "range" : "",
+        "canBeEmpty" : false,
+        "datatype" : "string"
+      },
+      {
+        "path" : "experiment.type",
+        "pattern" : "model|predict|monitoring",
+        "range" : "",
+        "canBeEmpty" : false,
+        "datatype" : "string"
+      }
+    ]
+  },
+  "datareader" : {
+    "validationList" : [
+      {
+        "path" : "hdfs.nameNode.uri",
+        "pattern" : "(hdfs://(.)+:(\\d)+)|(hdfs://(.)+)",
+        "range" : "",
+        "canBeEmpty" : false,
+        "datatype" : "string"
+      },
+      {
+        "path" : "project.data.location.source",
+        "pattern" : "(vertica|hive|hdfs)://[\\.0-9a-zA-Z_\/\-]*",
+        "range" : "",
+        "canBeEmpty" : false,
+        "datatype" : "string"
+      },
+      {
+        "path" : "project.data.location.format",
+        "pattern" : "",
+        "range" : "",
+        "canBeEmpty" : true,
+        "datatype" : "string"
+      },
+      {
+        "path" : "project.data.location.temp_table_prefix",
+        "pattern" : "[0-9a-zA-Z_]+",
+        "range" : "",
+        "canBeEmpty" : false,
+        "datatype" : "string"
+      },
+      {
+        "path" : "hive.thrift.url",
+        "pattern" : "thrift://(.)+:(\\d)+",
+        "range" : "",
+        "canBeEmpty" : false,
+        "datatype" : "string"
+      },
+      {
+        "path" : "flashml.context",
+        "pattern" : "yarn|local\\[(\\d+|\\*)\\]",
+        "range" : "",
+        "canBeEmpty" : false,
+        "datatype" : "string"
+      }
+    ]
+  },
+  "sampling" : {
+    "validationList" : [
+      {
+        "path" : "experiment.sample.type",
+        "pattern" : "conditional|random|stratified",
+        "range" : "",
+        "canBeEmpty" : false,
+        "datatype" : "string"
+      }
+    ]
+  },
+  "preprocessing" : {
+    "validationList" : [
+      {
+        "path" : "experiment.preprocessing.scope",
+        "pattern" : "allPage|noPage|perPage",
+        "range" : "",
+        "canBeEmpty" : false,
+        "datatype" : "string"
+      }
+    ]
+  },
+  "featuregeneration" : {
+    "validationList" : [
+      {
+        "path" : "experiment.featuregeneration.scope",
+        "pattern" : "allPage|noPage|perPage",
+        "range" : "",
+        "canBeEmpty" : false,
+        "datatype" : "string"
+      }
+    ]
+  },
+  "vectorization" : {
+    "validationList" : [
+      {
+        "path" : "experiment.vectorization.text.scope",
+        "pattern" : "allPage|noPage|perPage",
+        "range" : "",
+        "canBeEmpty" : false,
+        "datatype" : "string"
+      }
+    ]
+  },
+  "modelling" : {
+    "validationList" : [
+      {
+        "path" : "experiment.algorithm.type",
+        "pattern" : "logistic_regression|naive_bayes|svm|multilayer_perceptron|decision_trees|random_forest|gradient_boosted_trees",
+        "range" : "",
+        "canBeEmpty" : false,
+        "datatype" : "string"
+      },
+      {
+        "path" : "experiment.algorithm.build.type",
+        "pattern" : "binary|binomial|multinomial|ovr",
+        "range" : "",
+        "canBeEmpty" : false,
+        "datatype" : "string"
+      },
+      {
+        "path" : "experiment.cv.folds",
+        "pattern" : "[\\d]+",
+        "range" : "",
+        "canBeEmpty" : true,
+        "datatype" : "int"
+      },
+      {
+        "path" : "experiment.cv.predictSavepoint",
+        "pattern" : "true|false",
+        "range" : "",
+        "canBeEmpty" : true,
+        "datatype" : "boolean"
+      },
+      {
+        "path": "experiment.algorithm.svm.plattScalingEnabled",
+        "pattern":"true|false",
+        "range": "",
+        "canBeEmpty": true,
+        "datatype": "boolean"
+      }
+    ]
+  },
+  "scoring" : {
+    "validationList" : [
+      {
+        "path" : "experiment.postPredictFilter",
+        "pattern" : "",
+        "range" : "",
+        "canBeEmpty" : true,
+        "datatype" : "string"
+      }
+    ]
+  },
+  "publish" : {
+    "validationList" : [
+      {
+        "path" : "project.data.schema.file",
+        "pattern" : ".*(/.*)*",
+        "range" : "",
+        "canBeEmpty" : false,
+        "datatype" : "string"
+      }
+    ]
+  },
+  "qadatageneration" : {
+    "validationList" : [
+
+    ]
+  }
+}

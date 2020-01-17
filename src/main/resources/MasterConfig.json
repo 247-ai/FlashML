@@ -1,0 +1,39 @@
+{
+  "flashml": {
+    "context": "local[*]",
+    "rootdirectory": "/user/cloudera"
+  },
+  "vertica": {
+    "host": {
+      "url": "jdbc:vertica://analytics04.pxoe-app.va1.247-inc.net:5433/vertica247"
+    },
+    "jdbc": {
+      "driver": "com.vertica.jdbc.Driver"
+    },
+    "user": {
+      "name": "user_name",
+      "password": "password"
+    }
+  },
+  "experiment": {
+    "retrainId": "original",
+    "algorithm": {
+      "svm": {
+        "plattScalingEnabled": true
+      }
+    }
+  },
+  "hdfs": {
+    "nameNode": {
+      "uri": "hdfs://localhost:9000"
+    }
+  },
+  "hive": {
+    "thrift": {
+      "url": "thrift://localhost:9083"
+    }
+  },
+  "savePointing": {
+    "required": true
+  }
+}

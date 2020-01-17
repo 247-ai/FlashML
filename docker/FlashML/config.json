@@ -1,0 +1,238 @@
+{
+  "flashml": {
+    "context": "local[*]",
+    "rootDirectory": "/user/cloudera"
+  },
+  "model": {
+    "id": "MODEL_id1"
+  },
+  "job":{
+    "id":"job1"
+  },
+  "project": {
+    "id": "binary_test_config",
+    "logLevel": "ERROR",
+    "data": {
+      "location": {
+        "source": "hive://FLASHML.SEARSHS_TEST_DATA",
+        "format": "",
+        "temp_table_prefix": "praas_table_",
+        "queries": []
+      },
+      "schema":{
+        "file":"support_files/schema.txt"
+      }
+    }
+  },
+  "experiment": {
+    "cv": {
+      "folds": 1,
+      "predictSavepoint":false
+    },
+    "modelingMethod": [
+      "single_intent"
+    ],
+    "type": "model",
+    "algorithm": {
+      "type": "logistic_regression",
+      "build": {
+        "type": "binary"
+      },
+      "logistic": {
+        "regparam": 0.01,
+        "maxiter": 100,
+        "standardization": true,
+        "elasticnetparam": 1
+      }
+    },
+    "retrainId": "original",
+    "numericVariables": [
+      [
+        "no_of_visits_in_last_7_days",
+        "session_time"
+      ]
+    ],
+    "categoricalVariables": [
+      [
+        "initial_referrer_cat",
+        "browser_cat",
+        "nop_count",
+        "isp",
+        "os_cat",
+        "dd",
+        "hour_of_day"
+      ]
+    ],
+    "textVariables": [
+      [
+        "current_page_url",
+        "referrer"
+      ]
+    ],
+    "primaryKey": [
+      "vid",
+      "active_session",
+      "dt"
+    ],
+    "nullNaNReplace":{
+      "categorical":"other",
+      "numeric":0,
+      "text":"null"
+    },
+    "responseVariable": "purchase_flag",
+    "pageVariable": "nop_count",
+    "dateVariable": "",
+    "randomVariable": "rv",
+    "pageLevel" : {"numberOfPages":1},
+    "data": {
+      "positivePercent": 0
+    },
+    "randomNumberGeneratorVariable": "",
+    "cumulativeSessionTime": "",
+    "additionalVariables": [],
+    "customFilter": "",
+    "postPredictFilter": "",
+    "sample": {
+      "type": "conditional",
+      "condition": [
+        "rv<=80",
+        "rv>80"
+      ]
+    },
+    "preprocessing": {
+      "steps": [
+        [
+          {
+            "inputVariable": "current_page_url",
+            "outputVariable": "current_page_url1",
+            "transformations": [
+              {
+                "type": "case_normalization"
+              },
+              {
+                "type": "stopwords",
+                "parameter": "support_files/stopwords.txt"
+              },
+              {
+                "type": "stemming",
+                "parameter": []
+              },
+              {
+                "type": "contractions_replacement",
+                "parameter": "support_files/Apostrophe_words_new.txt"
+              },
+              {
+                "type":"word_classes_replacement",
+                "parameter": "support_files/word_classes.txt"
+              },
+              {
+                "type":"tokenizer",
+                "parameter": "/"
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    "featuregeneration": {
+      "binning": [],
+      "grams": [
+      ]
+    },
+    "vectorization": {
+      "text": {
+        "steps": [
+          [
+            {
+              "inputVariable": "current_page_url1",
+              "hashingtf": 2000
+            }
+          ]
+        ]
+      },
+      "categorical": {
+        "method": "hashingtf",
+        "slots": 1000
+      }
+    },
+    "publish": {
+      "format": "js",
+      "thresholds": [
+        0.6,
+        0.5,
+        0.5,
+        0.2
+      ],
+      "topList": [
+        20,
+        20,
+        20,
+        20
+      ],
+      "online": {
+        "pages": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "top": [
+          10,
+          10,
+          10,
+          10
+        ]
+      }
+    },
+    "customMetrics": {
+      "topVariable": "",
+      "type":"customProbBased",
+      "thresholds":[
+        0.6,
+        0.5,
+        0.5,
+        0.2
+      ],
+      "topList":[
+        20,
+        20,
+        20,
+        20
+      ],
+      "npages":4
+    },
+    "qa": {
+      "format": "csv",
+      "dataPoints": 1000
+    }
+  },
+  "hdfs": {
+    "nameNode": {
+      "uri": "hdfs://flashml-docker:9000"
+    }
+  },
+  "hive": {
+    "thrift": {
+      "url": "thrift://flashml-docker:9083"
+    }
+  },
+  "apollo":{
+    "api":{
+      "url":"http://localhost:8383/jobs/job1/status"
+    }
+  },
+  "pipeline": {
+    "steps": [
+      "dataReader",
+      "sampling",
+      "preprocessing",
+      "featureGeneration",
+      "vectorization",
+      "modelling",
+      "scoring"
+    ]
+  },
+  "savePointing": {
+    "required": true
+  }
+}

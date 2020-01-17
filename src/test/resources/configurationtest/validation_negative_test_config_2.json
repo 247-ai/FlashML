@@ -1,0 +1,260 @@
+{
+  "flashml": {
+    "context": "local[*]",
+    "rootDirectory": "/user/cloudera"
+  },
+  "model": {
+    "id": "MODEL_id2"
+  },
+  "project": {
+    "id": "singleIntent_svm_PG_test",
+    "logLevel": "ERRORR",
+    "data": {
+      "schema": {
+        "file": "support_files/schema.txt"
+      },
+      "location": {
+        "source": "http://FLASHML.SEARSHS_TEST_DATA",
+        "format": "",
+        "temp_table_prefix": "praas_table_",
+        "queries": []
+      }
+    }
+  },
+  "apollo": {
+    "api": {
+      "url": "http://localhost:8383/jobs/job1/status"
+    }
+  },
+  "job": {
+    "id": "job1"
+  },
+  "experiment": {
+    "variables": {
+      "scope": "perPage",
+      "text": [[
+        "current_page_url",
+        "referrer"
+      ],[
+        "current_page_url",
+        "referrer"
+      ],[
+        "current_page_url",
+        "referrer"
+      ],[
+        "current_page_url",
+        "referrer"
+      ]],
+      "numerical": [[
+        "no_of_visits_in_last_7_days"
+      ],[
+        "no_of_visits_in_last_7_days"
+      ],[
+        "no_of_visits_in_last_7_days"
+      ],[
+        "no_of_visits_in_last_7_days"
+      ]
+      ],
+      "categorical": [[
+        "initial_referrer_cat",
+        "browser_cat",
+        "isp",
+        "os_cat",
+        "dd",
+        "hour_of_day"
+      ],[
+        "initial_referrer_cat",
+        "browser_cat",
+        "isp",
+        "os_cat",
+        "dd",
+        "hour_of_day"
+      ],[
+        "initial_referrer_cat",
+        "browser_cat",
+        "isp",
+        "os_cat",
+        "dd",
+        "hour_of_day"
+      ],[
+        "initial_referrer_cat",
+        "browser_cat",
+        "isp",
+        "os_cat",
+        "dd",
+        "hour_of_day"
+      ]
+      ]
+    },
+    "cv": {
+      "folds": 0,
+      "predictSavepoint": false
+    },
+    "modelingMethod": [
+      "single_intent",
+      "page_level"
+    ],
+    "type": "model",
+    "algorithm": {
+      "type": "svm",
+      "build": {
+        "type": "polynomial"
+      },
+      "svm": {
+        "regparam": 0.01,
+        "maxiter": 10,
+        "standardization": true
+      }
+    },
+    "retrainId": "original",
+    "pageLevel": {
+      "numberOfPages": 4
+    },
+    "primaryKey": [
+      "vid",
+      "active_session",
+      "dt"
+    ],
+    "responseVariable": "purchase_flag",
+    "pageVariable": "nop_count",
+    "dateVariable": "",
+    "randomVariable": "rv",
+    "data": {
+      "positivePercent": 10
+    },
+    "randomNumberGeneratorVariable": "vid",
+    "cumulativeSessionTime": "",
+    "additionalVariables": [],
+    "customMetrics": {
+      "topVariable": "top_current"
+    },
+    "customFilter": "page_count<=10",
+    "postPredictFilter": "",
+    "sample": {
+      "type": "condational",
+      "condition": [
+        "rv<=80",
+        "rv>80"
+      ]
+    },
+    "preprocessing": {
+      "scope": "allPage",
+      "steps": [
+        {
+          "inputVariable": "current_page_url_test",
+          "outputVariable": "current_page_url1",
+          "transformations": [
+            {
+              "type": "nullcheck",
+              "parameter": ""
+            },
+            {
+              "type": "case_normalization"
+            },
+            {
+              "type": "tokenizer",
+              "parameter": "/"
+            }
+          ]
+        },
+        {
+          "inputVariable": "referrer",
+          "outputVariable": "referrer1",
+          "transformations": [
+            {
+              "type": "nullcheck",
+              "parameter": ""
+            },
+            {
+              "type": "case_normalization"
+            },
+            {
+              "type": "tokenizer",
+              "parameter": "/"
+            }
+          ]
+        }
+      ]
+    },
+    "featuregeneration": {
+      "scope": "allPage",
+      "binning": [],
+      "grams": [
+        {
+          "inputVariable": "current_page_url",
+          "outputVariable": "current_page_url2",
+          "transformations": [
+            {
+              "ngram": [
+                2,
+                3
+              ]
+            },
+            {
+              "skip_gram": 4
+            }
+          ]
+        },
+        {
+          "inputVariable": "referrer1",
+          "outputVariable": "referrer2",
+          "transformations": [
+            {
+              "ngram": [
+                2,
+                3
+              ]
+            },
+            {
+              "skip_gram": 4
+            }
+          ]
+        }
+      ]
+    },
+    "vectorization": {
+      "text": {
+        "scope": "allPage",
+        "steps": [
+          {
+            "inputVariable": "current_page_url3",
+            "method": "hashingtf",
+            "slots": 2000
+          },
+          {
+            "inputVariable": "referrer2",
+            "method": "hashingtf",
+            "slots": 2000
+          }
+        ]
+      },
+      "categorical": {
+        "method": "hashingtf",
+        "slots": 1000
+      }
+    }
+  },
+  "hdfs": {
+    "nameNode": {
+      "uri": "hdfs://localhost:9000"
+    }
+  },
+  "hive": {
+    "thrift": {
+      "url": "thrift://localhost:9083"
+    }
+  },
+  "pipeline": {
+    "steps": [
+      "dataReader",
+      "sampling",
+      "preprocessing",
+      "featureGeneration",
+      "vectorization",
+      "modelling"
+    ]
+  },
+  "savePointing": {
+    "required": true
+  }
+}

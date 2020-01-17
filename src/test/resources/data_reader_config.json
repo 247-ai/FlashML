@@ -1,0 +1,104 @@
+{
+  "flashml": {
+    "context": "local[*]",
+    "rootDirectory": "/user/cloudera"
+  },
+  "model":{"id":"MODEL_id1"},
+  "project": {
+    "id": "data_reader_test",
+    "logLevel": "ERROR",
+    "data": {
+      "location": {
+        "source": "hive://",
+        "format": "",
+        "temp_table_prefix": "flashml_table_",
+        "queries": [
+          "SELECT vid,active_session,dt,no_of_visits_in_last_7_days,session_time,purchase_flag,initial_referrer_cat,browser_cat,isp,os_cat,dd,hour_of_day,current_page_url,referrer,nop_count,rv,vid,top_current FROM FLASHML.WEB_JOURNEY_DATA",
+          "SELECT a.*, b.maxp FROM flashml_table_1 a inner Join (select max(purchase_flag) as maxp, vid, active_session, dt from flashml_table_1 group by vid, active_session, dt) b on a.vid = b.vid and a.active_session=b.active_session and a.dt=b.dt"
+        ]
+      }
+    }
+  },
+  "apollo":{
+    "api":{
+      "url":"http://localhost:8383/jobs/job1/status"
+    }
+  },
+  "job":{
+    "id":"job1"
+  },
+  "experiment": {
+    "variables":{
+      "scope":"noPage",
+      "text":[
+        "current_page_url",
+        "referrer"
+      ],
+      "numerical":[   "no_of_visits_in_last_7_days",
+        "session_time"],
+      "categorical":[
+        "initial_referrer_cat",
+        "browser_cat",
+        "nop_count",
+        "isp",
+        "os_cat",
+        "dd",
+        "hour_of_day"
+      ]
+    },
+    "cv": {
+      "folds": 0,
+      "predictSavepoint":false
+    },
+    "cumulativeSessionTime":"",
+    "additionalVariables" : ["maxp"],
+    "modelingMethod": [
+      "single_intent"
+    ],
+    "type": "model",
+    "sample": {
+      "type": "random",
+      "split": [
+        80,
+        20
+      ]
+    },
+    "randomNumberGeneratorVariable": "",
+    "customFilter": "",
+    "customMetrics": {
+      "topVariable": ""
+    },
+    "retrainId": "original",
+    "primaryKey": [
+      "vid",
+      "active_session",
+      "dt"
+    ],
+    "responseVariable": "purchase_flag",
+    "pageVariable": "nop_count",
+    "dateVariable": "",
+    "randomVariable": "",
+    "featuregeneration":{
+      "binning":[],
+      "grams":[]
+    }
+      },
+  "hdfs": {
+    "nameNode": {
+      "uri": "hdfs://localhost:9000"
+    }
+  },
+  "hive": {
+    "thrift": {
+      "url": "thrift://localhost:9083"
+    }
+  },
+  "pipeline": {
+    "steps": [
+      "dataReader"
+    ]
+  },
+  "savePointing": {
+    "required": true
+  }
+}

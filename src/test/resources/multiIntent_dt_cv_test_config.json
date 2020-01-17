@@ -1,0 +1,201 @@
+{
+  "flashml": {
+    "context": "local[*]",
+    "rootDirectory": "/user/cloudera"
+  },
+  "model": {
+    "id": "MODEL_id1"
+  },
+  "project": {
+    "id": "multiIntent_dt_cv_test",
+    "logLevel": "ERROR",
+    "data": {
+      "location": {
+        "source": "hdfs:///data/yelp-data/reviews_1k.json.gz",
+        "format": "json",
+        "temp_table_prefix": "flashml_table_",
+        "queries": []
+      },
+      "schema": {
+        "file": "flashml-core/support_files/schema.txt"
+      }
+    }
+  },
+  "apollo": {
+    "api": {
+      "url": "http://localhost:8383/jobs/job1/status"
+    }
+  },
+  "job": {
+    "id": "job1"
+  },
+  "vertica": {
+    "host": {
+      "url": "jdbc:vertica://analytics04.pxoe-app.va1.247-inc.net:5433/vertica247"
+    },
+    "jdbc": {
+      "driver": "com.vertica.jdbc.Driver"
+    },
+    "user": {
+      "name": "user_name",
+      "password": "password"
+    }
+  },
+  "experiment": {
+    "variables": {
+      "scope": "noPage",
+      "numerical": [],
+      "categorical": [],
+      "text": [
+        "text"
+      ]
+    },
+    "cv": {
+      "folds": 2,
+      "predictSavepoint": false
+    },
+    "modelingMethod": [
+      "multi_intent"
+    ],
+    "type": "model",
+    "algorithm": {
+      "type": "decision_trees",
+      "build": {
+        "type": "ovr"
+      },
+      "decision_trees": {
+        "impurity": ["gini"],
+        "maxDepth": [5,7],
+        "cacheNodeIDs": [true],
+        "maxBins": [15,25]
+      }
+    },
+    "retrainId": "original",
+    "pageLevel": {
+      "numberOfPages": 1
+    },
+    "multiIntent": {
+      "topIntentsColumn": "top_intents",
+      "maxTopIntents": 10
+    },
+    "primaryKey": [
+      "review_id"
+    ],
+    "responseVariable": "stars",
+    "pageVariable": "",
+    "dateVariable": "",
+    "randomVariable": "",
+    "data": {
+      "positivePercent": 10
+    },
+    "randomNumberGeneratorVariable": "review_id",
+    "uplift": {
+      "treatmentVariable": ""
+    },
+    "cumulativeSessionTime": "",
+    "additionalVariables": [],
+    "customFilter": "",
+    "postPredictFilter": "",
+    "sample": {
+      "type": "stratified",
+      "split": [
+        80,
+        20
+      ],
+      "condition": [],
+      "stratified": {
+        "minimumClassSupport": 10,
+        "otherClassValue": "other-other",
+        "minimumClassSupportRequired": false
+      }
+    },
+    "preprocessing": {
+      "scope": "noPage",
+      "steps": [
+        {
+          "inputVariable": "text",
+          "outputVariable": "text1",
+          "transformations": [
+            {
+              "type": "case_normalization"
+            },
+            {
+              "type": "stopwords",
+              "parameter": "support_files/stopwords.txt"
+            },
+            {
+              "type": "stemming",
+              "parameter": []
+            },
+            {
+              "type": "contractions_replacement",
+              "parameter": "support_files/lemma.txt"
+            },
+            {
+              "type": "tokenizer",
+              "parameter": "[.,? ###_END_### !]"
+            }
+          ]
+        }
+      ]
+    },
+    "featuregeneration": {
+      "scope": "noPage",
+      "binning": [],
+      "grams": [
+        {
+          "inputVariable": "text1",
+          "outputVariable": "text2",
+          "transformations": [
+            {
+              "ngram": [
+                2,
+                3
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "vectorization": {
+      "text": {
+        "scope": "noPage",
+        "steps": [
+          {
+            "inputVariable": "text2",
+            "method": "hashingtf",
+            "slots": 15000
+          }
+        ]
+      },
+      "categorical": {
+        "method": "hashingtf",
+        "slots": 1000
+      }
+    }
+  },
+  "hdfs": {
+    "nameNode": {
+      "uri": "hdfs://localhost:9000"
+    }
+  },
+  "hive": {
+    "thrift": {
+      "url": "thrift://localhost:9083"
+    }
+  },
+  "pipeline": {
+    "steps": [
+      "datareader",
+      "sampling",
+      "preprocessing",
+      "featuregeneration",
+      "vectorization",
+      "modelling",
+      "scoring"
+    ]
+  },
+  "savePointing": {
+    "required": true
+  }
+}

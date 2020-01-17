@@ -4,10 +4,14 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
-    <groupId>com.tfs.ilabs</groupId>
+    <groupId>com.github.247-ai</groupId>
     <artifactId>Flashml</artifactId>
     <version>2019.4</version>
     <packaging>jar</packaging>
+
+    <name>Flashml</name>
+    <url>https://github.com/247-ai/FlashML</url>
+    <description>FlashML</description>
 
     <dependencies>
         <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-core -->

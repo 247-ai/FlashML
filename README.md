@@ -165,7 +165,7 @@ For example, to Upgrade Spark/Hadoop/Hive version, change version in `pom.xml` a
 
     to the spark submit command. 
 
-3. Remaining details related to the socket server receiving the logs are available in the `README.md` in log-server module. 
+3. Remaining details related to the socket server receiving the logs are available in the [README.md in FlashML Log Server repo](https://github.com/247-ai/FlashML-Log-Server/blob/master/README.md). 
 
 ## Release Notes
 Release notes for all versions of FlashML are at [Release Notes](Release%20Notes.md).

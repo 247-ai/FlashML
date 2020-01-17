@@ -205,8 +205,6 @@ object PreprocessingStageLoader
      * @param parameter filePath (string) or a map containing the mappings from regex label to the regex pattern
      *                  (String)
      * @return collection of multiple Tuples wherein each value is present as (regex label, pattern)
-     * @usecase the collection of regex patterns to their labels for preprocessing
-     *          Order of values may vary
      */
     def getRegexes(parameter: Any): Seq[(String, String)] =
     {

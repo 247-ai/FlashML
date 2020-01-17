@@ -18,7 +18,7 @@ then
 fi
 # Copy over the FlashML jar to HDFS
 # Find the name of main jar
-mainJar=`ls flashml*[^tests].jar`
+mainJar=`ls FlashML*[^tests].jar`
 hadoop fs -mkdir /flashml
 hadoop fs -put $mainJar /flashml
 echo "** [NOTE] FlashML jar ($mainJar) is available at hdfs:///flashml/$mainJar"

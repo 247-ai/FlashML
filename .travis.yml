@@ -11,4 +11,4 @@ before_install:
   - echo $GPG_OWNERTRUST | base64 --decode | gpg --import-ownertrust
 ## Build and release to maven central
 script:
-  mvn -s .maven.xml clean deploy -DskipTests=true -B -U -Prelease
+  mvn clean package -DskipTests=true

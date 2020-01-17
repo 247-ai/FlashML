@@ -20,7 +20,7 @@ RUN chmod 777 /FlashML/run-flashml.sh
 RUN chmod 777 /FlashML/run-flashml-tests.sh
 
 COPY FlashML /FlashML
-COPY flashml-*.jar /FlashML/
+COPY FlashML-*.jar /FlashML/
 COPY scalatest_2.11-3.0.5.jar /FlashML/scalatest_2.11-3.0.5.jar
 COPY scalactic_2.11-3.0.5.jar /FlashML/scalactic_2.11-3.0.5.jar
 

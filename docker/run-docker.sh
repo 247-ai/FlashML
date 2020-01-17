@@ -12,13 +12,13 @@ if [[ "$1" == "test" ]]
 then
     # Find the names of main and test jar
     # First find out if we have multiple versions of the main JAR available. In that case, we will exit with an error.
-    if [[ `ls flashml-*-tests.jar | wc -l` > 1 ]]
+    if [[ `ls FlashML-*-tests.jar | wc -l` > 1 ]]
     then
 		    echo "Multiple versions of FlashML jar detected in this folder. Please remove old versions of main and test jars."
 		    exit -1
     fi
-    mainJar=`ls flashml*[^tests].jar`
-    testJar=`ls flashml-*-tests.jar`
+    mainJar=`ls FlashML*[^tests].jar`
+    testJar=`ls FlashML-*-tests.jar`
     echo "** Using [$mainJar] and [$testJar] for running tests"
 
     # Now create a docker container by running the image

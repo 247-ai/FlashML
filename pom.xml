@@ -5,11 +5,11 @@
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.247-ai</groupId>
-    <artifactId>Flashml</artifactId>
+    <artifactId>FlashML</artifactId>
     <version>2019.4</version>
     <packaging>jar</packaging>
 
-    <name>Flashml</name>
+    <name>FlashML</name>
     <url>https://github.com/247-ai/FlashML</url>
     <description>FlashML</description>
 

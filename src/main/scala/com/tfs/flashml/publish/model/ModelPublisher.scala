@@ -30,6 +30,8 @@ object ModelPublisher {
   //This option allows users to custom set the precision of the Co-efficients in the Publish scripts
   val decimalPrecision = if(FlashMLConfig.hasKey(FlashMLConstants.PUBLISH_PRECISION) && FlashMLConfig.getInt(FlashMLConstants.PUBLISH_PRECISION)!=0) FlashMLConfig.getInt(FlashMLConstants.PUBLISH_PRECISION) else defaultPrecision
 
+  val defaultPrecisionFlag = !FlashMLConfig.hasKey(FlashMLConstants.PUBLISH_PRECISION) || FlashMLConfig.getInt(FlashMLConstants.PUBLISH_PRECISION)==0
+
   private def throwException(msg: String) =
   {
     log.error(msg)

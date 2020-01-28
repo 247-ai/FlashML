@@ -1,6 +1,6 @@
 # FlashML
 
-This is a Data Science Engineering project for creating an internal framework for training all machine learning models deployed by Data Science Group. This is built on top of Apache Spark.
+This is a project from Data Science Engineering team at [[24]7.ai](https://www.247.ai/) for creating an internal framework for training all machine learning models deployed by the Data Science Group. This is built on top of Apache Spark.
 
 ## Dependencies
 0. JDK 8. OpenJDK 8 can be used without any issues.

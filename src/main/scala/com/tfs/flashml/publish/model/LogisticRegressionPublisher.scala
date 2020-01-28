@@ -25,21 +25,30 @@ object LogisticRegressionPublisher {
     js
   }
 
-  def createCoefficientsMap(coefficientsArray: Array[Double], idx:Int) : StringBuilder ={
+  def createCoefficientsMap(coefficientsArray: Array[Double], idx: Int): StringBuilder =
+  {
 
     val mapString = new StringBuilder
     val mapArray = new ArrayBuffer[String]()
     var formatString = s"#.${"#" * ModelPublisher.decimalPrecision}"
-    if(idx == -1){
-      mapString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var coefficients = { "
-    }else{
-      mapString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var coefficients_" + idx + " = { "
+    if (idx == -1)
+    {
+      mapString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var " + "coefficients = { "
+    }
+    else
+    {
+      mapString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var " + "coefficients_" + idx + " = { "
     }
 
-    for((value,index) <- coefficientsArray.zipWithIndex){
+    for ((value, index) <- coefficientsArray.zipWithIndex)
+    {
       if (value != 0)
-      mapArray += PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 2) + index + PublishUtils.indent(2) + ": " + doubleToString(value, formatString).toDouble
+      {
+        val coeffWithPrecision = if (!ModelPublisher.defaultPrecisionFlag) doubleToString(value, formatString).toDouble else value
+        mapArray += PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 2) + index + PublishUtils.indent(2) + ": " + coeffWithPrecision
+      }
     }
+
     mapString ++= mapArray.mkString(",")
     mapString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "};"
     mapString

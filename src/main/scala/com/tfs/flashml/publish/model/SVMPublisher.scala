@@ -29,14 +29,20 @@ object SVMPublisher {
     val mapArray = new ArrayBuffer[String]()
     var formatString = s"#.${"#" * ModelPublisher.decimalPrecision}"
     mapString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var svmCoefficients = { "
-    for((value,index) <- svmCoefficientsArray.zipWithIndex){
+    for((value,index) <- svmCoefficientsArray.zipWithIndex)
+    {
       if (value != 0)
-        mapArray += PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 2) + index + PublishUtils.indent(2) + ": " + doubleToString(value, formatString).toDouble
+      {
+        val coeffWithPrecision = if (!ModelPublisher.defaultPrecisionFlag) doubleToString(value,formatString).toDouble + value
+        mapArray += PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 2) + index + PublishUtils.indent(2) + ": " + coeffWithPrecision
+
+      }
     }
     mapString ++= mapArray.mkString(",")
     mapString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "};"
     mapString
   }
+
 
   def createCalibCoefficientsMap(calibCoefficientsArray: Array[Double]) : StringBuilder = {
 

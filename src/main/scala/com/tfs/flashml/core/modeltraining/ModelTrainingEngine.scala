@@ -1,4 +1,4 @@
-package com.tfs.flashml.core
+package com.tfs.flashml.core.modeltraining
 
 import com.tfs.flashml.core.sampling.{StratifiedTrainTestSplitter, TrainTestSampler}
 import com.tfs.flashml.util.ConfigUtils.{isUplift, upliftColumn}

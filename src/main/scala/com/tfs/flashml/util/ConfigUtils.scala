@@ -2,8 +2,6 @@ package com.tfs.flashml.util
 
 import java.util
 
-import com.tfs.flashml.core.ModelTrainingEngine.algorithm
-
 //import com.tfs.flashml.core.featuregeneration.FeatureGenerationEngine.featureGenerationBinningConfig
 
 //import com.tfs.flashml.util.ConfigUtils.{binningConfigPageVariables, featureGenerationBinningConfig, featureGenerationConfig}

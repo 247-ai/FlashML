@@ -1,12 +1,15 @@
 package org.apache.spark.ml.classification
 
 import org.apache.hadoop.fs.Path
-import org.apache.spark.ml.linalg.{Vector, Vectors}
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.ml.classification.PlattScalarModel
+import org.apache.spark.ml.linalg.{DenseVector, Vector, Vectors}
+import org.apache.spark.ml.param.shared.{HasFeaturesCol, HasProbabilityCol}
 import org.apache.spark.ml.param.{Param, ParamMap, ParamPair, Params}
 import org.apache.spark.ml.util._
 import org.apache.spark.ml.{Model, Transformer}
 import org.apache.spark.mllib.linalg.VectorUDT
-import org.apache.spark.sql.functions.{col, udf}
+import org.apache.spark.sql.functions.{col, lit, udf}
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Dataset}
 import org.json4s.JsonDSL._
@@ -14,24 +17,24 @@ import org.json4s.jackson.JsonMethods._
 import org.json4s.{DefaultFormats, _}
 
 /**
-  * Params for [[UpliftTransformer]].
-  */
-trait UpliftParams extends Params {
+ * Params for [[UpliftTransformer]].
+ */
+trait UpliftParams extends Params with HasFeaturesCol with HasProbabilityCol{
 
   type ModelType = Model[_]
 
   type PlattScalarModelType = PlattScalarModel
 
   /**
-    * param for the base classifier
-    */
+   * param for the base classifier
+   */
   final val baseClassifier: Param[ModelType] = new Param(this, "baseClassifier", "base classifier")
 
   def getBaseClassifier: ModelType = $(baseClassifier)
 
   /**
-    * param fo platt scaling model
-    */
+   * param fo platt scaling model
+   */
   final val plattScalar: Param[PlattScalarModelType] = new Param(this, "plattScalingModel", "platt scaling model")
 
   def getPlattScaler: PlattScalarModelType = $(plattScalar)
@@ -62,13 +65,13 @@ object UpliftParams {
 }
 
 /**
-  * Uplift Transformation applies the model on the data twice. First the treatment
-  * variable is set to 0 and scoring is done, next it is set to 1 followed by scoring. These two scores are subtracted to get the uplift probability. <br/>
-  * <br />
-  * Uplift Transformation is not applicable for multi intent models.
-  *
-  * @since 22/8/18
-  */
+ * Uplift Transformation applies the model on the data twice. First the treatment
+ * variable is set to 0 and scoring is done, next it is set to 1 followed by scoring. These two scores are subtracted to get the uplift probability. <br/>
+ * <br />
+ * Uplift Transformation is not applicable for multi intent models.
+ *
+ * @since 22/8/18
+ */
 class UpliftTransformer (override val uid: String)
   extends Transformer
     with UpliftParams
@@ -88,6 +91,8 @@ class UpliftTransformer (override val uid: String)
 
   def transform(df: Dataset[_]): DataFrame = {
 
+    /*val ss = SparkSession.builder().getOrCreate()
+    import ss.implicits._*/
     // Uplift specific UDFs
     val upliftProbabilityCoder: (Vector, Vector) => Vector = (num1: Vector, num2: Vector) => {
       Vectors.dense(Array(1 - (num1(1) - num2(1)), num1(1) - num2(1)))
@@ -141,6 +146,7 @@ class UpliftTransformer (override val uid: String)
       .withColumn("probability",
         upliftProbabilityFunc(col("probabilityTreatmentPositive"),
           col("probabilityTreatmentNegative")))
+      .withColumn("prediction",lit(1.0))
       .withColumn("rawPrediction", rawProbabilityFunc(col("probability")))
   }
 

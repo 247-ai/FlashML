@@ -12,25 +12,25 @@ import scala.collection.mutable
 object SentenceMarkerPublisher
 {
 
-    def generateJS(input: String, output: String, sentenceMarkerFunction: Boolean, globalVar: mutable.Set[String]) =
-    {
-        val sentMarkerJsTmp = if (sentenceMarkerFunction) sentenceMarkerFunctionJS
-        else new StringBuilder
-        globalVar += ("" + sentMarkerJsTmp)
-        val sentMarkerJs = new StringBuilder
-        sentMarkerJs ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var " +
-                output + " = sentenceMarker(" + input + ");"
-        sentMarkerJs
-    }
+  def generateJS(input: String, output: String, sentenceMarkerFunction: Boolean, globalVar: mutable.Set[String]) =
+  {
+    val sentMarkerJsTmp = if (sentenceMarkerFunction) sentenceMarkerFunctionJS
+    else new StringBuilder
+    globalVar += ("" + sentMarkerJsTmp)
+    val sentMarkerJs = new StringBuilder
+    sentMarkerJs ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var " +
+      output + " = sentenceMarker(" + input + ");"
+    sentMarkerJs
+  }
 
-    def sentenceMarkerFunctionJS: StringBuilder =
-    {
-        val sentMarkFunc = new StringBuilder
-        sentMarkFunc ++= PublishUtils.getNewLine + PublishUtils.indent(1) + "function sentenceMarker(line){"
-        sentMarkFunc ++= PublishUtils.getNewLine + PublishUtils.indent(2) + "line = 'class_ss_' + line + '_class_se'"
-        sentMarkFunc ++= PublishUtils.getNewLine + PublishUtils.indent(2) + "return line"
-        sentMarkFunc ++= PublishUtils.getNewLine + PublishUtils.indent(1) + "}"
-        sentMarkFunc
-    }
+  def sentenceMarkerFunctionJS: StringBuilder =
+  {
+    val sentMarkFunc = new StringBuilder
+    sentMarkFunc ++= PublishUtils.getNewLine + PublishUtils.indent(1) + "function sentenceMarker(line){"
+    sentMarkFunc ++= PublishUtils.getNewLine + PublishUtils.indent(2) + "line = 'class_ss_' + line + '_class_se'"
+    sentMarkFunc ++= PublishUtils.getNewLine + PublishUtils.indent(2) + "return line"
+    sentMarkFunc ++= PublishUtils.getNewLine + PublishUtils.indent(1) + "}"
+    sentMarkFunc
+  }
 
 }

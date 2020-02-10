@@ -43,7 +43,7 @@ import org.apache.spark.sql.types.{ArrayType, StringType, StructType}
 class StopWordsRemoverCustom (override val uid: String)
   extends Transformer with HasInputCol with HasOutputCol with DefaultParamsWritable {
 
-  def this() = this(Identifiable.randomUID("stopWords"))
+  def this() = this(Identifiable.randomUID("stopwords_remove"))
 
   /** @group setParam */
   def setInputCol(value: String): this.type = set(inputCol, value)

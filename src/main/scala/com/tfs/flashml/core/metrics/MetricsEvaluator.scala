@@ -18,66 +18,57 @@ object MetricsEvaluator
     val metricsMap = mutable.Map[String, AnyRef]()
     val csvMetrics = new StringBuilder
 
-    val columnsNames = (ConfigUtils.primaryKeyColumns ++ Array(ConfigUtils.topVariable, ConfigUtils
-            .getIndexedResponseColumn, ConfigUtils.pageColumn, "probability"))
-            .filter(_.nonEmpty)
-            .distinct
+  val columnsNames = (ConfigUtils.primaryKeyColumns ++ Array(ConfigUtils.topVariable, ConfigUtils.getIndexedResponseColumn, ConfigUtils.pageColumn, "probability"))
+    .filter(_.nonEmpty)
+    .distinct
 
 
-    def evaluateStandardMetrics(predictionArray: Array[DataFrame]): Unit =
-    {
-        StandardMetricsEvaluator.generateMetrics(predictionArray)
-    }
+  def evaluateStandardMetrics(predictionArray: Array[DataFrame]) :Unit = {
+    StandardMetricsEvaluator.generateMetrics(predictionArray)
+  }
 
-    def evaluateCustomMetrics(predictionArray: Array[DataFrame], step: String): Unit =
-    {
+  def evaluateCustomMetrics(predictionArray: Array[DataFrame], step: String):Unit={
 
-        val dfArray =
-            if (ConfigUtils.isPageLevelModel)
-                pageLevelTransform(predictionArray)
-            else predictionArray.map(_.select(columnsNames.map(col): _*))
+    val dfArray =
+      if (ConfigUtils.isPageLevelModel)
+        pageLevelTransform(predictionArray)
+      else predictionArray.map(_.select(columnsNames.map(col): _*))
 
-        dfArray
-                .tail
-                .map(_.cache)
+    dfArray
+      .tail
+      .map(_.cache)
 
-        val metricType = if (step.equals("metrics")) "Custom"
-        else "Publish"
+    val metricType = if (step.equals("metrics")) "Custom" else "Publish"
 
-        log.info(s"\n$metricType Metrics")
+    log.info(s"\n$metricType Metrics")
 
-        WebCustomMetricsEvaluator.customMetricsSimulation(dfArray, step)
+    WebCustomMetricsEvaluator.customMetricsSimulation(dfArray,step)
 
-        dfArray.tail.map(_.unpersist())
-    }
+    dfArray.tail.map(_.unpersist())
+  }
 
-    private def pageLevelTransform(inputArray: Array[DataFrame]): Array[DataFrame] =
-    {
-        var tempDf: DataFrame = null
+  private def pageLevelTransform(inputArray: Array[DataFrame]): Array[DataFrame] = {
+    var tempDf: DataFrame = null
 
-        val outputArray: ArrayBuffer[DataFrame] = ArrayBuffer[DataFrame]()
-        for (x <- inputArray.indices)
-        {
-            if (x % ConfigUtils.numPages == 0)
-            {
+    val outputArray: ArrayBuffer[DataFrame] = ArrayBuffer[DataFrame]()
+    for (x <- inputArray.indices) {
+      if (x % ConfigUtils.numPages == 0) {
 
-                tempDf = inputArray(x)
-                        .select(columnsNames.map(col): _*)
-            }
-            else
-            {
-                tempDf = tempDf
-                        .union(inputArray(x)
-                                .select(columnsNames
-                                        .map(col): _*))
+        tempDf = inputArray(x)
+          .select(columnsNames.map(col): _*)
+      }
+      else {
+        tempDf = tempDf
+          .union(inputArray(x)
+            .select(columnsNames
+              .map(col): _*))
 
-                if ((x + 1) % ConfigUtils.numPages == 0)
-                {
-                    outputArray.append(tempDf)
-                }
-            }
+        if ((x + 1) % ConfigUtils.numPages == 0) {
+          outputArray.append(tempDf)
         }
-        outputArray.toArray
+      }
     }
+    outputArray.toArray
+  }
 
 }

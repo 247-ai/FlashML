@@ -5,7 +5,7 @@ import org.apache.spark.ml.Transformer
 import org.apache.spark.ml.feature.StringIndexerModel
 import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.ml.param._
-import org.apache.spark.ml.param.shared.HasOutputCol
+import org.apache.spark.ml.param.shared.{HasInputCol, HasOutputCol}
 import org.apache.spark.ml.util._
 import org.apache.spark.sql.functions.{col, udf}
 import org.apache.spark.sql.types._
@@ -15,16 +15,27 @@ import org.json4s.jackson.JsonMethods._
 import org.json4s.{DefaultFormats, _}
 
 /**
+  * Calculate the top K intents for Multi Intent models.
+  * By default multi intent model scoring only gives the final prediction which has
+  * the probability. This gives the top K intents for analysis
+  *
+  * @author Neelesh Sambhajiche <neelesh.sa@247-inc.com>
+  * @since 22/8/18
+  */
+
+
+/**
   * Params for [[TopKIntents]].
   */
-trait TopKIntentsParams extends Params with HasOutputCol {
+trait TopKIntentsParams extends Params with HasOutputCol with HasInputCol {
 
   /**
     * param for the base classifier
     */
-  final val stringIndexerModel: Param[StringIndexerModel] = new Param(this, "stringIndexerModel", "String Indexer Model")
 
-  def getStringIndexerModel: StringIndexerModel = $(stringIndexerModel)
+  val labels: StringArrayParam = new StringArrayParam(this,"StringIndexer labels","To identify which label is pointing to which intent name")
+
+  def getLabels = ${labels}
 
   /**
     * param for number of intents
@@ -45,12 +56,6 @@ object TopKIntentsParams {
           s" because it contains $name which does not implement MLWritable." +
           s" Non-Writable $name: ${other.uid} of type ${other.getClass}")
     }
-
-    instance match {
-      case topKIntents: TopKIntents =>
-        checkElement(topKIntents.getStringIndexerModel, "model")
-      case _ =>
-    }
   }
 }
 
@@ -69,32 +74,31 @@ class TopKIntents(override val uid: String)
     with TopKIntentsParams
     with MLWritable {
 
-  def this() = this(Identifiable.randomUID("topKIntent"))
+  def this() = this(Identifiable.randomUID("topK"))
 
-  def setStringIndexerModel(value: StringIndexerModel): this.type = {
-    set(stringIndexerModel, value.asInstanceOf[StringIndexerModel])
-  }
+  def setLabels(value:Array[String])=set(labels,value)
 
   def setKValue(value: Int): this.type = set(kValue, value)
 
-  def setOutputCol(value: String = "top_intents"): this.type = set(outputCol, value)
+  def setInputCol(value:String = "probability"): this.type = set(inputCol,value)
+
+  def setOutputCol(value: String): this.type = set(outputCol, value)
 
   def copy(extra: ParamMap): TopKIntents = defaultCopy(extra)
 
   def transform(df: Dataset[_]): DataFrame = {
 
     // Get StringIndexerLabels for intents
-    val intentLabels = getStringIndexerModel.labels
+    val intentLabels = getLabels
 
-    def topIntentUDF(labels: Array[String]) = udf((probabilityCol: Vector) => {
-      // Get index and probability from array
+    def topIntentUDF(labels: Array[String]) = udf((predictions: Vector) => {
+      // get index and prob from array
       val scoresAndLabels =
-        for ((score, idx) <- probabilityCol.toArray.zipWithIndex) yield (labels(idx), score)
+        for ((score, idx) <- predictions.toArray.zipWithIndex) yield (labels(idx), score)
       scoresAndLabels.sortBy(-_._2).take(getKValue)
     })
 
-    df
-            .withColumn($(outputCol), topIntentUDF(intentLabels)(col("probability")))
+    df.withColumn($(outputCol), topIntentUDF(intentLabels)(col("probability")))
 
   }
 
@@ -105,7 +109,7 @@ class TopKIntents(override val uid: String)
   override def transformSchema(schema: StructType): StructType =
   {
     // Add the return field
-    schema.add(StructField($(outputCol), ArrayType(StructType(Array(StructField("_1", StringType, false), StructField("_2", DoubleType, false)))), true))
+    schema.add(StructField($(outputCol), ArrayType(  StructType(Array(StructField("_1", StringType, false),StructField("_2", DoubleType, false))) ), true))
   }
 
   override def write: MLWriter = new TopKIntents.TopKIntentsWriter(this)
@@ -126,14 +130,10 @@ object TopKIntents extends MLReadable[TopKIntents] {
     override protected def saveImpl(path: String): Unit = {
       val params = instance.extractParamMap().toSeq
       val jsonParams = render(params
-        .filter { case ParamPair(p, v) => p.name != "stringIndexerModel" }
         .map { case ParamPair(p, v) => p.name -> parse(p.jsonEncode(v)) }
         .toList)
 
       DefaultParamsWriter.saveMetadata(instance, path, sc, None, Some(jsonParams))
-
-      val stringIndexerModelPath = new Path(path, s"stringIndexerModel").toString
-      instance.getStringIndexerModel.asInstanceOf[MLWritable].save(stringIndexerModelPath)
     }
   }
 
@@ -145,13 +145,11 @@ object TopKIntents extends MLReadable[TopKIntents] {
     override def load(path: String): TopKIntents = {
       implicit val format: DefaultFormats.type = DefaultFormats
       val metadata = DefaultParamsReader.loadMetadata(path, sc, className)
-      val stringIndexerModelPath = new Path(path, s"stringIndexerModel").toString
-      val stringIndexerModel: StringIndexerModel = DefaultParamsReader.loadParamsInstance[StringIndexerModel](stringIndexerModelPath, sc)
 
       val topKIntents = new TopKIntents(metadata.uid)
       metadata.getAndSetParams(topKIntents)
 
-      topKIntents.setStringIndexerModel(stringIndexerModel)
+      topKIntents
     }
   }
 }

@@ -1,6 +1,5 @@
 package com.tfs.flashml.core.modeltraining
 
-import com.tfs.flashml.core.ModelTrainingEngine
 import com.tfs.flashml.dal.SavePointManager
 import com.tfs.flashml.util.conf.{ConfigValidatorException, FlashMLConstants}
 import com.tfs.flashml.util.{ConfigUtils, FlashMLConfig}

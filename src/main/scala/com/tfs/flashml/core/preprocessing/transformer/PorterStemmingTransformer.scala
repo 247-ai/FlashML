@@ -10,96 +10,79 @@ import org.apache.spark.ml.util.{DefaultParamsReadable, DefaultParamsWritable, I
 import org.apache.spark.sql.types.{ArrayType, DataType, DataTypes, StringType}
 
 /**
- * Transformer to apply stemming on the sequence
- */
+  * Transformer to apply stemming on the sequence
+  */
 
 class PorterStemmingTransformer(override val uid: String)
-        extends UnaryTransformer[String, String, PorterStemmingTransformer]
-                with Serializable
-                with DefaultParamsWritable
-{
+  extends UnaryTransformer[String, String, PorterStemmingTransformer]
+    with Serializable
+    with DefaultParamsWritable {
 
-    def this() = this(Identifiable.randomUID("PorterStemmingTransformer"))
+  def this() = this(Identifiable.randomUID("porter_stemmer"))
 
-    /**
-     * A list of word on which stemming is not to be applied on
-     */
-    var stemExceptions: StringArrayParam = new StringArrayParam(this, "stemException", "provide a stem exception " +
-            "dictionary")
+  /**
+    * A list of word on which stemming is not to be applied on
+    */
+  var stemExceptions: StringArrayParam = new StringArrayParam(this,"stemException", "provide a stem exception dictionary")
 
-    val pattern: Param[String] = new Param(this, "delimiter", "regex pattern used for tokenizing")
+  val pattern: Param[String] = new Param(this,"delimiter","regex pattern used for tokenizing")
 
-    def setExceptions(exceptions: Array[String]): this.type =
-    {
-        set(stemExceptions, exceptions)
-    }
+  def setExceptions(exceptions: Array[String]): this.type = {
+    set(stemExceptions,exceptions)
+  }
 
-    def setDelimiter(value: String): this.type = set(pattern, value)
+  def setDelimiter(value:String): this.type = set(pattern,value)
 
-    def getDelimiter: String = $(pattern)
+  def getDelimiter : String = $(pattern)
 
-    def getExceptions: Array[String] = $
-    {
-        stemExceptions
-    }
+  def getExceptions: Array[String] = ${stemExceptions}
 
-    setDefault(stemExceptions -> Array())
+  setDefault( stemExceptions -> Array())
 
-    override protected def createTransformFunc: String => String =
-    {
-        getFeatures
-    }
+  override protected def createTransformFunc: String => String = {
+    getFeatures
+  }
 
-    private def getFeatures(words: String): String =
-    {
-        //todo change null check to options
+  private def getFeatures(words: String): String = {
+    //todo change null check to options
 
-        def replacement(word: String): String =
-        {
-            if (!$(stemExceptions).isEmpty)
-            {
-                if (!$(stemExceptions).contains(word) && !word.contains("_class_"))
-                {
-                    val update = Option(PorterStemmer.stem(word))
-                    update match
-                    {
-                        case Some(str) => str
-                        case None => word
-                    }
-                }
-                else
-                    word
-            }
-            else
-            {
-                if (!word.contains("_class_"))
-                {
-                    val update = Option(PorterStemmer.stem(word))
-                    update match
-                    {
-                        case Some(str) => str
-                        case None => word
-                    }
-                }
-                else
-                    word
-            }
+    def replacement(word: String): String = {
+      if(!$(stemExceptions).isEmpty) {
+        if (!$(stemExceptions).contains(word) && !word.contains("_class_")) {
+          val update = Option(PorterStemmer.stem(word))
+          update match {
+              case Some(str) => str
+              case None => word
+          }
         }
-
-        ($(pattern) + "|(" + FlashMLConstants.CUSTOM_DELIMITER + ")").r.split(words).toSeq.map(word => replacement(word)).mkString(FlashMLConstants.CUSTOM_DELIMITER)
+        else
+          word
+      }
+      else {
+        if (!word.contains("_class_")) {
+          val update = Option(PorterStemmer.stem(word))
+          update match {
+            case Some(str) => str
+            case None => word
+          }
+        }
+        else
+          word
+      }
     }
 
-    override protected def validateInputType(inputType: DataType): Unit =
-    {
-        require(inputType == StringType)
-    }
+    ($(pattern) + "|(" +FlashMLConstants.CUSTOM_DELIMITER+")").r.split(words).toSeq.map(word => replacement(word)).mkString(FlashMLConstants.CUSTOM_DELIMITER)
+  }
 
-    override protected def outputDataType: DataType = StringType
+  override protected def validateInputType(inputType: DataType): Unit = {
+    require(inputType == StringType)
+  }
+
+  override protected def outputDataType: DataType = StringType
 
 }
 
 object PorterStemmingTransformer
-        extends DefaultParamsReadable[PorterStemmingTransformer]
-{
-    override def load(path: String): PorterStemmingTransformer = super.load(path)
+  extends DefaultParamsReadable[PorterStemmingTransformer] {
+  override def load(path: String): PorterStemmingTransformer = super.load(path)
 }

@@ -24,6 +24,8 @@ package org.apache.spark.ml.classification
 
 import java.util.UUID
 
+import ml.combust.mleap.core.classification.ProbabilisticClassificationModel
+
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 import scala.language.existentials
@@ -36,9 +38,10 @@ import org.apache.spark.SparkContext
 import org.apache.spark.annotation.Since
 import org.apache.spark.ml._
 import org.apache.spark.ml.attribute._
+import org.apache.spark.ml.classification.{ClassificationModel, Classifier, LinearSVCModel}
 import org.apache.spark.ml.linalg.{Vector, Vectors}
 import org.apache.spark.ml.param.{Param, ParamMap, ParamPair, Params}
-import org.apache.spark.ml.param.shared.{HasParallelism, HasWeightCol}
+import org.apache.spark.ml.param.shared.{HasParallelism, HasProbabilityCol, HasWeightCol}
 import org.apache.spark.ml.util.Instrumentation.instrumented
 import org.apache.spark.ml.util._
 import org.apache.spark.sql.{DataFrame, Dataset, Row}
@@ -137,10 +140,11 @@ private[ml] object OneVsRestCustomParams extends ClassifierTypeTrait {
   *               (taking label 0).
   */
 final class OneVsRestCustomModel private[ml] (
-                                                override val uid: String,
-                                                private[ml] val labelMetadata: Metadata,
-                                                val models: Array[_ <: ClassificationModel[_, _]])
-  extends Model[OneVsRestCustomModel] with OneVsRestCustomParams with MLWritable {
+                                               override val uid: String,
+                                               private[ml] val labelMetadata: Metadata,
+                                               val models: Array[_ <: ClassificationModel[_, _]],
+                                               val isProbModel : Boolean)
+  extends Model[OneVsRestCustomModel] with OneVsRestCustomParams with MLWritable with HasProbabilityCol {
 
   def setFeaturesCol(value: String): this.type = set(featuresCol, value)
 
@@ -161,8 +165,10 @@ final class OneVsRestCustomModel private[ml] (
 
     // add an accumulator column to store predictions of all the models
     val accColName = "ovr" + $(rawPredictionCol)
+    val probAccColName = "ovr" + ${probabilityCol}
     val initUDF = udf { () => Map[Int, Double]() }
-    val newDataset = dataset.withColumn(accColName, initUDF())
+    var newDataset = dataset.withColumn(accColName, initUDF())
+    if(!models(0).isInstanceOf[LinearSVCModel])newDataset = newDataset.withColumn(probAccColName, initUDF())
 
     // persist if underlying dataset is not persistent.
     val handlePersistence = !dataset.isStreaming && dataset.storageLevel == StorageLevel.NONE
@@ -177,28 +183,36 @@ final class OneVsRestCustomModel private[ml] (
       case (df, (model, index)) =>
 
         val rawPredictionCol = model.getRawPredictionCol
-        val columns = origCols ++ List(col(rawPredictionCol), col(accColName))
+        val probabilityCol = "probability"
+        //if(df.schema.contains(probabilityCol))
+        val columns = if(!models(0).isInstanceOf[LinearSVCModel]) origCols ++ List(col(rawPredictionCol), col(accColName), col(probabilityCol), col(probAccColName))
+        else origCols ++ List(col(rawPredictionCol), col(accColName))
 
         // add temporary column to store intermediate scores and update
         val tmpColName = "mbc$tmp" + UUID.randomUUID().toString
-
+        val probTmpColName = "mbc$prob" + UUID.randomUUID().toString
         val updateUDF = udf { (predictions: Map[Int, Double], prediction: Vector) =>
           predictions + ((index, prediction(1)))
         }
 
         model.setFeaturesCol($(featuresCol))
-
-        val transformedDataset = model.transform(df).select(columns: _*)
-
-        val updatedDataset = transformedDataset
-          .withColumn(tmpColName, updateUDF(col(accColName), col(rawPredictionCol)))
-
-        val newColumns = origCols ++ List(col(tmpColName))
+        val transformedDataset = model.transform(df).select( columns: _*)
+        val updatedDataset = if(!model.isInstanceOf[LinearSVCModel]){
+          transformedDataset
+            .withColumn(tmpColName, updateUDF(col(accColName), col(rawPredictionCol)))
+            .withColumn(probTmpColName, updateUDF(col(probAccColName),col(probabilityCol)))
+        } else {
+          transformedDataset
+            .withColumn(tmpColName, updateUDF(col(accColName), col(rawPredictionCol)))
+        }
+        val newColumns = if(!model.isInstanceOf[LinearSVCModel]) origCols ++ List(col(tmpColName),col(probTmpColName))
+        else origCols ++ List(col(tmpColName))
 
         // switch out the intermediate column with the accumulator column
-        updatedDataset
-          .select(newColumns: _*)
-          .withColumnRenamed(tmpColName, accColName)
+        val intermediateDF = updatedDataset.select(newColumns: _*).withColumnRenamed(tmpColName, accColName)
+        if(!model.isInstanceOf[LinearSVCModel])
+          intermediateDF.withColumnRenamed(probTmpColName, probAccColName)
+        else intermediateDF
     }
 
     if (handlePersistence) {
@@ -220,18 +234,23 @@ final class OneVsRestCustomModel private[ml] (
           .toArray[Double])
     }
 
-    aggregatedDataset
+    val resultDF = aggregatedDataset
       // output label and label metadata as prediction
       .withColumn($(predictionCol), labelUDF(col(accColName)), labelMetadata)
       .withColumn(accColName + "_tempVec", mapToVectorUDF(col(accColName)))
       .withColumnRenamed(accColName + "_tempVec", $(rawPredictionCol))
       .drop(accColName)
+    if(!models(0).isInstanceOf[LinearSVCModel])
+      resultDF.withColumn(probAccColName + "_tempVec", mapToVectorUDF(col(probAccColName)))
+        .withColumnRenamed(probAccColName + "_tempVec", $(probabilityCol))
+        .drop(probAccColName)
+    else resultDF
   }
 
 
   override def copy(extra: ParamMap): OneVsRestCustomModel = {
     val copied = new OneVsRestCustomModel(
-      uid, labelMetadata, models.map(_.copy(extra).asInstanceOf[ClassificationModel[_, _]]))
+      uid, labelMetadata, models.map(_.copy(extra).asInstanceOf[ClassificationModel[_, _]]),!models(0).isInstanceOf[LinearSVCModel])
     copyValues(copied, extra).setParent(parent)
   }
 
@@ -278,7 +297,7 @@ object OneVsRestCustomModel extends MLReadable[OneVsRestCustomModel] {
         val modelPath = new Path(path, s"model_$idx").toString
         DefaultParamsReader.loadParamsInstance[ClassificationModel[_, _]](modelPath, sc)
       }
-      val ovrModel = new OneVsRestCustomModel(metadata.uid, labelMetadata, models)
+      val ovrModel = new OneVsRestCustomModel(metadata.uid, labelMetadata, models,!models(0).isInstanceOf[LinearSVCModel])
       metadata.getAndSetParams(ovrModel)
       ovrModel.set("classifier", classifier)
       ovrModel
@@ -298,12 +317,12 @@ object OneVsRestCustomModel extends MLReadable[OneVsRestCustomModel] {
   */
 
 final class OneVsRestCustom(override val uid: String)
-  extends Estimator[OneVsRestCustomModel] with OneVsRestCustomParams with HasParallelism with MLWritable {
+  extends Estimator[OneVsRestCustomModel] with OneVsRestCustomParams with HasParallelism with HasProbabilityCol with MLWritable {
 
   private val logger = Logger.getLogger(getClass)
   logger.setLevel(Level.INFO)
 
-  def this() = this(Identifiable.randomUID("OneVsRestCustom"))
+  def this() = this(Identifiable.randomUID("ovr_custom"))
 
   def setClassifier(value: Classifier[_, _, _]): this.type = {
     set(classifier, value.asInstanceOf[ClassifierType])
@@ -422,7 +441,7 @@ final class OneVsRestCustom(override val uid: String)
         NominalAttribute.defaultAttr.withName("label").withNumValues(numClasses)
       case attr: Attribute => attr
     }
-    val model = new OneVsRestCustomModel(uid, labelAttribute.toMetadata(), models).setParent(this)
+    val model = new OneVsRestCustomModel(uid, labelAttribute.toMetadata(), models,!models(0).isInstanceOf[LinearSVCModel]).setParent(this)
     copyValues(model)
   }
 

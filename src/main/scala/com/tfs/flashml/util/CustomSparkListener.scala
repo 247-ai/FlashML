@@ -43,6 +43,7 @@ class CustomSparkListener extends SparkListener {
     catch{
       case ex:Exception => log.info("Ignoring Exception - Apollo server is not active")
     }
+    //FlashML.log4jPR.close()
   }
 
   override def onApplicationEnd(applicationEnd: SparkListenerApplicationEnd): Unit = {
@@ -68,6 +69,6 @@ class CustomSparkListener extends SparkListener {
       case ex:Exception => log.info("Ignoring Exception - Apollo server is not active")
     }
 
-    FlashML.log4jPR.close()
+   // FlashML.log4jPR.close()
   }
 }

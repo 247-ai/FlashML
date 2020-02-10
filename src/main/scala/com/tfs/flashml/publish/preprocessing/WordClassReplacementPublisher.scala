@@ -10,12 +10,12 @@ import org.slf4j.LoggerFactory
 object WordClassReplacementPublisher
 {
 
-    private val log = LoggerFactory.getLogger(getClass)
+  private val log = LoggerFactory.getLogger(getClass)
 
-    def generateJS(wordClasses: Array[(String, String)], input: String, output: String) =
-    {
-        val tokenizerJs = new StringBuilder
-        tokenizerJs
-    }
+  def generateJS(wordClasses: Array[(String, String)], input: String, output: String) =
+  {
+    val tokenizerJs = new StringBuilder
+    tokenizerJs
+  }
 
 }

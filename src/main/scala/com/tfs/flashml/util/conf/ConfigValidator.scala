@@ -2,7 +2,8 @@ package com.tfs.flashml.util.conf
 
 import java.io.File
 
-import com.tfs.flashml.core.{ModelTrainingEngine, Validator, VectorizationEngine}
+import com.tfs.flashml.core.{ Validator, VectorizationEngine}
+import com.tfs.flashml.core.modeltraining.ModelTrainingEngine
 import com.tfs.flashml.core.featuregeneration.FeatureGenerationEngine
 import com.tfs.flashml.core.preprocessing.PreprocessingEngine
 import com.tfs.flashml.core.sampling.TrainTestSampler

@@ -1,6 +1,6 @@
 package com.tfs.flashml.util.conf
 
-import com.tfs.flashml.core.{ModelTrainingEngine, VectorizationEngine}
+import com.tfs.flashml.core.VectorizationEngine
 import com.tfs.flashml.core.featuregeneration.FeatureGenerationEngine
 import com.tfs.flashml.core.preprocessing.PreprocessingEngine
 import com.tfs.flashml.util.FlashMLConfig

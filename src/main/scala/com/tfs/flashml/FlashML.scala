@@ -1,7 +1,5 @@
 package com.tfs.flashml
-
 import java.io.PrintStream
-
 import com.tfs.flashml.core.PipelineSteps
 import com.tfs.flashml.util._
 import com.tfs.flashml.util.conf.FlashMLConstants
@@ -9,28 +7,30 @@ import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.SparkSession
 import org.slf4j.LoggerFactory
 
+import org.apache.spark.sql.{DataFrame, SparkSession}
+import scala.collection.JavaConverters._
+
 /**
- * Entry point to FlashML application.
- *
- * @since 21/03/18
- */
+  * Entry point to FlashML application.
+  * @since 21/03/18
+  */
 
 object FlashML
 {
     private val log = LoggerFactory.getLogger(getClass)
     // Redirecting Standard Error Stream to Log4j
-    val log4jPR = new PrintStream(new LoggingOutputStream(Logger.getLogger("com.tfs.flashml.ErrorLogger"), Level.ERROR))
+    /*val log4jPR = new PrintStream(new LoggingOutputStream(
+        Logger.getLogger("com.tfs.flashml.ErrorLogger"), Level.ERROR))
 
-    System.setErr(log4jPR)
+    System.setErr(log4jPR)*/
 
     def main(args: Array[String]): Unit =
     {
-        // Set up the config file to be used
-        ConfigUtils.configFilePath = if (args.length > 0) args(0)
-        else "config.json"
-        log.info(s"Using ${ConfigUtils.configFilePath} as config file.")
+      // Set up the config file to be used
+      ConfigUtils.configFilePath = if (args.length > 0) args(0) else "config.json"
+      log.info(s"Using ${ConfigUtils.configFilePath} as config file.")
 
-        log.info("Starting FlashML application")
+      log.info("Starting FlashML application")
 
         val logLevelMsg: Level = FlashMLConfig
                 .getString(FlashMLConstants.PACKAGE_LOG_LEVEL)
@@ -73,7 +73,7 @@ object FlashML
         // Get the deploy mode. When running from IntelliJ, this value is not available, so we need a default.
         val deployMode = ss.sparkContext.getConf.get("spark.submit.deployMode", "client")
         log.info(s"Using deploymode: $deployMode, context: $context")
-        if (deployMode == "cluster" && context == "local") throw new RuntimeException(s"Invalid combination: deploymode: $deployMode, context: $context. Please update the property flashml.context to 'yarn' in the config file.")
+        if(deployMode == "cluster" && context == "local") throw new RuntimeException(s"Invalid combination: deploymode: $deployMode, context: $context. Please update the property flashml.context to 'yarn' in the config file.")
 
         // Run the FlashML pipeline
         PipelineSteps.run()

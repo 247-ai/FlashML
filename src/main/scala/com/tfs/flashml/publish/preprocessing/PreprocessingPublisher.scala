@@ -121,7 +121,7 @@ object PreprocessingPublisher
 
     val imputerStage = stage.asInstanceOf[ImputerCustom]
     val replaceValue = imputerStage.getReplacementValue
-    val inputCol = imputerStage.getInputColumn
+    val inputCol = imputerStage.getInputCol
     val imputerJS = ImputerPublisher.generateJS(replaceValue, inputCol, imputerFunction, globalVar)
     imputerFunction = false
     imputerJS

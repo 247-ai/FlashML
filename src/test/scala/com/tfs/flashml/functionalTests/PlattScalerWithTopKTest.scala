@@ -106,7 +106,7 @@ class PlattScalerWithTopKTest extends FlatSpec
 
         // Calculate TopK Intents
         val topKPipeline = new Pipeline().setStages(Array(
-            new TopKIntents().setStringIndexerModel(trainingPipelineModel.stages(0).asInstanceOf[StringIndexerModel]).setKValue(3).setOutputCol("topKIntents")
+            new TopKIntents().setLabels(trainingPipelineModel.stages(0).asInstanceOf[StringIndexerModel].labels).setKValue(3).setOutputCol("topKIntents")
         ))
         val topKPipelineModel = topKPipeline.fit(transformed)
         val dfWithTopK = topKPipelineModel.transform(transformed).select("topKIntents")

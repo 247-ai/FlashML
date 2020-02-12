@@ -20,7 +20,7 @@
         "queries": []
       },
       "schema": {
-        "file": "flashml-core/support_files/schema.txt"
+        "file": "support_files/schema.txt"
       }
     }
   },
@@ -149,7 +149,7 @@
       }
     },
     "publish": {
-      "format": "js",
+      "format": "mleap",
       "thresholds": [
         0.6,
         0.5,
@@ -216,15 +216,17 @@
   },
   "pipeline": {
     "steps": [
-      "dataReader",
-      "sampling",
-      "preprocessing",
-      "featureGeneration",
-      "vectorization",
-      "modelling",
-      "scoring",
-      "standardmetrics",
-      "custommetrics"
+      "1dataReader",
+      "1sampling",
+      "1preprocessing",
+      "1featureGeneration",
+      "1vectorization",
+      "1modelling",
+      "1scoring",
+      "1standardmetrics",
+      "1custommetrics",
+      "publish",
+      "qadatageneration"
     ]
   },
   "savePointing": {

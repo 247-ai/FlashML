@@ -254,7 +254,7 @@ object VectorizationEngine extends Engine with Validator
   private val savePipelineModel: (PipelineModel, Int) => Unit = savePipelineModel(_: PipelineModel, _: Int,
     "vectorization")
 
-  private val loadPipelineModel: Int => PipelineModel = loadPipelineModel(_: Int, "vectorization")
+  val loadPipelineModel: Int => PipelineModel = loadPipelineModel(_: Int, "vectorization")
 
   /**
    * Validating flashml Vectorization configuration for checking whether the input variables

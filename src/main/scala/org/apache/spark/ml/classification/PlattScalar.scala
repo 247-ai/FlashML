@@ -382,6 +382,8 @@ final class PlattScalar(override val uid: String)
   setDefault(rawPredictionCol,"rawPrediction")
   setDefault(predictionCol,"prediction")
 
+    def setParallelism(value: Int): this.type = set(parallelism, value)
+
     override def transformSchema(schema: StructType): StructType =
     {
 

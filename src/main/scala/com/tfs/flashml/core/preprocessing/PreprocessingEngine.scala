@@ -404,7 +404,7 @@ object PreprocessingEngine extends Engine with Validator
                                 .toString
 
                               val stage: PipelineStage = new ImputerCustom()
-                                .setInputColumn(inputCol)
+                                .setInputCol(inputCol)
                                 .setReplacementValue(replaceValue)
                               // This is an inplace transformation, so we return the input column.
                               (stage, inputCol)

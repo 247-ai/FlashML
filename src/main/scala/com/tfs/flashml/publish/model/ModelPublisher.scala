@@ -1,6 +1,6 @@
 package com.tfs.flashml.publish.model
 
-import com.tfs.flashml.core.ModelTrainingEngine
+import com.tfs.flashml.core.modeltraining.ModelTrainingEngine
 import com.tfs.flashml.core.modeltraining.ModelTrainingUtils.log
 import com.tfs.flashml.util.{ConfigUtils, FlashMLConfig, PublishUtils}
 import com.tfs.flashml.util.conf.FlashMLConstants
@@ -13,8 +13,8 @@ import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 /**
-  * Class for publishing the models.
-  */
+ * Class for publishing the models.
+ */
 object ModelPublisher {
 
   private val name = ConfigUtils.mlAlgorithm.toLowerCase
@@ -30,8 +30,6 @@ object ModelPublisher {
   //This option allows users to custom set the precision of the Co-efficients in the Publish scripts
   val decimalPrecision = if(FlashMLConfig.hasKey(FlashMLConstants.PUBLISH_PRECISION) && FlashMLConfig.getInt(FlashMLConstants.PUBLISH_PRECISION)!=0) FlashMLConfig.getInt(FlashMLConstants.PUBLISH_PRECISION) else defaultPrecision
 
-  val defaultPrecisionFlag = !FlashMLConfig.hasKey(FlashMLConstants.PUBLISH_PRECISION) || FlashMLConfig.getInt(FlashMLConstants.PUBLISH_PRECISION)==0
-
   private def throwException(msg: String) =
   {
     log.error(msg)
@@ -39,10 +37,10 @@ object ModelPublisher {
   }
 
   /**
-    * Method to generate the JS code for each page.
-    * @param pageNumber
-    * @return
-    */
+   * Method to generate the JS code for each page.
+   * @param pageNumber
+   * @return
+   */
   def generateJS(pageNumber: Int, globalVar:mutable.Set[String]): StringBuilder = {
 
     pageNum = pageNumber
@@ -66,7 +64,7 @@ object ModelPublisher {
 
     val lrModel = pipeline
       .stages(2)
-            .asInstanceOf[PlattScalarModel]
+      .asInstanceOf[PlattScalarModel]
       .models(0)
 
     val svmCoefficients = svmModel.coefficients
@@ -199,7 +197,7 @@ object ModelPublisher {
       conditionsList.append("condition" + pageNum)
     }
     //conditionsJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "function canOfferInvite()"
-   // conditionsJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "{"
+    // conditionsJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "{"
     //conditionsJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 2) + "if(" + conditionsList.mkString(" || ") + ")"
     //conditionsJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 2) + "{"
     //conditionsJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 3) + "return true;"

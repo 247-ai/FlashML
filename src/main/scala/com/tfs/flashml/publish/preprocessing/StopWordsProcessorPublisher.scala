@@ -15,11 +15,11 @@ object StopWordsProcessorPublisher
         val stopWordsJs = if (stopWordsFunc) stopWordsFuncJS(pattern)
         else new StringBuilder
         stopWordsJs ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var " +
-                "stopWordsArray_" + output + " = "
+          "stopWordsArray_" + output + " = "
 
         stopWordsJs ++= words.mkString("[\"", "\",\"", "\"];")
         stopWordsJs ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var " +
-                output + " = stopWordsRemover(" + input
+          output + " = stopWordsRemover(" + input
         stopWordsJs ++= ",stopWordsArray_" + output + ");"
     }
 
@@ -27,40 +27,40 @@ object StopWordsProcessorPublisher
     {
         val stopWordsString = new StringBuilder
         stopWordsString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "function " +
-                "stopWordsRemover(line,stopWordsArr){"
+          "stopWordsRemover(line,stopWordsArr){"
         stopWordsString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 2) + "var " +
-                "termArr = line.replace(/\\\"/g,\"\\\\\\\"\")"
+          "termArr = line.replace(/\\\"/g,\"\\\\\\\"\")"
         stopWordsString ++= ".split(/"
         val javaPattern = pattern.stripPrefix("[").stripSuffix("]").replace("//", "\\/\\/").split('|').fold("")(
             (accumulator, subPattern) =>
-        {
-            if (subPattern.contains("(") || subPattern.contains(")"))
             {
-                val openCount = subPattern.count(_ == '(')
-                val closeCount = subPattern.count(_ == ')')
-                if (openCount == closeCount)
+                if (subPattern.contains("(") || subPattern.contains(")"))
                 {
-                    accumulator + "+|" + subPattern
+                    val openCount = subPattern.count(_ == '(')
+                    val closeCount = subPattern.count(_ == ')')
+                    if (openCount == closeCount)
+                    {
+                        accumulator + "+|" + subPattern
+                    }
+                    else
+                        accumulator + "+|\\" + subPattern
                 }
                 else
                     accumulator + "+|\\" + subPattern
-            }
-            else
-                accumulator + "+|\\" + subPattern
-        }) + "+/);"
+            }) + "+/);"
         stopWordsString ++= javaPattern.substring(2)
         stopWordsString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 2) + "while" +
-                "(stopWordsArr.length){"
+          "(stopWordsArr.length){"
         stopWordsString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 3) + "var " +
-                "stopWord = stopWordsArr.pop();"
+          "stopWord = stopWordsArr.pop();"
         stopWordsString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 3) + "while" +
-                "(termArr.indexOf(stopWord) != -1){"
+          "(termArr.indexOf(stopWord) != -1){"
         stopWordsString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 4) + "termArr" +
-                ".splice(termArr.indexOf(stopWord),1);"
+          ".splice(termArr.indexOf(stopWord),1);"
         stopWordsString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 3) + "}"
         stopWordsString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 2) + "}"
         stopWordsString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 2) + "return " +
-                "termArr.join(\"" + FlashMLConstants.CUSTOM_DELIMITER + "\");"
+          "termArr.join(\"" + FlashMLConstants.CUSTOM_DELIMITER + "\");"
         stopWordsString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "}"
     }
 

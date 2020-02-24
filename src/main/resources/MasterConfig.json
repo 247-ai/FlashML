@@ -16,7 +16,6 @@
     }
   },
   "experiment": {
-    "retrainId": "original",
     "algorithm": {
       "svm": {
         "plattScalingEnabled": true

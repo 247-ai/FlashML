@@ -168,7 +168,7 @@ object FlashMLConstants
   val DECISION_TREES ="decision_trees"
   val MULTILAYER_PERCEPTRON = "multilayer_perceptron"
 
-  // algorithm related configuration
+  // algortihm related configuration
   val LR_REGULARISATION = "experiment.algorithm.logistic.regparam"
   val LR_ITERATIONS = "experiment.algorithm.logistic.maxiter"
   val LR_ELASTIC_NET = "experiment.algorithm.logistic.elasticnetparam"
@@ -242,9 +242,18 @@ object FlashMLConstants
   val PUBLISH_TOPTHRESHOLDS="experiment.publish.topList"
   val PUBLISH_FORMAT="experiment.publish.format"
   val PUBLISH_PRECISION = "experiment.publish.precision"
+  val PUBLISH_MLEAP_BUNDLING = "experiment.publish.mleap.bundling"
 
   //Publish format
   val PUBLISH_JS="js"
+  val PUBLISH_NL="nl"
+  val PUBLISH_MLEAP = "mleap"
+
+  //tucana compatible jar location
+  val TUCANA_JAR_FOLDER = "tucana.jar.folder"
+
+  // The following parameter is used in publish step for web2nl model
+  val DEFAULT_INTENT="experiment.publish.defaultIntent"
 
   //QA Inputs
   val QA_DATAPOINTS="experiment.qa.dataPoints"

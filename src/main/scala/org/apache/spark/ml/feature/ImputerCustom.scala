@@ -37,10 +37,10 @@ import org.apache.spark.sql.types._
   */
 
 class ImputerCustom (override val uid: String)
-  extends Transformer with HasInputCols with HasOutputCol with DefaultParamsWritable {
+  extends Transformer with HasInputCols with HasInputCol with HasOutputCol with DefaultParamsWritable {
 
 
-  def this() = this(Identifiable.randomUID("imputerCustom"))
+  def this() = this(Identifiable.randomUID("imputercustom"))
 
   val inputColumn: Param[String] = new Param(this,"input column","Param for input column name")
 
@@ -50,32 +50,33 @@ class ImputerCustom (override val uid: String)
 
   def setInputCols(value: Array[String]): this.type = set(inputCols, value)
 
-  def setInputColumn(value: String):this.type = set(inputColumn,value)
+  def setInputCol(value: String):this.type = {
+    set(inputCol, value)
+    setDefault(outputCol,s"imputerCol_$getInputCol")
+  }
 
   def setReplacementValue(value: String):this.type = set(replaceValue,value)
 
   def getReplacementValue:String = ${replaceValue}
 
-  def getInputColumn:String = ${inputColumn}
-
   /** @group setParam */
-  def setOutputCol(value: String): this.type = set(outputCol, value)
-
+  def setOutputCol(value: String="imputerCol"): this.type = set(outputCol, value+s"_${inputCol}")
 
   override def transform(dataset: Dataset[_]): DataFrame = {
     val schema = dataset.schema
-    val replace = schema(${inputColumn}).dataType match {
+    val replace = schema(${inputCol}).dataType match {
       case s:StringType => ${replaceValue}
       case d:DoubleType => ${replaceValue}.toDouble
       case i:IntegerType => ${replaceValue}.toInt
       case f:FloatType => ${replaceValue}.toFloat
       case l:LongType => ${replaceValue}.toLong
     }
-    dataset.na.fill(Map(${inputColumn} -> replace)).select(col("*"))
+    dataset.na.fill(Map(${inputCol} -> replace)).withColumn(${outputCol},lit("1").cast(schema(${inputCol}).dataType)).select(col("*"))
   }
 
   override def transformSchema(schema: StructType): StructType = {
     schema
+      .add(StructField(${outputCol},schema(${inputCol}).dataType,true))
   }
 
   override def copy(extra: ParamMap): ImputerCustom = defaultCopy(extra)

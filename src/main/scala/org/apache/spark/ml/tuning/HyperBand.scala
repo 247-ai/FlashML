@@ -38,22 +38,22 @@ import scala.collection.mutable.ListBuffer
 import breeze.numerics._
 
 /**
-  * Params for [[HyperBand]] and [[HyperBandModel]].
-  */
+ * Params for [[HyperBand]] and [[HyperBandModel]].
+ */
 private[ml] trait HyperBandParams extends ValidatorParams
 {
     /**
-      * Param for number of folds for cross validation.  Must be &gt;= 2.
-      * Default: 3
-      *
-      * @group param
-      * val numFolds: IntParam = new IntParam(this, "numFolds",
-      * "number of folds for cross validation (>= 2)", ParamValidators.gtEq(2))
-      * *
-      * /** @group getParam */
-      * def getNumFolds: Int = $(numFolds)
-      * *
-      * setDefault(numFolds -> 3)*/
+     * Param for number of folds for cross validation.  Must be &gt;= 2.
+     * Default: 3
+     *
+     * @group param
+     * val numFolds: IntParam = new IntParam(this, "numFolds",
+     * "number of folds for cross validation (>= 2)", ParamValidators.gtEq(2))
+     * *
+     * /** @group getParam */
+     * def getNumFolds: Int = $(numFolds)
+     * *
+     * setDefault(numFolds -> 3)*/
 
     val estimatorParamRangeMaps: Param[Array[ParamMap]] =
         new Param(this, "estimatorParamRangeMaps", "param range maps for the estimator")
@@ -62,36 +62,36 @@ private[ml] trait HyperBandParams extends ValidatorParams
         new Param(this, "estimatorParamIterableMaps", "param iterable maps for the estimator")
 
     /**
-      * Param for maximum number of hyperband iterations, i.e maximum hyperband iterations per configuration.
-      * 1 hyperband iteration = iterationMultiplier spark iterations
-      * Default: 81
-      */
+     * Param for maximum number of hyperband iterations, i.e maximum hyperband iterations per configuration.
+     * 1 hyperband iteration = iterationMultiplier spark iterations
+     * Default: 81
+     */
     val maxHyperbandIter: IntParam = new IntParam(this, "maxHyperbandIter", "maximum number of hyperband iterations")
 
     setDefault(maxHyperbandIter -> 81)
 
 
     /**
-      * Number of spark iteration per hyperband iterations
-      * * Default: 20
-      */
+     * Number of spark iteration per hyperband iterations
+     * * Default: 20
+     */
     val iterationMultiplier = new IntParam(this, "iterationMultiplier", "specify no of spark iterations per hyperband iteration")
     setDefault(iterationMultiplier -> 20)
     /* defines downsampling rate (default=3) */
 
     /**
-      * Specify the max iterations for the best model in each hyperband outer loop. i.e the max iterations for best
-      * model in one set of
-      * configurations.
-      * Default: 1000
-      **/
+     * Specify the max iterations for the best model in each hyperband outer loop. i.e the max iterations for best
+     * model in one set of
+     * configurations.
+     * Default: 1000
+     **/
     val maxIterationsFinalModel = new IntParam(this, "maxIterationsFinalModel", "number of iterations for the best model in each set of configuration")
     setDefault(maxIterationsFinalModel, 1000)
 
     /**
-      * Param for downsampling rate. Must be &gt; 0
-      * Default: 3
-      */
+     * Param for downsampling rate. Must be &gt; 0
+     * Default: 3
+     */
     val eta = new IntParam(this, "eta", "downsampling rate", ParamValidators.gt(0))
     setDefault(eta -> 3)
 
@@ -106,22 +106,22 @@ private[ml] trait HyperBandParams extends ValidatorParams
 }
 
 /**
-  * Hyperband is a hyperparameter optimization algorithm.
-  * "Hyperband formulates hyperparameter optimization as a pure-exploration nonstochastic
-  * infinite-armed bandit problem where a predefined resource like iterations, data
-  * samples, or features is allocated to randomly sampled configurations."
-  *
-  * In this implementation the input data is split into train & test & a given performance metric is
-  * evaluated on test set to select the best hyperparameter. At the end final model is created using the
-  * best hyperparameter on the complete data set that is provided.
-  *
-  * Hyperband paper - https://arxiv.org/abs/1603.06560
-  * Another blog by one of the authors - https://homes.cs.washington.edu/~jamieson/hyperband.html
-  */
+ * Hyperband is a hyperparameter optimization algorithm.
+ * "Hyperband formulates hyperparameter optimization as a pure-exploration nonstochastic
+ * infinite-armed bandit problem where a predefined resource like iterations, data
+ * samples, or features is allocated to randomly sampled configurations."
+ *
+ * In this implementation the input data is split into train & test & a given performance metric is
+ * evaluated on test set to select the best hyperparameter. At the end final model is created using the
+ * best hyperparameter on the complete data set that is provided.
+ *
+ * Hyperband paper - https://arxiv.org/abs/1603.06560
+ * Another blog by one of the authors - https://homes.cs.washington.edu/~jamieson/hyperband.html
+ */
 class HyperBand(override val uid: String)
-        extends Estimator[HyperBandModel]
-                with HyperBandParams with HasParallelism with HasCollectSubModels
-                with MLWritable with Logging
+  extends Estimator[HyperBandModel]
+    with HyperBandParams with HasParallelism with HasCollectSubModels
+    with MLWritable with Logging
 {
     private var estimatorParamSpecifier = new ParamRangeSpecifier()
 
@@ -159,10 +159,10 @@ class HyperBand(override val uid: String)
     }
 
     /**
-      * If trainTestSplitter is assigned then seed value & trainPercent set in code won't be used
-      * @param value
-      * @return
-      */
+     * If trainTestSplitter is assigned then seed value & trainPercent set in code won't be used
+     * @param value
+     * @return
+     */
     def setTrainTestSplitter(value:TrainTestSplitter):this.type = {
         this.trainTestSplitter = value
         this
@@ -188,63 +188,63 @@ class HyperBand(override val uid: String)
     def setSeed(value: Long): this.type = set(seed, value)
 
     /**
-      * Set the maximum level of parallelism to evaluate models in parallel.
-      * Default is 1 for serial evaluation
-      *
-      * @group expertSetParam
-      */
+     * Set the maximum level of parallelism to evaluate models in parallel.
+     * Default is 1 for serial evaluation
+     *
+     * @group expertSetParam
+     */
     def setParallelism(value: Int): this.type = set(parallelism, value)
 
     override def fit(dataset: Dataset[_]): HyperBandModel = instrumented
     {
 
         /**
-          * This returns a list with no of successive halving rounds to perform, corresponding to each set of unique
-          * configurations.
-          * Starting with loop with more hyperband configurations, hence decreasing order of successive halving values
-          **/
+         * This returns a list with no of successive halving rounds to perform, corresponding to each set of unique
+         * configurations.
+         * Starting with loop with more hyperband configurations, hence decreasing order of successive halving values
+         **/
         def getMaxSuccessiveHalvingCount =
         { //the count of values in srange will be sMax+1
             sMax to 0 by -1
         }
 
         /**
-          * Get the intial no of iterations that a configuration have to be run
-          **/
+         * Get the intial no of iterations that a configuration have to be run
+         **/
         def getInitialIterationsCount(maxHyperbandIteration: Int, etaValue: Int, s: Int) =
         {
             maxHyperbandIteration * pow(etaValue, -s)
         }
 
         /**
-          * Get the number of configurations to generate for the hyperband outerloop
-          **/
+         * Get the number of configurations to generate for the hyperband outerloop
+         **/
         def getConfigCount(maxHyperbandIteration: Int, etaValue: Int, B: Int, s: Int) =
         {
             ceil((B / maxHyperbandIteration / (s + 1)).toInt * pow(etaValue, s)).toInt
         }
 
         /**
-          * Reduced no of configurations during successing halving loop
-          **/
+         * Reduced no of configurations during successing halving loop
+         **/
         def reduceConfigurationsCount(etaValue: Int, n: Int, i: Int) =
         {
             n * pow(etaValue, -i)
         }
 
         /**
-          * Increased no of iterations during successive halving loop
-          **/
+         * Increased no of iterations during successive halving loop
+         **/
         def increaseIterationsCount(etaValue: Int, r: Double, i: Int) =
         {
             r * pow(etaValue, i)
         }
 
         /**
-          * Decide the no of max iterations to set based on whether the current successive halving loop is the last one.
-          * The original hyperband implementation doesn't have the concept of separate max iterations only for the
-          * last model.
-          **/
+         * Decide the no of max iterations to set based on whether the current successive halving loop is the last one.
+         * The original hyperband implementation doesn't have the concept of separate max iterations only for the
+         * last model.
+         **/
         def findMaxIterations(iterationMultiplier: Int, successiveHalvingIteration: Int, r_i: Double,
                               maxIterationFinal: Int) =
         {
@@ -289,8 +289,8 @@ class HyperBand(override val uid: String)
             // Creating a train test split using random split
             //TODO make type of split configurable
             val trainTest = trainTestSplitter.split(inpDataset)
-//            val trainTestSplit = Array(trainPercent, testPercent)
-//            val trainTest = dataset.randomSplit(trainTestSplit, $(seed))
+            //            val trainTestSplit = Array(trainPercent, testPercent)
+            //            val trainTest = dataset.randomSplit(trainTestSplit, $(seed))
 
             val trainingDataset = trainTest(0).cache()
             val validationDataset = trainTest(1).cache()
@@ -334,27 +334,27 @@ class HyperBand(override val uid: String)
                     val rI = increaseIterationsCount(etaValue, r, i)
 
                     log.info("param grid values length " + paramGridArray.length + " values " + paramGridArray
-                            .mkString(" , "))
+                      .mkString(" , "))
 
                     trainingDataset.printSchema()
 
                     val valMetricsFutures = paramGridArray.zipWithIndex.map
                     { case (paramMap, paramIndex) =>
                         Future[Double]
-                        {
-                            //This won't work for estimators without maxIter,
-                            // TODO will have to check if pipeline objects have maxIter in topLevel
-                            val maxIterParam  = est match {
-                                case oneVsRestCustom:OneVsRestCustom => oneVsRestCustom.getClassifier.getParam("maxIter")
-                                case est => est.getParam("maxIter")
-                            }
-                            val maxIter: Int = findMaxIterations(iterMultiplier, i, rI, maxIterationFinal)
-                            paramMap.put(maxIterParam, maxIter)
-                            val model = est.fit(trainingDataset, paramMap).asInstanceOf[Model[_]]
+                          {
+                              //This won't work for estimators without maxIter,
+                              // TODO will have to check if pipeline objects have maxIter in topLevel
+                              val maxIterParam  = est match {
+                                  case oneVsRestCustom:OneVsRestCustom => oneVsRestCustom.getClassifier.getParam("maxIter")
+                                  case est => est.getParam("maxIter")
+                              }
+                              val maxIter: Int = findMaxIterations(iterMultiplier, i, rI, maxIterationFinal)
+                              paramMap.put(maxIterParam, maxIter)
+                              val model = est.fit(trainingDataset, paramMap).asInstanceOf[Model[_]]
 
-                            val metric = eval.evaluate(model.transform(validationDataset))
-                            metric
-                        }(executionContext)
+                              val metric = eval.evaluate(model.transform(validationDataset))
+                              metric
+                          }(executionContext)
                     }
 
                     val valMetrics = valMetricsFutures.map(ThreadUtils.awaitResult(_, Duration.Inf))
@@ -362,12 +362,12 @@ class HyperBand(override val uid: String)
                     // the number of configurations to retain for next round of successive halving
                     val noOfSetsToRetain = (nI / etaValue).toInt
                     log.info(s"No of sets to retain $noOfSetsToRetain \n value of n_i $nI no of iteration r_i $rI " +
-                            s"value of n $n & value of r $r value of s $s paramGridArray length ${paramGridArray
-                                    .length} is larger better ${eval.isLargerBetter}")
+                      s"value of n $n & value of r $r value of s $s paramGridArray length ${paramGridArray
+                        .length} is larger better ${eval.isLargerBetter}")
                     val zippedMetricValue = paramGridArray.zip(valMetrics).map
                     { case (p, m) => s"${p.toString()} =>  metric = $m" }.mkString("\n")
                     log.info(s"No of params in current loop ${paramGridArray.length} params & val metrics before " +
-                            s"reducing - \n $zippedMetricValue")
+                      s"reducing - \n $zippedMetricValue")
 
                     val sortOrdering = if (eval.isLargerBetter) -1 else 1
 
@@ -471,9 +471,9 @@ object HyperBand extends MLReadable[HyperBand]
             val (metadata, estimator, evaluator, estimatorParamMaps) =
                 ValidatorParams.loadImpl(path, sc, className)
             val cv = new HyperBand(metadata.uid)
-                    .setEstimator(estimator)
-                    .setEvaluator(evaluator)
-                    .setEstimatorParamMaps(estimatorParamMaps)
+              .setEstimator(estimator)
+              .setEvaluator(evaluator)
+              .setEstimatorParamMaps(estimatorParamMaps)
             metadata.getAndSetParams(cv, skipParams = Option(List("estimatorParamMaps")))
             cv
         }
@@ -482,19 +482,19 @@ object HyperBand extends MLReadable[HyperBand]
 }
 
 /**
-  * HyperBandModel contains the model with the highest average cross-validation
-  * metric across folds and uses this model to transform input data. HyperBandModel
-  * also tracks the metrics for each param map evaluated.
-  *
-  * @param bestModel  The best model selected from k-fold cross validation.
-  * @param avgMetrics Average cross-validation metrics for each paramMap in
-  *                   `HyperBand.estimatorParamMaps`, in the corresponding order.
-  */
+ * HyperBandModel contains the model with the highest average cross-validation
+ * metric across folds and uses this model to transform input data. HyperBandModel
+ * also tracks the metrics for each param map evaluated.
+ *
+ * @param bestModel  The best model selected from k-fold cross validation.
+ * @param avgMetrics Average cross-validation metrics for each paramMap in
+ *                   `HyperBand.estimatorParamMaps`, in the corresponding order.
+ */
 class HyperBandModel private[ml](
-                                        @Since("1.4.0") override val uid: String,
-                                        @Since("1.2.0") val bestModel: Model[_],
-                                        @Since("1.5.0") val avgMetrics: Array[Double])
-        extends Model[HyperBandModel] with HyperBandParams with MLWritable
+                                  @Since("1.4.0") override val uid: String,
+                                  @Since("1.2.0") val bestModel: Model[_],
+                                  @Since("1.5.0") val avgMetrics: Array[Double])
+  extends Model[HyperBandModel] with HyperBandParams with MLWritable
 {
 
     /** A Python-friendly auxiliary constructor. */
@@ -528,16 +528,16 @@ class HyperBandModel private[ml](
     }
 
     /**
-      * @return submodels represented in two dimension array. The index of outer array is the
-      *         fold index, and the index of inner array corresponds to the ordering of
-      *         estimatorParamMaps
-      * @throws IllegalArgumentException if subModels are not available. To retrieve subModels,
-      *                                  make sure to set collectSubModels to true before fitting.
-      */
+     * @return submodels represented in two dimension array. The index of outer array is the
+     *         fold index, and the index of inner array corresponds to the ordering of
+     *         estimatorParamMaps
+     * @throws IllegalArgumentException if subModels are not available. To retrieve subModels,
+     *                                  make sure to set collectSubModels to true before fitting.
+     */
     def subModels: Array[Array[Model[_]]] =
     {
         require(_subModels.isDefined, "subModels not available, To retrieve subModels, make sure " +
-                "to set collectSubModels to true before fitting.")
+          "to set collectSubModels to true before fitting.")
         _subModels.get
     }
 
@@ -584,11 +584,11 @@ object HyperBandModel extends MLReadable[HyperBandModel]
     override def load(path: String): HyperBandModel = super.load(path)
 
     /**
-      * Writer for HyperBandModel.
-      * HyperBandModelWriter is used to write the best model from the experiment
-      *
-      * @param instance HyperBandModel instance used to construct the writer
-      */
+     * Writer for HyperBandModel.
+     * HyperBandModelWriter is used to write the best model from the experiment
+     *
+     * @param instance HyperBandModel instance used to construct the writer
+     */
     final class HyperBandModelWriter private[tuning](instance: HyperBandModel) extends MLWriter
     {
 
@@ -602,12 +602,12 @@ object HyperBandModel extends MLReadable[HyperBandModel]
 
             require(Array("true", "false").contains(persistSubModelsParam.toLowerCase(Locale.ROOT)),
                 s"persistSubModels option value ${persistSubModelsParam} is invalid, the possible " +
-                        "values are \"true\" or \"false\"")
+                  "values are \"true\" or \"false\"")
             val persistSubModels = persistSubModelsParam.toBoolean
 
             import org.json4s.JsonDSL._
             val extraMetadata = ("avgMetrics" -> instance.avgMetrics.toSeq) ~
-                    ("persistSubModels" -> persistSubModels)
+              ("persistSubModels" -> persistSubModels)
             ValidatorParams.saveImpl(path, instance, sc, Some(extraMetadata))
             val bestModelPath = new Path(path, "bestModel").toString
             instance.bestModel.asInstanceOf[MLWritable].save(bestModelPath)
@@ -645,7 +645,7 @@ object HyperBandModel extends MLReadable[HyperBandModel]
             val bestModel = DefaultParamsReader.loadParamsInstance[Model[_]](bestModelPath, sc)
             val avgMetrics = (metadata.metadata \ "avgMetrics").extract[Seq[Double]].toArray
             val persistSubModels = (metadata.metadata \ "persistSubModels")
-                    .extractOrElse[Boolean](false)
+              .extractOrElse[Boolean](false)
 
             //not saving sub models
             /*val subModels: Option[Array[Array[Model[_]]]] = if (persistSubModels) {
@@ -666,8 +666,8 @@ object HyperBandModel extends MLReadable[HyperBandModel]
             val model = new HyperBandModel(metadata.uid, bestModel, avgMetrics)
             //                    .setSubModels(subModels)
             model.set(model.estimator, estimator)
-                    .set(model.evaluator, evaluator)
-                    .set(model.estimatorParamMaps, estimatorParamMaps)
+              .set(model.evaluator, evaluator)
+              .set(model.estimatorParamMaps, estimatorParamMaps)
             metadata.getAndSetParams(model, skipParams = Option(List("estimatorParamMaps")))
             model
         }

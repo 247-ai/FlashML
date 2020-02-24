@@ -54,13 +54,11 @@ class WordSubstitutionTransformer(override val uid: String)
           .foldLeft(Seq[String]())((accumulator, subsToken) => accumulator ++ subsToken.split("\\s"))*/
     }
 
-    private def getSubstitution(line: String): String =
-    {
-        val words = ($(pattern) + "|(" + FlashMLConstants.CUSTOM_DELIMITER + ")").r.split(line).toSeq
-        words.map(token => $(wordDict).getOrElse(token, token))
-                .foldLeft(Seq[String]())((accumulator, subsToken) => accumulator ++ subsToken.split("\\s"))
-                .mkString(FlashMLConstants.CUSTOM_DELIMITER)
-    }
+  private def getSubstitution(line:String):String={
+    val delimiter = $(pattern) + "|(" +FlashMLConstants.CUSTOM_DELIMITER+ ")"
+    val words = delimiter.r.split(line).toSeq
+    words.flatMap(token => $(wordDict).getOrElse(token, token).split(delimiter)).mkString(FlashMLConstants.CUSTOM_DELIMITER)
+  }
 
     override protected def validateInputType(inputType: DataType): Unit =
     {

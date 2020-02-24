@@ -10,12 +10,12 @@ import org.slf4j.LoggerFactory
 object PorterStemmingPublisher
 {
 
-    private val log = LoggerFactory.getLogger(getClass)
+  private val log = LoggerFactory.getLogger(getClass)
 
-    def generateJS(input: String, output: String, pattern: String) =
-    {
-        val stemmingJs = new StringBuilder
-        stemmingJs
-    }
+  def generateJS(input: String, output: String, pattern: String) =
+  {
+    val stemmingJs = new StringBuilder
+    stemmingJs
+  }
 
 }

@@ -225,7 +225,8 @@
       "featureGeneration",
       "vectorization",
       "modelling",
-      "scoring"]
+      "scoring"
+    ]
   },
   "savePointing": {
     "required": true

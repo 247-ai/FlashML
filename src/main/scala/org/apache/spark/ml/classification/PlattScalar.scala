@@ -10,10 +10,11 @@ import org.apache.spark.ml.attribute.BinaryAttribute
 import org.apache.spark.ml.feature.VectorAssembler
 import org.apache.spark.ml.linalg.{Vector, VectorUDT, Vectors}
 import org.apache.spark.ml.param._
-import org.apache.spark.ml.param.shared.{HasLabelCol, HasParallelism, HasProbabilityCol}
+import org.apache.spark.ml.param.shared._
 import org.apache.spark.ml.util.Instrumentation.instrumented
 import org.apache.spark.ml.util._
 import org.apache.spark.ml.{Estimator, Model}
+import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{DoubleType, Metadata, StructType}
 import org.apache.spark.sql.{DataFrame, Dataset, Row}
@@ -31,8 +32,10 @@ import scala.concurrent.duration.Duration
   * Params and Constants for Platt Scalar.
   */
 private[ml] trait PlattScalarParams extends Params
-        with HasProbabilityCol
-        with HasLabelCol
+  with HasProbabilityCol
+  with HasRawPredictionCol
+  with HasPredictionCol
+  with HasLabelCol
 {
 
     // Constants
@@ -142,8 +145,8 @@ models: Array[BinaryLogisticRegressionWithDoubleResponseModel])
     override def transformSchema(schema: StructType): StructType =
     {
 
-        // Check whether Label is of numeric type
-        SchemaUtils.checkNumericType(schema, $(labelCol))
+    //check whether Label is of numeric type
+    //SchemaUtils.checkNumericType(schema, $(labelCol))
 
         // Append probability column to the data
         SchemaUtils.appendColumn(schema, $(probabilityCol), new VectorUDT)
@@ -166,7 +169,8 @@ models: Array[BinaryLogisticRegressionWithDoubleResponseModel])
             val accColName = "accumcol_" + UUID.randomUUID().toString
             val initUDF = udf{ () => Map[Int, Double]() }
 
-            val newDataset = dataset.withColumn(accColName, initUDF())
+      val newDataset = dataset
+        .withColumn(accColName, initUDF())
 
             // Persist if underlying dataset is not persistent.
             val handlePersistence = !dataset.isStreaming && dataset.storageLevel == StorageLevel.NONE
@@ -368,21 +372,23 @@ final class PlattScalar(override val uid: String)
     private val logger = Logger.getLogger(getClass)
     logger.setLevel(Level.INFO)
 
-    def this() = this(Identifiable.randomUID("plattScaler"))
+  def this() = this(Identifiable.randomUID("platt_scalar"))
 
     def setIsMultiIntent(value: Boolean): this.type = set(isMultiIntent, value)
 
     def setLabelCol(value: String): this.type = set(labelCol, value)
 
-    def setProbabilityCol(value: String): this.type = set(probabilityCol, value)
+  def setProbabilityCol(value: String): this.type = set(probabilityCol, value)
+  setDefault(rawPredictionCol,"rawPrediction")
+  setDefault(predictionCol,"prediction")
 
     def setParallelism(value: Int): this.type = set(parallelism, value)
 
     override def transformSchema(schema: StructType): StructType =
     {
 
-        //check whether Label is of numeric type
-        SchemaUtils.checkNumericType(schema, $(labelCol))
+    //check whether Label is of numeric type
+    //SchemaUtils.checkNumericType(schema, $(labelCol))
 
         //Append probability column to the data
         SchemaUtils.appendColumn(schema, $(probabilityCol), new VectorUDT)
@@ -416,10 +422,7 @@ final class PlattScalar(override val uid: String)
                 // classes are assumed to be numbered from 0,...,maxLabelIndex
                 maxLabelIndex.toInt + 1
             }
-            val numClasses = MetadataUtils
-                    .getNumClasses(labelSchema)
-                    .fold(computeNumClasses())(identity)
-
+            val numClasses = MetadataUtils.getNumClasses(labelSchema).fold(computeNumClasses())(identity)
             instr.logNumClasses(numClasses)
 
             val executionContext = getExecutionContext
@@ -453,7 +456,6 @@ final class PlattScalar(override val uid: String)
                             .collect() // Steps before this should be executed in parallel
                             .foldLeft(new mutable.HashMap[Double, Long]())
                             { (a, v) => a += (v(0).asInstanceOf[Double] -> v(1).asInstanceOf[Long]) }
-
                     val (lowerVal, upperVal) = (1.0d / (classCounts(0.0) + 2), (classCounts(1.0) + 1.0d) / (classCounts(1.0) + 2.0d))
 
                     // Now update the same column

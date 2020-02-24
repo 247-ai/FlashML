@@ -143,11 +143,7 @@ object FlashMLConfig
 
   def getDoubleArray(key: String): Array[Double] =
   {
-    config
-            .getDoubleList(key)
-            .asScala
-            .map(_.toDouble)
-            .toArray
+    config.getDoubleList(key).asScala.map(_.toDouble).toArray
   }
 
   def getDouble(key: String): Double = config.getDouble(key)

@@ -14,45 +14,45 @@ import scala.util.matching.Regex
 object DataReaderFactory
 {
 
-    private val log = LoggerFactory.getLogger(getClass)
+  private val log = LoggerFactory.getLogger(getClass)
 
-    /**
-     * Example Usage :  val inputRegex = "(hive|hdfs|simod)://(.*)".r
-     * val inputRegex(prefix, suffix) = "hive//localhost:1000/foo"
-     *
-     *
-     * prefix: String = hive
-     * suffix: String = localhost:1000/foo
-     *
-     */
+  /**
+   * Example Usage :  val inputRegex = "(hive|hdfs|simod)://(.*)".r
+   * val inputRegex(prefix, suffix) = "hive//localhost:1000/foo"
+   *
+   *
+   * prefix: String = hive
+   * suffix: String = localhost:1000/foo
+   *
+   */
 
-    val HIVE = "hive"
-    val HDFS = "hdfs"
-    val VERTICA = "vertica"
+  val HIVE = "hive"
+  val HDFS = "hdfs"
+  val VERTICA = "vertica"
 
-    val inputRegex: Regex = "^(.*)://(.*)".r
+  val inputRegex: Regex = "^(.*)://(.*)".r
 
 
-    def get(): DataReader =
+  def get(): DataReader =
+  {
+
+    val source: String = FlashMLConfig.getString(FlashMLConstants.INPUT_PATH + ".source")
+
+    val inputRegex(prefix, suffix) = source
+    prefix.toLowerCase match
     {
-
-        val source: String = FlashMLConfig.getString(FlashMLConstants.INPUT_PATH + ".source")
-
-        val inputRegex(prefix, suffix) = source
-        prefix.toLowerCase match
-        {
-            case HIVE => new HiveReader(suffix)
-            case VERTICA => new VerticaReader(suffix)
-            case HDFS => new FileReader(prefix.toLowerCase, suffix)
-            case _ => throwException("Input Data Source should be hive (hive://), vertica (vertica://), or hdfs " +
-                    "(hdfsfile:// or hdfs://)")
-        }
+      case HIVE => new HiveReader(suffix)
+      case VERTICA => new VerticaReader(suffix)
+      case HDFS => new FileReader(prefix.toLowerCase, suffix)
+      case _ => throwException("Input Data Source should be hive (hive://), vertica (vertica://), or hdfs " +
+        "(hdfsfile:// or hdfs://)")
     }
+  }
 
-    private def throwException(msg: String) =
-    {
-        log.error(msg)
-        throw new SparkException(msg)
-    }
+  private def throwException(msg: String) =
+  {
+    log.error(msg)
+    throw new SparkException(msg)
+  }
 
 }

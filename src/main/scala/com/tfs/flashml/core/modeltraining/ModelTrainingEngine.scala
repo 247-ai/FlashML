@@ -1,5 +1,6 @@
-package com.tfs.flashml.core
+package com.tfs.flashml.core.modeltraining
 
+import com.tfs.flashml.core.{Engine, Validator}
 import com.tfs.flashml.core.sampling.{StratifiedTrainTestSplitter, TrainTestSampler}
 import com.tfs.flashml.util.ConfigUtils.{isUplift, upliftColumn}
 import com.tfs.flashml.util.conf.{ConfigValidatorException, FlashMLConstants}
@@ -232,9 +233,10 @@ object ModelTrainingEngine extends Engine with Validator
                     .asInstanceOf[StringIndexerModel]
 
             val topKIntents = new TopKIntents()
+                    .setInputCol()
                     .setKValue(ConfigUtils.topKValue)
                     .setOutputCol(ConfigUtils.topKIntentColumnName)
-                    .setStringIndexerModel(stringIndexerModel)
+                    .setLabels(stringIndexerModel.labels)
 
             log.info(s"Model Training: Adding TopK Intent model to the pipeline")
             allStages += topKIntents

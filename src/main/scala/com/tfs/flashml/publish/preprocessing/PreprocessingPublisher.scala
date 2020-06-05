@@ -69,11 +69,11 @@ object PreprocessingPublisher
 
         val stages = preProcessingPipeline.stages
 
-        val pattern: String = stages.last match
+        val pattern: String = if(stages.length >= 1)stages.last match
         {
             case tokenizerStage: RegexTokenizer => tokenizerStage.getPattern
             case _ => ""
-        }
+        } else ""
 
         //Mention that listed method is not supported
         //We check the stage if it matches the pipeline Transformer from Preprocessing Module

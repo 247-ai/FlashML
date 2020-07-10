@@ -66,23 +66,25 @@ To stop the history server:
 
    `$SPARK_HOME/sbin/stop-history-server.sh`
 
-## Running without docker
+## Running directly on your system, without docker
 
 ### Setting up environment
-1. Start hadoop and yarn processes (as root):
+1. Start hadoop and yarn processes as root:
   * `start-dfs.sh`
   * `start-yarn.sh`
-2. Load data into hive: From the project root folder, using user login (root login not required) run the following:
+2. Start mysql/mariadb service if not already running, and if we are using that as the backend, as root:
+      `/etc/init.d/mysql start`
+3. Load data into hive: From the project root folder, using user login (root login not required) run the following:
      `hive -f scripts/<scriptname.sql>`
-3. Test if the table shows up properly:
+4. Test if the table shows up properly:
   * Run hive: `hive`
   * Check tables: `show tables;`
   * Count rows in the table just loaded
-4. Start hive metastore to be used by the FlashML process, using user login: 
+5. Start hive metastore to be used by the FlashML process, using user login: 
 
      `hive --service metastore &`
      
-5. Build latest FlashML at the `flashml-core` folder:
+6. Build latest FlashML at the `flashml-core` folder:
 
    `mvn clean scala:compile package -DskipTests`  
 

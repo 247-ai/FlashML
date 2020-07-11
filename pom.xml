@@ -153,7 +153,7 @@
         </developer>
     </developers>
 
-    <!--     This suppresses the warning "File encoding has not been set, using platform encoding UTF-8, i.e. build is platform dependent!"-->
+    <!-- This suppresses the warning "File encoding has not been set, using platform encoding UTF-8, i.e. build is platform dependent!"-->
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>

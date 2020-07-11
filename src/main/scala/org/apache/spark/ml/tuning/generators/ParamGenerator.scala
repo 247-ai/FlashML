@@ -7,8 +7,10 @@ trait ParamGenerator extends Generator[ParamMap]
     def getNext: ParamMap
 }
 
-object ParamGenerator{
-    def empty:Generator[ParamMap] = new Generator[ParamMap] {
+object ParamGenerator
+{
+    def empty: Generator[ParamMap] = new Generator[ParamMap]
+    {
         override def getNext = new ParamMap()
     }
 }

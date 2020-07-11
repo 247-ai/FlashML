@@ -21,6 +21,8 @@ This is a project from Data Science Engineering team at [[24]7.ai](https://www.2
 
 ## Running with docker
 
+<b>Developer Notes:</b> If you are using Windows 10 with WSL 1 for development, this will not work - as docker doesn't work on WSL 1. Please use the method described in the section "Running directly on your system, without docker" below.
+
 ### Installing docker
 Following are the links for docker installation.
 1. [Ubuntu/Debian](https://docs.docker.com/engine/installation/linux/docker-ce/ubuntu/)
@@ -28,8 +30,9 @@ Following are the links for docker installation.
 3. [Windows](https://docs.docker.com/toolbox/toolbox_install_windows/)
 
 ### Building and packaging
-1. `cd flashml-core`
-2. `mvn clean scala:compile package -DskipTests`
+The `pom` file contains two profiles, one for testing and one for release. We need to use the test profile for testing.
+ 
+ `mvn clean compile package -DskipTests -Ptest`
 
 ### Running FlashML tests
 1. `cd ../docker`
@@ -41,7 +44,7 @@ Following are the links for docker installation.
    
      `./run-docker.sh "test" "systemTests.MultiIntentSVMTest"`
      
-For a complete list of test classes, navigate to [`flashml-core/src/test/scala/com/tfs/flashml`](flashml-core/src/test/scala/com/tfs/flashml) 
+For a complete list of test classes, navigate to [`src/test/scala/com/tfs/flashml`](src/test/scala/com/tfs/flashml) 
 
 ### Using docker shell with FlashML
 The following commands would drop you into a docker bash shell with all FlashML dependencies ready. There you can run spark-submit and other usual commands. We also load the FlashML jar in docker HDFS, please follow the notes on screen.
@@ -70,34 +73,46 @@ To stop the history server:
 
 ### Setting up environment
 1. Start hadoop and yarn processes as root:
-  * `start-dfs.sh`
-  * `start-yarn.sh`
-2. Start mysql/mariadb service if not already running, and if we are using that as the backend, as root:
+    * `start-dfs.sh`
+    * `start-yarn.sh`
+    
+2. Start mysql/mariadb service if not already running, and if we are using that as the backend for hive, as root:
+
       `/etc/init.d/mysql start`
-3. Load data into hive: From the project root folder, using user login (root login not required) run the following:
-     `hive -f scripts/<scriptname.sql>`
-4. Test if the table shows up properly:
-  * Run hive: `hive`
-  * Check tables: `show tables;`
-  * Count rows in the table just loaded
-5. Start hive metastore to be used by the FlashML process, using user login: 
+
+6. Start hive metastore to be used by the FlashML process, using user login: 
 
      `hive --service metastore &`
      
-6. Build latest FlashML at the `flashml-core` folder:
+7. Build latest FlashML at the project root folder: The `pom` file contains two profiles, one for testing and one for release. We need to use the test profile for testing.
 
-   `mvn clean scala:compile package -DskipTests`  
+   `mvn clean compile package -DskipTests -Ptest`  
 
 ### Running a test from command line
 
-1. Make sure that the relevant data is loaded using `hive -f`, and the relevant/required support files are available at the correct location as per config file. For example, in our case, change the working directory to `docker/Flashml`
+1. Load data into hive: From the project root folder, using user login (root login not required) run the following:
 
-	`cd docker/FlashML`
+     `hive -f scripts/<scriptname.sql>`  
 
-2. Run a particular test using the command as below.
+    <b>Developer Notes:</b> If you are developing FlashML, and want to test out some or all the unit tests, load the following scripts: `titanic-survival-data.sql` and `web_journey_data_load.sql`. The yelp datasets, when used for testing, is loaded directly from HDFS (but can be loaded using `yelp_1k.sql` or `yelp_10k.sql` if you need them.)
+    
+2. Load data on HDFS: From the project root folder, using user login (root login not required) run the following:
 
-	`scala -J-Xmx2g -cp "../scalatest_2.11-3.0.5.jar:../scalactic_2.11-3.0.5.jar:../flashml-<version>.jar" org.scalatest.tools.Runner -o -R ../flashml-<version>-tests.jar -s com.tfs.flashml.systemTests.MultiIntentSVMTest`
+    ```$xslt
+    hadoop fs -mkdir /data
+    hadoop fs -put data/* /data/
+    ```
+   
+3. Test if the table shows up properly in hive:
+    * Run hive: `hive`
+    * Check tables: `show tables;`
+    * Count rows in the table just loaded
+    
+4. Run a particular test using the command below from the repo root folder.
+
+	`scala -J-Xmx2g -cp "docker/scalatest_2.11-3.0.5.jar:docker/scalactic_2.11-3.0.5.jar:target/FlashML-<version>-SNAPSHOT.jar" org.scalatest.tools.Runner -o -R target/FlashML-<version>-SNAPSHOT-tests.jar -s com.tfs.flashml.systemTests.MultiIntentSVMTest`
 	
+5. To run all tests, it is recommended to use the script `scripts/run-flashml-tests.sh` as shown below from the repo root folder.
 
 ### Running FlashML code from comamand line
 
@@ -126,10 +141,10 @@ To stop the history server:
 ### Running FlashML from IDE
 
 <b>Running FlashML:</b> Follow the steps below to run FlashML using your favorite IDE.
-- Modify `flashml-core/config.json` as required
+- Modify `config.json` as required
 - Right click on `com.tfs.flashml.FlashML.scala` and select `Run FlashML`
 
-	<b>Developer Notes:</b> The file `flashml-core/config.json` is included in the `.gitignore` file at the root level, and is expected to be checked in only when there is an update to the configurations (e.g., adding/removal/update of keys).
+	<b>Developer Notes:</b> The file `config.json` is included in the `.gitignore` file at the root level, and is expected to be checked in only when there is an update to the configurations (e.g., adding/removal/update of keys).
 
 <b>Running FlashML Tests:</b> We recommend running tests from IDE. Right-click on the test class name in the IDE Project Explorer and choose `Run <XXXTest>`
 
@@ -138,11 +153,11 @@ To stop the history server:
 ## Packaging
 1. The compiled classes gets packaged to a jar using the same maven command mentioned above (it also does packaging and shading for the main jar - flashml-<version>.jar). The artifact version will be changed for every release of FlashML.
 
- - *NOTE*: Change VersionNumber in both root `pom.xml` and `docker/run-flashml-container.sh` parameter
+ - <b>Developer Notes:</b> Change VersionNumber in both root `pom.xml` and `docker/run-flashml-container.sh` parameter
  
 2. To build a thin jar, add `<scope>provided</scope>` in the `pom.xml` to all the Spark dependencies. 
 
-3. The artifact will be generated in the docker folder inside the project with flashml-<version>.jar name.
+3. The artifact will be generated in the docker folder inside the project with `flashml-<version>.jar` name.
 
 ## Upgrading Dependencies
 Any dependency change will require change in two places:
@@ -150,7 +165,7 @@ Any dependency change will require change in two places:
  - Root `pom.xml` : for changes to application dependencies
  - `docker test infra` : Change in docker images for Test Infra
     
-NOTE: The instructions for changing DockerHub Infra are in [docker/dockerhub/README.md](docker/dockerhub/README.md)
+<b>Developer Notes:</b> The instructions for changing DockerHub Infra are in [docker/dockerhub/README.md](docker/dockerhub/README.md)
     
 For example, to Upgrade Spark/Hadoop/Hive version, change version in `pom.xml` and then change dockerhub image to use new version.
 

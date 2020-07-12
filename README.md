@@ -103,20 +103,22 @@ To stop the history server:
     hadoop fs -put data/* /data/
     ```
    
-3. Test if the table shows up properly in hive:
+3. Test if the tables show up properly in hive:
     * Run hive: `hive`
     * Check tables: `show tables;`
     * Count rows in the table just loaded
     
 4. Run a particular test using the command below from the repo root folder.
 
-	`scala -J-Xmx2g -cp "docker/scalatest_2.11-3.0.5.jar:docker/scalactic_2.11-3.0.5.jar:target/FlashML-<version>-SNAPSHOT.jar" org.scalatest.tools.Runner -o -R target/FlashML-<version>-SNAPSHOT-tests.jar -s com.tfs.flashml.systemTests.MultiIntentSVMTest`
+	`scala -J-Xmx2g -cp "docker/scalatest_2.12-3.1.0.jar:docker/scalactic_2.12-3.1.0.jar:target/FlashML-<version>-SNAPSHOT.jar" org.scalatest.tools.Runner -o -R target/FlashML-<version>-SNAPSHOT-tests.jar -s com.tfs.flashml.systemTests.MultiIntentSVMTest`
 	
-5. To run all tests, it is recommended to use the script `scripts/run-flashml-tests.sh` as shown below from the repo root folder.
+5. To run all tests, it is recommended to use the script `scripts/run-flashml-tests.sh` as shown below from the repo root folder. 
+
+    `scripts/run-flashml-tests.sh /path/to/main/FlashML/jar /path/to/test/FlashML/jar`    
 
 ### Running FlashML code from comamand line
 
-1. Set up a folder with the data, support files (if required), a SQL script to load the data to hive, and the config file.
+1. Set up a folder with the data, support files (if required), a SQL script to load the data to hive (or, load the data in HDFS), and the config file.
 
 2. To run on your local dev box (e.g., your VM):
 
@@ -128,7 +130,7 @@ To stop the history server:
     * `spark-submit --num-executors 2 --driver-memory 2g --executor-memory 2g --executor-cores 2 --master yarn --deploy-mode cluster --files <comma separated list of file paths> --class com.tfs.flashml.FlashML <hdfs:///path/to/flashml-<version>.jar> <config file>`
 
 <b>Notes:</b> 
-* The `<config file>` at the end of the command can be ommitted if the config file with name "config.json" is available at the folder from where the spark job is launched.
+* The `<config file>` at the end of the command can be omitted if the config file with the name "config.json" is available at the folder from where the spark job is to be launched.
 * We can attach the IntelliJ debugger even if we are using the `spark-submit` command from shell, by using the technique of remote debugging in JVM.
  
 	* Use the following command for `spark-submit`:

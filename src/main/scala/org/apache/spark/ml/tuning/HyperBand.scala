@@ -2,40 +2,31 @@ package org.apache.spark.ml.tuning
 
 import java.util.{Locale, List => JList}
 
-import scala.collection.JavaConverters._
-import scala.collection.mutable.{ArrayBuffer, ListBuffer}
-import scala.concurrent.Future
-import scala.concurrent.duration.Duration
-import scala.util.Random
-import scala.math.{ceil, pow}
+import breeze.numerics
+import com.tfs.flashml.core.sampling.{RandomTrainTestSplitter, TrainTestSplitter}
 import org.apache.hadoop.fs.Path
-import org.json4s.DefaultFormats
+import org.apache.log4j.{Level, Logger}
 import org.apache.spark.annotation.Since
 import org.apache.spark.internal.Logging
-import org.apache.spark.ml.{Estimator, Model}
+import org.apache.spark.ml.classification.OneVsRestCustom
 import org.apache.spark.ml.evaluation.Evaluator
 import org.apache.spark.ml.param._
 import org.apache.spark.ml.param.shared.{HasCollectSubModels, HasParallelism}
-import org.apache.spark.ml.util._
-import org.apache.spark.ml.util.Instrumentation.instrumented
-import org.apache.spark.mllib.util.MLUtils
-import org.apache.spark.sql.{DataFrame, Dataset, Row}
-import org.apache.spark.sql.types.StructType
-import org.apache.spark.util.ThreadUtils
-import org.apache.spark.ml.linalg._
-import breeze.linalg.{DenseVector => BDV}
-import breeze.optimize.{CachedDiffFunction, LBFGS => BreezeLBFGS, LBFGSB => BreezeLBFGSB, OWLQN => BreezeOWLQN}
-import breeze.numerics
-import com.tfs.flashml.core.sampling.{RandomTrainTestSplitter, TrainTestSplitter}
-import org.apache.log4j.{Level, Logger}
-import org.apache.spark.ml.classification.{OneVsRestCustom, OneVsRestCustomModel}
 import org.apache.spark.ml.tuning.generators.{Generator, ParamGenerator}
+import org.apache.spark.ml.util.Instrumentation.instrumented
+import org.apache.spark.ml.util._
+import org.apache.spark.ml.{Estimator, Model}
+import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.{DataFrame, Dataset, Row}
+import org.apache.spark.util.ThreadUtils
+import org.json4s.DefaultFormats
+import org.slf4j.LoggerFactory
 
-import scala.collection.immutable
+import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
-//import breeze.linalg._
-//import breeze.math._
-import breeze.numerics._
+import scala.concurrent.Future
+import scala.concurrent.duration.Duration
+import scala.math.{ceil, pow}
 
 /**
  * Params for [[HyperBand]] and [[HyperBandModel]].
@@ -123,6 +114,8 @@ class HyperBand(override val uid: String)
     with HyperBandParams with HasParallelism with HasCollectSubModels
     with MLWritable with Logging
 {
+    override val log = LoggerFactory.getLogger(getClass)
+
     private var estimatorParamSpecifier = new ParamRangeSpecifier()
 
     var paramGenerator: Generator[ParamMap] = ParamGenerator.empty
@@ -272,8 +265,6 @@ class HyperBand(override val uid: String)
             val etaValue = $(eta)
             val trainPercent = $(trainSize)
 
-
-
             // Create execution context based on $(parallelism)
             val executionContext = getExecutionContext
 
@@ -289,8 +280,6 @@ class HyperBand(override val uid: String)
             // Creating a train test split using random split
             //TODO make type of split configurable
             val trainTest = trainTestSplitter.split(inpDataset)
-            //            val trainTestSplit = Array(trainPercent, testPercent)
-            //            val trainTest = dataset.randomSplit(trainTestSplit, $(seed))
 
             val trainingDataset = trainTest(0).cache()
             val validationDataset = trainTest(1).cache()
@@ -299,10 +288,9 @@ class HyperBand(override val uid: String)
             val maxSuccessiveHalvingRange = getMaxSuccessiveHalvingCount
             val B = (sMax + 1) * maxHyperbandIteration
 
-
-            // This is the metric for the best entry,
-            // this value would ideally keep on reducing with more successive halving loops
-            // this is because the no of iterations increases with each successive halving loops
+            // This is the metric for the best entry, this value would ideally keep on reducing
+            // with more successive halving loops. This is because the no of iterations increases
+            // with each successive halving loops.
             var bestMetricOverall = initializeBestMetric(eval)
             var bestParamValueOverall: ParamMap = new ParamMap()
 
@@ -310,6 +298,7 @@ class HyperBand(override val uid: String)
 
 
             // Begin Finite Horizon Hyperband outlerloop. Repeat indefinetely.
+            log.info("String iterations for hyperband algorithm.")
             for (s <- maxSuccessiveHalvingRange)
             {
                 // initial no of configurations
@@ -333,40 +322,40 @@ class HyperBand(override val uid: String)
                     // no of iterations to run for the current loop of successive halving
                     val rI = increaseIterationsCount(etaValue, r, i)
 
-                    log.info("param grid values length " + paramGridArray.length + " values " + paramGridArray
-                      .mkString(" , "))
+                    log.info("param grid values length " + paramGridArray.length + " values " + paramGridArray.mkString(" , "))
 
                     trainingDataset.printSchema()
 
                     val valMetricsFutures = paramGridArray.zipWithIndex.map
                     { case (paramMap, paramIndex) =>
                         Future[Double]
-                          {
-                              //This won't work for estimators without maxIter,
-                              // TODO will have to check if pipeline objects have maxIter in topLevel
-                              val maxIterParam  = est match {
-                                  case oneVsRestCustom:OneVsRestCustom => oneVsRestCustom.getClassifier.getParam("maxIter")
-                                  case est => est.getParam("maxIter")
-                              }
-                              val maxIter: Int = findMaxIterations(iterMultiplier, i, rI, maxIterationFinal)
-                              paramMap.put(maxIterParam, maxIter)
-                              val model = est.fit(trainingDataset, paramMap).asInstanceOf[Model[_]]
+                        {
+                            // This won't work for estimators without maxIter,
+                            // TODO will have to check if pipeline objects have maxIter in topLevel
+                            val maxIterParam = est match
+                            {
+                                case oneVsRestCustom: OneVsRestCustom => oneVsRestCustom.getClassifier.getParam("maxIter")
+                                case est => est.getParam("maxIter")
+                            }
+                            val maxIter: Int = findMaxIterations(iterMultiplier, i, rI, maxIterationFinal)
+                            paramMap.put(maxIterParam, maxIter)
+                            val model = est.fit(trainingDataset, paramMap).asInstanceOf[Model[_]]
 
-                              val metric = eval.evaluate(model.transform(validationDataset))
-                              metric
-                          }(executionContext)
+                            val metric = eval.evaluate(model.transform(validationDataset))
+                            metric
+                        }(executionContext)
                     }
 
                     val valMetrics = valMetricsFutures.map(ThreadUtils.awaitResult(_, Duration.Inf))
                     //                log.info("validation metrics " + valMetrics.mkString(","))
                     // the number of configurations to retain for next round of successive halving
                     val noOfSetsToRetain = (nI / etaValue).toInt
-                    log.info(s"No of sets to retain $noOfSetsToRetain \n value of n_i $nI no of iteration r_i $rI " +
+                    log.debug(s"No of sets to retain $noOfSetsToRetain \n value of n_i $nI no of iteration r_i $rI " +
                       s"value of n $n & value of r $r value of s $s paramGridArray length ${paramGridArray
                         .length} is larger better ${eval.isLargerBetter}")
                     val zippedMetricValue = paramGridArray.zip(valMetrics).map
                     { case (p, m) => s"${p.toString()} =>  metric = $m" }.mkString("\n")
-                    log.info(s"No of params in current loop ${paramGridArray.length} params & val metrics before " +
+                    log.debug(s"No of params in current loop ${paramGridArray.length} params & val metrics before " +
                       s"reducing - \n $zippedMetricValue")
 
                     val sortOrdering = if (eval.isLargerBetter) -1 else 1
@@ -374,7 +363,6 @@ class HyperBand(override val uid: String)
                     val valMetricsSorted = valMetrics.zipWithIndex.sortBy(_._1 * sortOrdering)
                     val indexesToRetain = valMetricsSorted.map
                     { case (m, index) => index }.take(noOfSetsToRetain)
-                    //                instr.logDebug("indexes to retain " + indexesToRetain.mkString(" , "))
                     val (topValueCurrentSuccessiveHalving, topIndex) = valMetricsSorted(0)
                     val topGridParamCurrentSuccessiveHalving = paramGridArray(topIndex)
 
@@ -407,9 +395,12 @@ class HyperBand(override val uid: String)
 
                 }
                 metricsBuffer += bestMetricCurrentConfigSet
-                log.info(s"Done with s = $s")
+                log.info(s"After hyperband iteration $s, result:")
+                log.info(s"Best hyperparameter values: $bestParamValueOverall")
+                log.info(s"Best metric: $bestMetricOverall")
             }
-            log.info("Best hyperparameter values " + bestParamValueOverall + " best metric " + bestMetricOverall)
+            log.info("Completed iterations for hyperband algorithm.")
+            log.info(s"Best hyperparameter values: $bestParamValueOverall, best metric: $bestMetricOverall")
             // Unpersist training & validation set once all metrics have been produced
             trainingDataset.unpersist()
             validationDataset.unpersist()

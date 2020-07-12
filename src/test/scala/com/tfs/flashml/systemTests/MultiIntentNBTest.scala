@@ -9,10 +9,10 @@ import org.apache.log4j.{Level, Logger}
 import org.apache.spark.mllib.evaluation.MulticlassMetrics
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 import org.slf4j.LoggerFactory
 
-class MultiIntentNBTest extends FlatSpec
+class MultiIntentNBTest extends AnyFlatSpec
 {
 
     private val log = LoggerFactory.getLogger(getClass)

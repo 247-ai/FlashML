@@ -3,7 +3,6 @@
 # The script takes the following arguments:
 # 1: Path of Main jar, e.g., flashml-2018.4-SNAPSHOT.jar
 # 2: Path of Test jar, e.g., flashml-2018.4-SNAPSHOT-tests.jar
-# 3: Additional argument(s) that were passed to run-docker.sh
 
 # Print the complete execution command for this script
 myInvocation="$(printf %q "$BASH_SOURCE")$((($#)) && printf ' %q' "$@")"
@@ -21,14 +20,14 @@ fi
 # Set up the classpath
 mainJar=$1
 testJar=$2
-alljars="docker/scalatest_2.11-3.0.5.jar:docker/scalactic_2.11-3.0.5.jar:$mainJar"
+alljars="docker/scalatest_2.12-3.1.0.jar:docker/scalactic_2.12-3.1.0.jar:$mainJar"
 
 # We will keep track of time it takes to run all the tests.
 SECONDS=0
 # Check if we are running a specific test, otherwise run all tests
 if [[ $# -eq 3 ]]
 then
-    scala -J-Xmx2g -cp "$alljars" org.scalatest.tools.Runner -o -R $testJar -s com.tfs.flashml.$3 $extraDockerOptions
+    scala -J-Xmx2g -cp "$alljars" org.scalatest.tools.Runner -o -R $testJar -s com.tfs.flashml.$3
 else
     echo "** Starting all tests"
     # List of tests to run.
@@ -85,6 +84,7 @@ else
 fi
 
 # Print time taken
+# $SECONDS is an inbuilt function in bash to keep track of time.
 duration=$SECONDS
 echo "** Time taken to run all tests: $(($duration / 60)) minutes and $(($duration % 60)) seconds."
 

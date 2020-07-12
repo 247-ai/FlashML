@@ -7,12 +7,12 @@ import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions._
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 import org.slf4j.LoggerFactory
 
 import scala.util.Random
 
-class MonitoringMetricsTest extends FlatSpec {
+class MonitoringMetricsTest extends AnyFlatSpec {
 
   private val log = LoggerFactory.getLogger(getClass)
   Logger.getLogger("org").setLevel(Level.OFF)

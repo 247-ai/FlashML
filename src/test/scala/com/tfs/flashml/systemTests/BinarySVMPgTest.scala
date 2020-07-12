@@ -10,10 +10,10 @@ import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions.col
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
 import org.slf4j.LoggerFactory
 
-class BinarySVMPgTest extends FlatSpec {
+class BinarySVMPgTest extends AnyFlatSpec {
 
   private val log = LoggerFactory.getLogger(getClass)
   Logger.getLogger("org").setLevel(Level.OFF)

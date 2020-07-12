@@ -7,10 +7,10 @@ import com.tfs.flashml.util.conf.ConfigValidator
 import com.tfs.flashml.util.FlashMLConfig
 import com.typesafe.config.ConfigFactory
 import org.apache.log4j.{Level, Logger}
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 import org.slf4j.LoggerFactory
 
-class ConfigValidatorPositiveTest extends FlatSpec {
+class ConfigValidatorPositiveTest extends AnyFlatSpec {
 
   private val log = LoggerFactory.getLogger(getClass)
   Logger.getLogger("org").setLevel(Level.OFF)

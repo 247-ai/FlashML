@@ -6,7 +6,7 @@ import com.tfs.flashml.util.conf.FlashMLConstants
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.ml.feature.{RegexTokenizer, StopWordsRemoverCustom}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 import org.slf4j.LoggerFactory
 import org.apache.spark.sql.functions.{col, concat}
 import java.util.ArrayList
@@ -20,7 +20,7 @@ import scala.collection.mutable
  * Class to test the functionality of preprocessing transformers for all FlashML supported preprocessing methods
  * Yelp dataset of 1000 rows used, loaded as a local JSON file
  */
-class PreprocessingTest extends FlatSpec
+class PreprocessingTest extends AnyFlatSpec
 {
   private val log = LoggerFactory.getLogger(getClass)
   Logger.getLogger("org").setLevel(Level.ERROR)

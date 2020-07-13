@@ -60,11 +60,11 @@ object Publish {
       /**
         * We are loading the pipeline stages of each step to combine it as a single pipeline.
         */
-      val thresholds = FlashMLConfig.getDoubleArray(FlashMLConstants.PUBLISH_THRESHOLDS)
-      val configTopThresholds = FlashMLConfig.getIntArray(FlashMLConstants.TOP_THRESHOLDS)
-      val topVariable = FlashMLConfig.getString(FlashMLConstants.TOP_VARIABLE)
-      val customMetricsType = FlashMLConfig.getString(FlashMLConstants.CUSTOM_METRICS_TYPE)
-      val nPages = FlashMLConfig.getInt(FlashMLConstants.N_PAGES)
+      val thresholds = if(ConfigUtils.isSingleIntent)FlashMLConfig.getDoubleArray(FlashMLConstants.PUBLISH_THRESHOLDS) else Array[Double]()
+      val configTopThresholds = if(ConfigUtils.isSingleIntent)FlashMLConfig.getIntArray(FlashMLConstants.TOP_THRESHOLDS) else Array[Int]()
+      val topVariable = if(ConfigUtils.isSingleIntent)FlashMLConfig.getString(FlashMLConstants.TOP_VARIABLE) else ""
+      val customMetricsType = if(ConfigUtils.isSingleIntent)FlashMLConfig.getString(FlashMLConstants.CUSTOM_METRICS_TYPE) else ""
+      val nPages = if(ConfigUtils.isSingleIntent)FlashMLConfig.getInt(FlashMLConstants.N_PAGES) else 0
       val topThresholds = 1.to(nPages).map(i =>
       {
         if (configTopThresholds.isEmpty || customMetricsType.equals(FlashMLConstants.PROB_ONLY_CUSTOM_METRICS)) 0
@@ -87,7 +87,8 @@ object Publish {
             hotleadPipeline.fit(mleapTrainDF.get(pageIndex - 1))
           } else null
           mleapPagePipeline += new Pipeline().setStages(PreprocessingEngine.loadPipelineModel(pageIndex).stages ++
-          FeatureGenerationEngine.loadPipelineModel(pageIndex).stages ++
+            (if(!FeatureGenerationEngine.loadPipelineModel(0).stages.isEmpty)
+              FeatureGenerationEngine.loadPipelineModel(0).stages else Array[Transformer]()) ++
           VectorizationEngine.loadPipelineModel(pageIndex).stages ++
           ModelTrainingEngine.loadPipelineModel(pageIndex).stages.drop(1) ++
           (if(ConfigUtils.isSingleIntent)
@@ -106,7 +107,8 @@ object Publish {
           hotleadPipeline.fit(mleapTrainDF.get(0))
         }else null
         mleapPagePipeline += new Pipeline().setStages(PreprocessingEngine.loadPipelineModel(0).stages ++
-          FeatureGenerationEngine.loadPipelineModel(0).stages ++
+          (if(!FeatureGenerationEngine.loadPipelineModel(0).stages.isEmpty)
+            FeatureGenerationEngine.loadPipelineModel(0).stages else Array[Transformer]()) ++
           VectorizationEngine.loadPipelineModel(0).stages ++
           ModelTrainingEngine.loadPipelineModel(0).stages.drop(1) ++
           (if(ConfigUtils.isSingleIntent)

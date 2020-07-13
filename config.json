@@ -6,43 +6,49 @@
   "model": {
     "id": "MODEL_id1"
   },
-  "job": {
-    "id": "job1"
-  },
   "project": {
-    "id": "binary_test_config",
+    "id": "multiIntent_SVM_titanic",
     "logLevel": "ERROR",
     "data": {
       "location": {
-        "source": "hive://FLASHML.WEB_JOURNEY_DATA",
-        "format": "",
+        "source": "hive://FLASHML.TITANIC_SURVIVAL_DATA",
+        "format": "json",
         "temp_table_prefix": "flashml_table_",
-        "queries": []
+        "queries": [
+        ]
       },
       "schema": {
         "file": "support_files/schema.txt"
       }
     }
   },
+  "apollo": {
+    "api": {
+      "url": "http://localhost:8383/jobs/job1/status"
+    }
+  },
+  "job": {
+    "id": "job1"
+  },
+  "vertica": {
+    "host": {
+      "url": "jdbc:vertica://analytics04.pxoe-app.va1.247-inc.net:5433/vertica247"
+    },
+    "jdbc": {
+      "driver": "com.vertica.jdbc.Driver"
+    },
+    "user": {
+      "name": "user_name",
+      "password": "password"
+    }
+  },
   "experiment": {
     "variables": {
       "scope": "noPage",
+      "numerical": ["age"],
+      "categorical": ["pclass","sex"],
       "text": [
-        "current_page_url",
-        "referrer"
-      ],
-      "categorical": [
-        "initial_referrer_cat",
-        "browser_cat",
-        "nop_count",
-        "isp",
-        "os_cat",
-        "dd",
-        "hour_of_day"
-      ],
-      "numerical": [
-        "no_of_visits_in_last_7_days",
-        "session_time"
+        "cabin"
       ]
     },
     "cv": {
@@ -50,78 +56,94 @@
       "predictSavepoint": false
     },
     "modelingMethod": [
-      "single_intent"
+      "multi_intent"
     ],
     "type": "model",
     "algorithm": {
-      "type": "logistic_regression",
+      "type": "svm",
       "build": {
-        "type": "binary"
+        "type": "ovr"
       },
-      "logistic": {
-        "regparam": 0.01,
-        "maxiter": 100,
-        "standardization": true,
-        "elasticnetparam": 1
+      "svm": {
+        "plattScalingEnabled": true,
+        "regparam": 0.1,
+        "maxiter": 20,
+        "standardization": true
       }
     },
     "retrainId": "original",
-    "primaryKey": [
-      "vid",
-      "active_session",
-      "dt"
-    ],
-    "responseVariable": "purchase_flag",
-    "pageVariable": "nop_count",
-    "dateVariable": "dt",
-    "randomVariable": "rv",
     "pageLevel": {
       "numberOfPages": 1
     },
-    "data": {
-      "positivePercent": 0
+    "multiIntent": {
+      "topIntentsColumn": "top_intents",
+      "maxTopIntents": 10
     },
-    "randomNumberGeneratorVariable": "",
+    "primaryKey": [
+      "home_dest"
+    ],
+    "responseVariable": "survived",
+    "pageVariable": "",
+    "dateVariable": "",
+    "randomVariable": "",
+    "data": {
+      "positivePercent": 10
+    },
+    "randomNumberGeneratorVariable": "home_dest",
+    "uplift": {
+      "treatmentVariable": ""
+    },
     "cumulativeSessionTime": "",
     "additionalVariables": [],
     "customFilter": "",
     "postPredictFilter": "",
     "sample": {
-      "type": "conditional",
-      "condition": [
-        "rv<=80",
-        "rv>80"
-      ]
+      "type": "random",
+      "split": [
+        70,30
+      ],
+      "condition": [],
+      "stratified": {
+        "minimumClassSupport": 10,
+        "otherClassValue": "other-other",
+        "minimumClassSupportRequired": false
+      }
     },
     "preprocessing": {
       "scope": "noPage",
       "steps": [
         {
-          "inputVariable": "current_page_url",
-          "outputVariable": "current_page_url1",
+          "inputVariable": "pclass",
           "transformations": [
+            {
+              "type": "nullcheck",
+              "parameter": "0"
+            }
+          ]
+        },
+        {
+          "inputVariable": "age",
+          "transformations": [
+            {
+              "type": "nullcheck",
+              "parameter": 0
+            }
+          ]
+        },
+        {
+          "inputVariable": "cabin",
+          "outputVariable": "cabin1",
+          "transformations": [
+            {
+              "type": "nullcheck",
+              "parameter": "default"
+            },
             {
               "type": "case_normalization"
             },
             {
-              "type": "stopwords",
-              "parameter": "support_files/stopwords.txt"
-            },
-            {
-              "type": "stemming",
-              "parameter": []
-            },
-            {
-              "type": "contractions_replacement",
-              "parameter": "support_files/abbreviations_small.txt"
-            },
-            {
-              "type": "word_classes_replacement",
-              "parameter": "support_files/word_classes.txt"
-            },
-            {
               "type": "tokenizer",
-              "parameter": "/"
+              "parameter": "[\\s+]"
             }
           ]
         }
@@ -130,16 +152,28 @@
     "featuregeneration": {
       "scope": "noPage",
       "binning": [],
-      "grams": []
+      "grams": [
+        {
+          "inputVariable": "cabin1",
+          "outputVariable": "cabin2",
+          "transformations": [
+            {
+              "ngram": [
+
+              ]
+            }
+          ]
+        }
+      ]
     },
     "vectorization": {
       "text": {
         "scope": "noPage",
         "steps": [
           {
-            "inputVariable": "current_page_url1",
-            "method": "hashingtf",
-            "slots": 2000
+            "inputVariable": "cabin2",
+            "method":"count_vectorizer",
+            "slots": 1500
           }
         ]
       },
@@ -151,48 +185,15 @@
     "publish": {
       "format": "mleap",
       "thresholds": [
-        0.6,
-        0.5,
-        0.5,
-        0.2
       ],
       "topList": [
-        20,
-        20,
-        20,
-        20
       ],
       "online": {
         "pages": [
-          1,
-          2,
-          3,
-          4
         ],
         "top": [
-          10,
-          10,
-          10,
-          10
         ]
       }
-    },
-    "customMetrics": {
-      "topVariable": "",
-      "type": "customProbBased",
-      "thresholds": [
-        0.6,
-        0.5,
-        0.5,
-        0.2
-      ],
-      "topList": [
-        20,
-        20,
-        20,
-        20
-      ],
-      "npages": 4
     },
     "qa": {
       "format": "json",
@@ -209,24 +210,17 @@
       "url": "thrift://localhost:9083"
     }
   },
-  "apollo": {
-    "api": {
-      "url": "http://localhost:8383/jobs/job1/status"
-    }
-  },
   "pipeline": {
     "steps": [
-      "1dataReader",
-      "1sampling",
-      "1preprocessing",
-      "1featureGeneration",
-      "1vectorization",
-      "1modelling",
-      "1scoring",
-      "1standardmetrics",
-      "1custommetrics",
-      "publish",
-      "qadatageneration"
+      "datareader",
+      "sampling",
+      "preprocessing",
+      "featuregeneration",
+      "vectorization",
+      "modelling",
+      "scoring",
+      "standardmetrics",
+      "publish"
     ]
   },
   "savePointing": {

@@ -7,15 +7,11 @@ import org.apache.spark.ml.linalg.{DenseVector, Vector}
 import org.apache.spark.mllib.util.MLUtils
 
 /**
-  * LogisticAggregator computes the gradient and loss for binary or multinomial logistic (softmax)
+  * BinaryLogisticWithDoubleResponseAggregator computes the gradient and loss for binary or multinomial logistic (softmax)
   * loss function, as used in classification for instances in sparse or dense vector in an online
   * fashion.
   *
-  * Two LogisticAggregators can be merged together to have a summary of loss and gradient of
-  * the corresponding joint dataset.
-  *
-  * This class is specific to computing the loss function and the gradient for a binary logisitc
-  * regression problem when the response values are double (i.e., not 0 and 1).
+  * The class is similar to LogisticAggregator - see for more details.
   *
   * @param bcFeaturesStd
   * @param numClasses

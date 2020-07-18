@@ -7,10 +7,10 @@ import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.hadoop.fs.Path
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.SparkSession
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 import org.slf4j.LoggerFactory
 
-class MultiIntentSVMStdMetricsTest extends FlatSpec{
+class MultiIntentSVMStdMetricsTest extends AnyFlatSpec{
 
     private val log = LoggerFactory.getLogger(getClass)
     Logger.getLogger("org").setLevel(Level.OFF)

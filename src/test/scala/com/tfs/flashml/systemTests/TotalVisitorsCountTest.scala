@@ -8,10 +8,10 @@ import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions.{col, concat}
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 import org.slf4j.LoggerFactory
 
-class TotalVisitorsCountTest extends FlatSpec {
+class TotalVisitorsCountTest extends AnyFlatSpec {
 
   private val log = LoggerFactory.getLogger(getClass)
   Logger.getLogger("org").setLevel(Level.OFF)

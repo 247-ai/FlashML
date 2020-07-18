@@ -6,14 +6,14 @@ import org.apache.spark.ml.classification.{BinaryLogisticRegressionWithDoubleRes
 import org.apache.spark.ml.feature.VectorAssembler
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.io.Path
 import scala.util.{Random, Try}
 
-class BinaryLogisticWithDoubleResponseTest extends FlatSpec
+class BinaryLogisticWithDoubleResponseTest extends AnyFlatSpec
 {
     private val log = LoggerFactory.getLogger(getClass)
     Logger.getLogger("org").setLevel(Level.OFF)

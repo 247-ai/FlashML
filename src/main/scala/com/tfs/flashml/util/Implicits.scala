@@ -11,6 +11,10 @@ object Implicits
 
     implicit class StringList(value: String)
     {
+        /**
+          * Quote word function, like perl :-)
+          * @return
+          */
         def qw() = value.split(" ")
     }
 

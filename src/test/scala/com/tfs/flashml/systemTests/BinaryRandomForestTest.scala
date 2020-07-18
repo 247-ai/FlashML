@@ -8,10 +8,10 @@ import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.ml.evaluation.BinaryClassificationEvaluator
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 import org.slf4j.LoggerFactory
 
-class BinaryRandomForestTest extends FlatSpec {
+class BinaryRandomForestTest extends AnyFlatSpec {
 
     private val log = LoggerFactory.getLogger(getClass)
     Logger.getLogger("org").setLevel(Level.OFF)

@@ -8,14 +8,14 @@ import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.DoubleType
 import org.apache.spark.sql.{Row, SparkSession}
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.io.Path
 import scala.util.Try
 
-class PlattScalerWithTopKTest extends FlatSpec
+class PlattScalerWithTopKTest extends AnyFlatSpec
 {
     private val log = LoggerFactory.getLogger(getClass)
     Logger.getLogger("org").setLevel(Level.OFF)

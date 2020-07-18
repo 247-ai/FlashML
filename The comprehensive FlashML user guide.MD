@@ -1,9 +1,7 @@
 # The comprehensive FlashML User Guide
 
 ## Introduction
-FlashML is the in-house ML prediction model building tool built and maintained by the FlashML team of [24]7.ai's Data Science Group.
-New features and updates are packaged and released as a new version of the tool quarterly (as a minor version). Major versions are released yearly. The tool was designed to support the requirements of customizing the entire model lifecycle to build the ideal prediction model.
-FlashML also supports retraining of prediction models as well as testing the performance metrics of previously built models.
+FlashML is the in-house ML prediction model building tool built and maintained by the FlashML team of [24]7.ai's Data Science Group. New features and updates are packaged and released as a new version of the tool quarterly (as a minor version). Major versions are released yearly. The tool was designed to support the requirements of customizing the entire model lifecycle to build the ideal prediction model. FlashML also supports retraining of prediction models as well as testing the performance metrics of previously built models.
 
 ## FlashML use cases
 FlashML serves as a prediction model building tool for the following use cases:
@@ -464,8 +462,9 @@ The perPage option allows the user to custom-specify preprocessing config parame
 
 For **text columns**, it is required that the last transformation step be tokenization so as to convert the data into an array of tokens, and then follow subsequent steps. The transformations supported are listed below, and the way they needs to be mentioned are provided in parenthesis.
 <br />
-<ul>
-<li>Stopwords (<code>stopwords</code>)
+</li>
+
+<li><h4>Stopwords</h4> (<code>stopwords</code>)
 
 FlashML allows the user to provide an array of words (strings) as the parameter. Alternatively, the user can also submit a text file with the stop words in each line of the text file. To submit a text file, the parameter should be the filepath (a string) and the spark-submit command should include the file. Examples for submitting the parameters as per both supported approaches are included in the sample config snippet number 6 below. The snippets below shows the options that can be used.
  ```
@@ -482,19 +481,19 @@ FlashML allows the user to provide an array of words (strings) as the parameter.
  ```
 </li>
 
-<li>Tokenizer (<code>tokenizer</code>)
+<li><h4>Tokenizer</h4> (<code>tokenizer</code>)
 
 The string that is to be applied as a delimiter has to be specified in the `parameter` key. Tokenization has to be mandatorily applied as the last preprocessing step (in case of any text preprocessing transformations). Sample config snippet num. 6 below lists an example of tokenization.
 </li>
 
-<li>Stemming (<code>stemming</code>)
+<li><h4>Stemming</h4> (<code>stemming</code>)
 
 The `parameter` key allows the user to enter any specific exceptions to be followed while Stemming. Users can enter an array of strings, or a filepath (as a string) in the <code>parameter</code> key. If a file (listing exceptions) is to be used, each line of the text file should contain a word from the list. Alternatively, a blank string can be used to denote no specific exceptions to be enforced while stemming.
 
 The stemming function is not supported by FlashML's Publish module at this time. Users can pick this preprocessing option and build prediction models and run upto Metrics steps.
 </li>
 
-<li>Regular Expression Replacement (<code>regex_replacement</code>)
+<li><h4>Regular Expression Replacement</h4> (<code>regex_replacement</code>)
 
 FlashML allows users to make text-replacements with labels by specifying a regular expression. For all text patterns matching the expression, the patterns will be replaced with the specified label. Users can either define the key-value pairs in a 'support file' or define it directly in the configuration file.
 
@@ -504,7 +503,6 @@ FlashML allows users to make text-replacements with labels by specifying a regul
  \\b(hola|hello|hi|hey)\\b   class_hello
  \\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}\\b   class_email
  ```
-
  Alternatively users can directly define the hashmap in the `parameter` key. In the following example snippet, we show the same use case explained above.
 
  ```
@@ -589,11 +587,9 @@ Only a few examples of the many possible combinations were listed, to elaborate 
    ]
 }
 ```
-
-
 </li>
 
-<li>Regular Expession Removal (<code>regex_removal</code>)
+<li><h4>Regular Expession Removal</h4> (<code>regex_removal</code>)
 
 This preprocessing step allows users to certain text patterns by specifying a regex. The `parameter` key accepts an array of strings, or a string (denoting a filepath). If a file is to be used, users should ensure regexes in each line of the file. Few lines from a sample text file listed for reference.
 
@@ -663,12 +659,12 @@ The above config snippet has been modified to the below listed snippet. The `ign
 Users may kindly note that the specified regex operations will be included in the Javascript deployment file that is generated in the `Publish` option. The regexes will need to comply with Java regex and Javascript regex syntaxes, to ensure that the same pre-processing applied on the training input (during the model building phase) is applied on the model evaluation input.
 </li>
 
-<li>Case Normalization (<code>case_normalization</code>)
+<li><h4>Case Normalization</h4> (<code>case_normalization</code>)
 
 The user is not required to pass any arguments in this preprocessing type. Refer the sample config snippet number 6 below.
 </li>
 
-<li>Word Classes Replacement (<code>word_classes_replacement</code>)
+<li><h4>Word Classes Replacement</h4> (<code>word_classes_replacement</code>)
 
 This step allows users to define a label as a replacement for multiple string values. The `parameter` key allows the user to enter either a string (denoting a filepath) or a HashMap mapping the labels to arrays of strings (denoting the similar words that should be replaced with the common label). In case of the file approach, the HashMap can be directly entered in the text file. A few sample lines include:
 
@@ -694,12 +690,12 @@ A sample config snippet listing the same input directly in the configuration fil
 The word-class replacement function is not supported by FlashML's Publish module at this time. Users can pick this preprocessing option and build prediction models and run upto Metrics steps.
 </li>
 
-<li>Sentence Marker (<code>sentence_marker</code>)
+<li><h4>Sentence Marker</h4> (<code>sentence_marker</code>)
 
 No parameter is required from the user in this preprocessing step. This step adds the string `_class_ss_` at the beginning of the string, and the string `_class_se` at the end and returns the new string.
 </li>
 
-<li>Contractions Replacement (<code>contractions_replacement</code>)
+<li><h4>Contractions Replacement</h4> (<code>contractions_replacement</code>)
 
 This step allows users to convert different forms of a word to a (user-defined) base form. Users may submit the replacements either as a string (denoting a filepath) with each line mapping the different forms of a word to it's required form, or, directly as a dictionary in the config file. Sample config snippet num. 6 listed below shows that a filepath has been depicted. Some sample lines from the file are listed here for reference:
 
@@ -715,7 +711,7 @@ luckiest,lucky
 The contractions-replacement function is not supported by FlashML's Publish module at this time. Users can pick this preprocessing option and build prediction models and run upto Metrics steps.
 </li>
 
-<li>Null check (<code>nullcheck</code>)
+<li><h4>Null check</h4> (<code>nullcheck</code>)
 
 FlashML allows the user to replace `null` values in the column with a string value mentioned in the `parameter` field. For non-string data types also, the user may enter a string as the replacement value. FlashML internally completes the replacement and converts it to the data type as per the schema file. In the following example, we check for nulls in two different columns and treat them in different ways.
 ```
@@ -741,10 +737,8 @@ FlashML allows the user to replace `null` values in the column with a string val
   }
 
 ```
-
 </li>
-</ul>
-<br />
+</ol>
 
 FlashML follows a simplified way of listing the preprocessing steps (sample configuration snippet below).
 
@@ -799,7 +793,6 @@ During each transformation step, the users are required to enter the `type` of p
   }
 }
 ```
-</ul>
 
 In case there is no pre-processing required, users need leave the steps blank with empty square parantheses, as shown below.
 
@@ -1204,8 +1197,7 @@ FlashML currently supports the following methods to generate term frequency vect
  <li><code>TFIDF</code></li>
 </ul>
 
-It is required that the number of slots selected (target feature dimension, i.e. number of buckets on the hash table) for the term frequency vectors are sufficient enough to avoid hash collision.
-Users can read more about the way Spark supports feature extraction and transformation with these resources:
+It is required that the number of slots selected (target feature dimension, i.e. number of buckets on the hash table) for the term frequency vectors are sufficient enough to avoid hash collision. Users can read more about the way Spark supports feature extraction and transformation with these resources:
 <ul>
  <li>https://spark.apache.org/docs/latest/ml-features.html#countvectorizer</li>
  <li>https://spark.apache.org/docs/latest/ml-features.html#word2vec</li>
@@ -1213,7 +1205,7 @@ Users can read more about the way Spark supports feature extraction and transfor
 </ul>
 <br />
 
-<li><h4 id="modeling">Modeling</h4></li>
+<li><h4 id="modeling">Modeling</h4>
 
 The parameter <code>experiment.modelingMethod</code> accepts an array of string values.
 The accepted values are case insensitive and include:
@@ -1244,7 +1236,6 @@ The parameter `experiment.uplift.treatmentVariable` in the sample configuration 
 }
 ```
 
-
 The <code>Page Level</code> option is used in cases where the data extends to multiple pages and model performance metrics are also computed for each page, and co-efficients for the prediction model for each page are listed in the ready-to-deploy JavaScript file.
 The majority of `Page level` models are used for Web journey data based models, to identify proactive intervention targets.
 
@@ -1261,8 +1252,6 @@ Following are the accepted array combinations for the parameter `experiment.mode
 <br />
 
 The `uplift` option in the parameter `experiment.modelingMethod` will ensure that a model is built with the specified variable, and checked to see if the additional variable's participation improves the model performance.
-
-
 
 The parameter block <code>experiment.algorithm</code> requires the type of algorithm to be filled in.
 The parameter <code>experiment.algorithm.type</code> accepts the below listed values (Case insensitive).
@@ -1305,11 +1294,9 @@ The following configuration block pertains with the modelling step
 }
 ```
 
-
 FlashML supports Cross Validation on both the above listed algorithms.
 
-In the below listed sample code snippet, cross validation is disabled as the number of folds is less than 1.
-The parameter `experiment.cv.folds` accepts the value of `k` for a  k-fold cross calidation (the integer `k` has to be greater than 1 to enable CV computation). Users can save the prediction datasets for each of the `k` subfolds by enabling the parameter `experiment.cv.predictSavepoint`. The saved datasets for the different subfolds helps the user identify the optimum intent acceptance thresholds.
+In the below listed sample code snippet, cross validation is disabled as the number of folds is less than 1. The parameter `experiment.cv.folds` accepts the value of `k` for a  k-fold cross calidation (the integer `k` has to be greater than 1 to enable CV computation). Users can save the prediction datasets for each of the `k` subfolds by enabling the parameter `experiment.cv.predictSavepoint`. The saved datasets for the different subfolds helps the user identify the optimum intent acceptance thresholds.
 ```
 {
   "experiment": {
@@ -1330,9 +1317,7 @@ In case of CV models, the configuration for SVM parameters should be modified, a
         "standardization": [true]
       }
 ```
-FlashML supports hyperparameter tuning using [hyperband](https://arxiv.org/abs/1603.06560).  
-It is available only for svm & logistic_regression. If hyperband is used then values specified under cv, including cv.folds won't be used.     
-To use hyperband, experiment.hyperparamop should be set as true. 
+FlashML supports hyperparameter tuning using [hyperband](https://arxiv.org/abs/1603.06560). It is available only for svm & logistic_regression. If hyperband is used then values specified under cv, including cv.folds won't be used. To use hyperband, `experiment.hyperparamop` should be set as true. 
 ```
   "experiment": {
       "hyperparamop": true
@@ -1349,7 +1334,7 @@ Other **optional parameters** that can be modified for hyperband experiment are 
 ```
 For description about these parameters refer to - [Configuration parameters list](Configuration%20parameters%20table.MD)
 
-If hyperband is being used, then regparam & elasticnetparam can be specified as either as a **single value**, **list** or as a **dictionary** with the following key values *min* & *max* - 
+If hyperband is being used, then `regparam` & `elasticnetparam` can be specified as either as a **single value**, **list** or as a **dictionary** with the following key values *min* & *max* - 
 ```
 "elasticnetparam": 0.5
 	
@@ -1392,8 +1377,6 @@ If hyperband is being used, then regparam & elasticnetparam can be specified as 
 	]
 }      
 ```
-
-
 The parameter `multiIntent.maxTopIntents` accepts an Integer value and the specified number of intents will be listed based on descending order of their probability values. These intents will be stored under the column name provided by the user for the parameter `experiment.multiIntent.topIntentsColumn`. Sample code block listed below for reference.
 
 ```
@@ -1415,18 +1398,15 @@ Users can read more about Spark support for ML algorithms with the resources lis
  <li>https://spark.apache.org/docs/2.4.0/ml-tuning.html</li>
  <li>https://en.wikipedia.org/wiki/Support_vector_machine</li>
 </ul>
-<br />
+</li>
 
-<li><h4 id="scoring">Scoring</h4></li>
+<li><h4 id="scoring">Scoring</h4>
 It is expected that either of the two parameters <code>experiment.postPredictFilter</code> or <code>experiment.responseVariable</code> is populated.
 The model built with the specified parameters is run on the input datasets.
 Depending on the <code>savePointing.required</code> boolean parameter entered by the user, the prediction datapoints are saved on the HDFS project directory.
-<br />
+</li>
 
-
-<li><h4 id="standard metrics">Standard Metrics</h4></li>
-
-
+<li><h4 id="standard metrics">Standard Metrics</h4>
 Once the standard metrics are computed, the scores are saved in the project directory on HDFS, at the location
 ```$"rootDirectory"+"/metrics/standardMetrics/stdMetrics.json"```
 
@@ -1443,10 +1423,9 @@ Users can read more about AUROC and related metrics at these resources.
  <li>https://in.mathworks.com/matlabcentral/fileexchange/19468-auroc-area-under-receiver-operating-characteristic</li>
  <li>https://stats.stackexchange.com/questions/132777/what-does-auc-stand-for-and-what-is-it</li>
 </ul>
-
-<li>
-<h4 id="custom metrics">Custom Metrics</h4>
 </li>
+
+<li><h4 id="custom metrics">Custom Metrics</h4>
 
  The parameter <code>experiment.customMetrics.type</code> accepts the following String entries:
 <ul>
@@ -1483,12 +1462,12 @@ Users can read more about AUROC and related metrics at these resources.
   }
 }
 ```
-
-<li>
-<h4 id="publish">Publish</h4>
 </li>
+
+<li><h4 id="publish">Publish</h4>
 In this step, a JavaScript file is generated which contains the model parameters (preprocessing, vectorization, model algorithms, information on pagewise parameters, if any) containing functions needed to operate on input data to generate required information.
 The schema file path is to be loaded in the parameter <code>project.data.schema.file</code> and should contain the mapping of each of the variables to the specified format view .
+</li>
 <br />
 <br />
 
@@ -1555,7 +1534,7 @@ Users may note that some Preprocessing and Feature Generation options are not su
 Unsupported Preprocessing transformation(s): Stemming, Contractions Replacement, Word class replacement
 Unsupported Feature Generation transformation(s): NGrams
 
-<li><h4 id="qa data generation">QA Data Generation</h4></li>
+<li><h4 id="qa data generation">QA Data Generation</h4>
 
 The Quality Analysis related data is saved at this step, in the specified format.
 The parameter `experiment.qa.format` accepts the following string values (Case insensitive):
@@ -1576,14 +1555,13 @@ The parameter `experiment.qa.dataPoints` accepts an Integer value and denotes th
   }
 }
 ```
-
-</ol>
+</li>
 
 ## Miscellaneous
 Certain additional topics of interest to users have been coverered here. Users can read the following to identify the Hadoop locations on which some data is written onto, after certain steps are computed on FlashML.
 
 ### Running a "predict" job on new dataset
-Let's say, you have build a prediction model by running FlashMLand now you would like to test the model on some newer data (perhaps out-of-sample data). In this case the you need to enter the value <code>predict</code> (case insensitive) for the key <code>experiment.type</code> in the config file. FlashML will use the model built (by loading the pipeline, i.e. the result of the model building done on the previous training data) and will 'score' the data, generating predictions and metrics.
+Let's say, you have build a prediction model by running FlashMLand now you would like to test the model on some newer data (perhaps out-of-sample data). In this case the you need to enter the value `predict` (case insensitive) for the key `experiment.type` in the config file. FlashML will use the model built (by loading the pipeline, i.e. the result of the model building done on the previous training data) and will 'score' the data, generating predictions and metrics.
 
 ### Analysis of prediction dataframe
 At the <code>scoring</code> pipeline step, FlashML generates predictions for the test data and then saves the entire dataframe in <code>parquet</code> format in the Hadoop directories assigned for the current project. The location of the directory for the current project is generated using parameters in the config file as follows: users can explore the hadoop path <code>/${FlashML.rootDirectory}/${project.id}/${model.id}/${experiment.retrainID}/${experiment.type}/</code> for accessing the current job related files. To load the result of the scoring dataset, the parquet files can be loaded onto a Spark DataFrame and analysed. Users should ensure that the Spark version used is the same as that of the currently used FlashML version. The command <code>spark.read.parquet(FilePath)</code> yields the DataFrame with all the required rows.

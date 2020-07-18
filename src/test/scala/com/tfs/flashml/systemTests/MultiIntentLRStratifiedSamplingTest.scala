@@ -9,10 +9,10 @@ import org.apache.log4j.{Level, Logger}
 import org.apache.spark.mllib.evaluation.MulticlassMetrics
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
 import org.slf4j.LoggerFactory
 
-class MultiIntentLRStratifiedSamplingTest  extends FlatSpec{
+class MultiIntentLRStratifiedSamplingTest  extends AnyFlatSpec{
 
   private val log = LoggerFactory.getLogger(getClass)
   Logger.getLogger("org").setLevel(Level.OFF)

@@ -1,7 +1,7 @@
 {
   "flashml": {
     "context": "local[*]",
-    "rootDirectory": "/user/cloudera"
+    "rootDirectory": "/jobs"
   },
   "model":{"id":"MODEL_id1"},
   "project": {

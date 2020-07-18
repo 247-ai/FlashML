@@ -1,7 +1,7 @@
 {
   "flashml": {
     "context": "local[*]",
-    "rootDirectory": "/user/cloudera"
+    "rootDirectory": "/jobs"
   },
   "model": {
     "id": "MODEL_id2"
@@ -14,7 +14,7 @@
         "file": "support_files/schema.txt"
       },
       "location": {
-        "source": "hive1://FLASHML.SEARSHS_TEST_DATA",
+        "source": "hive1://FLASHML.WEB_JOURNEY_DATA",
         "format": "",
         "temp_table_prefix": "praas_table_",
         "queries": []

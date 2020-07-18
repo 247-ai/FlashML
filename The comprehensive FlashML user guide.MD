@@ -31,8 +31,8 @@ FlashML serves as a prediction model building tool for the following use cases:
 		-   [Publish](#publish)
 		-   [QA Data Generation](#qa-data-generation)
 -   [Miscellaneous](#miscellaneous)
-    -   [Running a Predict Job](#predict-job)
-    -   [Analysis of prediction DataFrame](#predictionDF)
+    -   [Running a Predict Job](#running-a-predict-job-on-new-dataset)
+    -   [Analysis of prediction DataFrame](#analysis-of-prediction-dataframe)
 
 ## How to run FlashML
 The user requires access to a spark cluster with hadoop configured. Apart from loading the FlashML jar file onto hadoop, and a configuration file specifying all the model parameters, the user only needs to load data using one of the many options supported by FlashML.
@@ -1427,17 +1427,17 @@ Users can read more about AUROC and related metrics at these resources.
 
 <li><h4 id="custom metrics">Custom Metrics</h4>
 
- The parameter <code>experiment.customMetrics.type</code> accepts the following String entries:
+ The parameter `experiment.customMetrics.type` accepts the following String entries:
 <ul>
  <li>customProbAndTopBased</li>
  <li>customProbBased</li>
 </ul>
-<br />
- The parameter <code>experiment.customMetrics.topVariable</code> accepts the string variable containing the required parameter. In this case FlashML contains the 'Time on page' value (i.e. time spent on each page).
 
- The parameter <code>experiment.customMetrics.topList</code> contains the pagewise lower bound threshold for the dataPoint to qualify as a 'proactive intervention target'.
+The parameter `experiment.customMetrics.topVariable` accepts the string variable containing the required parameter. In this case FlashML contains the 'Time on page' value (i.e. time spent on each page).
+
+ The parameter `experiment.customMetrics.topList` contains the pagewise lower bound threshold for the dataPoint to qualify as a 'proactive intervention target'.
  Also the pagewise lower bound threshold for probability is also used to screen dataPoints for qualifying as a proactive intervention target.
- The parameter <code>experiment.customMetrics.thresholds</code> accepts an array of Float values, denoting the pagewise probability thresholds.
+ The parameter `experiment.customMetrics.thresholds` accepts an array of Float values, denoting the pagewise probability thresholds.
 
 ```
 {
@@ -1466,7 +1466,7 @@ Users can read more about AUROC and related metrics at these resources.
 
 <li><h4 id="publish">Publish</h4>
 In this step, a JavaScript file is generated which contains the model parameters (preprocessing, vectorization, model algorithms, information on pagewise parameters, if any) containing functions needed to operate on input data to generate required information.
-The schema file path is to be loaded in the parameter <code>project.data.schema.file</code> and should contain the mapping of each of the variables to the specified format view .
+The schema file path is to be loaded in the parameter `project.data.schema.file` and should contain the mapping of each of the variables to the specified format view .
 </li>
 <br />
 <br />
@@ -1564,7 +1564,7 @@ Certain additional topics of interest to users have been coverered here. Users c
 Let's say, you have build a prediction model by running FlashMLand now you would like to test the model on some newer data (perhaps out-of-sample data). In this case the you need to enter the value `predict` (case insensitive) for the key `experiment.type` in the config file. FlashML will use the model built (by loading the pipeline, i.e. the result of the model building done on the previous training data) and will 'score' the data, generating predictions and metrics.
 
 ### Analysis of prediction dataframe
-At the <code>scoring</code> pipeline step, FlashML generates predictions for the test data and then saves the entire dataframe in <code>parquet</code> format in the Hadoop directories assigned for the current project. The location of the directory for the current project is generated using parameters in the config file as follows: users can explore the hadoop path <code>/${FlashML.rootDirectory}/${project.id}/${model.id}/${experiment.retrainID}/${experiment.type}/</code> for accessing the current job related files. To load the result of the scoring dataset, the parquet files can be loaded onto a Spark DataFrame and analysed. Users should ensure that the Spark version used is the same as that of the currently used FlashML version. The command <code>spark.read.parquet(FilePath)</code> yields the DataFrame with all the required rows.
+At the <code>scoring</code> pipeline step, FlashML generates predictions for the test data and then saves the entire dataframe in <code>parquet</code> format in the Hadoop directories assigned for the current project. The location of the directory for the current project is generated using parameters in the config file as follows: users can explore the hadoop path <code>/${FlashML.rootDirectory}/${project.id}/${model.id}/${experiment.retrainID}/${experiment.type}/</code> for accessing the current job related files. To load the result of the scoring dataset, the parquet files can be loaded onto a Spark DataFrame and analysed. Users should ensure that the Spark version used is the same as that of the currently used FlashML version. The command `spark.read.parquet(filePath)` loads the dataframe in Spark session.
 
 A sample config snippet is listed here for reference.
 

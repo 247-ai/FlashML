@@ -4,24 +4,24 @@ This is a project from Data Science Engineering team at [[24]7.ai](https://www.2
 
 ## Dependencies
 0. JDK 8. OpenJDK 8 can be used without any issues.
-1. Hadoop (>2.7.x) and Hive (1.2.2, download from: https://archive.apache.org/dist/hive/hive-1.2.2/)
+1. Hadoop (>2.9.x) and Hive (>2.3.x)
    - The default installation of hive is with derby, a single-user database, as the backend. Follow the instructions in this page for using mysql as the backend: https://saurzcode.in/2015/01/configure-mysql-metastore-hive/
-2. Scala: Version 2.11.12
+2. Scala: Version 2.12.10
     - The binaries should be in the path
 3. Apache Spark: Version 2.4.x
     - The binaries should be in the path
-4. Maven: Version 3.3.9 or above
+4. Maven: Version 3.6.x or above
     - The binaries should be in the path
 5. [Optional, for development] IntelliJ IDEA Community Edition
 6. [Optional, for log search] ELK Stack (see section [Logging](#Logging) below)
 
 ### Important !
 * If you are starting off in a new VM, you can use `install-scripts/installer-debian.sh` to install the following components: OpenJDK 8, mysql, Scala, Hadoop, Spark, Hive, IntelliJ IDEA, Maven.
-* The code HAS to be complied against scala version 2.11.x with Java 8 for now.
+* The code HAS to be complied against scala version 2.12.x with Java 8 for now.
 
 ## Running with docker
 
-<b>Developer Notes:</b> If you are using Windows 10 with WSL 1 for development, this will not work - as docker doesn't work on WSL 1. Please use the method described in the section "Running directly on your system, without docker" below.
+<b>Developer Notes:</b> If you are using Windows 10 with WSL 1 for development, running with docker will not work - as docker doesn't work on WSL 1. Please use the method described in the section "Running directly on your system, without docker" below.
 
 ### Installing docker
 Following are the links for docker installation.

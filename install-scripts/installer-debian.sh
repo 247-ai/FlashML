@@ -177,7 +177,7 @@ sudo -i << ROOT
 
 	#############################################################################
 	# Install Scala
-	SCALA_VERSION="2.11.12"
+	SCALA_VERSION="2.12.10"
 
 	if [[ ! -e /opt/scala-\$SCALA_VERSION ]]
 	then
@@ -199,7 +199,7 @@ sudo -i << ROOT
 
 	#############################################################################
 	# Install hadoop
-	HADOOP_VERSION=2.7.7
+	HADOOP_VERSION=2.9.2
 
 	if [[ ! -e /opt/hadoop-\$HADOOP_VERSION ]]
 	then
@@ -380,7 +380,7 @@ sudo -i << ROOT
 
 	#############################################################################
 	# Install Spark
-	SPARK_VERSION=2.4.5
+	SPARK_VERSION=2.4.6
 
 	if [[ ! -e /opt/spark-\$SPARK_VERSION ]]
 	then
@@ -409,7 +409,7 @@ sudo -i << ROOT
 
 	#############################################################################
 	# Install IntelliJ Idea
-	IDEA_VERSION=2019.3
+	IDEA_VERSION=2020.1
 
 	if [[ ! -e /opt/idea-\$IDEA_VERSION ]]
 	then

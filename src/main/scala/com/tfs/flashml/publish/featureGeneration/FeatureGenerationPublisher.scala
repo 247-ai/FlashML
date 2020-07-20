@@ -3,7 +3,7 @@ package com.tfs.flashml.publish.featureGeneration
 import com.tfs.flashml.core.DirectoryCreator
 import com.tfs.flashml.core.featuregeneration.transformer.CategoricalColumnsTransformer
 import com.tfs.flashml.util.conf.FlashMLConstants
-import com.tfs.flashml.util.{ConfigUtils, FlashMLConfig, PublishUtils}
+import com.tfs.flashml.util.{ConfigValues, FlashMLConfig, PublishUtils}
 import org.apache.spark.ml.PipelineModel
 import org.apache.spark.ml.feature.Bucketizer
 
@@ -62,7 +62,7 @@ object FeatureGenerationPublisher {
     val inputCols = stage.getInputCols
     val categoricalArrayJS = new StringBuilder
     val categoricalArray = new ArrayBuffer[String]()
-    categoricalArrayJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var " + FlashMLConstants.CATEGORICAL_ARRAY + " = " + "["
+    categoricalArrayJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "var " + FlashMLConstants.CATEGORICAL_ARRAY + " = " + "["
     for (i <- inputCols)
     {
       categoricalArray += "'" + i + "_' + " + i

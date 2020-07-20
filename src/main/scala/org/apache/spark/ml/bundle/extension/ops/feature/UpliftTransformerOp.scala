@@ -1,6 +1,6 @@
 package org.apache.spark.ml.bundle.extension.ops.feature
 
-import com.tfs.flashml.util.ConfigUtils
+import com.tfs.flashml.util.ConfigValues
 import ml.combust.bundle.BundleContext
 import ml.combust.bundle.dsl._
 import ml.combust.bundle.op.OpModel
@@ -26,11 +26,11 @@ class UpliftTransformerOp extends SimpleSparkOp[UpliftTransformer] {
         case svm:LinearSVCModel => (svm.coefficients,svm.intercept)
         case _ => throw new Exception("Uplift is supported only for binomial cases")
       }
-      val (plattCoefficients,plattIntercept) = if(obj.getBaseClassifier.isInstanceOf[LinearSVCModel] && ConfigUtils.plattScalingEnabled)
+      val (plattCoefficients,plattIntercept) = if(obj.getBaseClassifier.isInstanceOf[LinearSVCModel] && ConfigValues.plattScalingEnabled)
       (obj.getPlattScaler.models(0).coefficients,obj.getPlattScaler.models(0).intercept) else (Vectors.dense(Array(0.0)),0.0)
       val resultModel = model.withValue("baseCoefficients",Value.vector(baseCoefficients.toArray))
         .withValue("baseIntercept",Value.double(baseIntercept))
-      if(obj.getBaseClassifier.isInstanceOf[LinearSVCModel] && ConfigUtils.plattScalingEnabled)
+      if(obj.getBaseClassifier.isInstanceOf[LinearSVCModel] && ConfigValues.plattScalingEnabled)
         resultModel.withValue("plattCoefficients",Value.vector(plattCoefficients.toArray))
         .withValue("plattIntercept",Value.double(plattIntercept))
       resultModel

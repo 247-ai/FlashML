@@ -1,6 +1,6 @@
 package com.tfs.flashml.publish.preprocessing
 
-import com.tfs.flashml.util.{ConfigUtils, PublishUtils}
+import com.tfs.flashml.util.{ConfigValues, PublishUtils}
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable
@@ -16,7 +16,7 @@ object CaseNormalizer
     else new StringBuilder
     globalVar += ("" + caseNormJsTmp)
     val caseNormJs = new StringBuilder
-    caseNormJs ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var " + output + " = caseNormalizer(" + input + ");"
+    caseNormJs ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "var " + output + " = caseNormalizer(" + input + ");"
     //caseNormJs ++= ",caseNormArray_" + output + ");"
     caseNormJs
   }

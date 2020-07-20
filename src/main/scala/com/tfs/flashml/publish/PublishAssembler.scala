@@ -7,7 +7,7 @@ import com.tfs.flashml.publish.featureGeneration.FeatureGenerationPublisher
 import com.tfs.flashml.publish.preprocessing.PreprocessingPublisher
 import com.tfs.flashml.util.conf.FlashMLConstants
 import org.apache.hadoop.fs.Path
-import com.tfs.flashml.util.{ConfigUtils, FlashMLConfig, PublishUtils}
+import com.tfs.flashml.util.{ConfigValues, FlashMLConfig, PublishUtils}
 import org.apache.spark.sql.SparkSession
 import org.slf4j.LoggerFactory
 import scala.collection.mutable
@@ -20,9 +20,9 @@ object PublishAssembler
 {
   private val log = LoggerFactory.getLogger(getClass)
 
-  private val textVariableColumns= ConfigUtils.scopeTextVariables
-  private val categoricalVariableColumns = ConfigUtils.scopeCategoricalVariables
-  private val numericVariablesColumns = ConfigUtils.scopeNumericalVariables
+  private val textVariableColumns= ConfigValues.scopeTextVariables
+  private val categoricalVariableColumns = ConfigValues.scopeCategoricalVariables
+  private val numericVariablesColumns = ConfigValues.scopeNumericalVariables
 
   private val pageVariable = FlashMLConfig.getString(FlashMLConstants.PAGE_VARIABLE)
   val schemaFile: String = FlashMLConfig.getString(FlashMLConstants.SCHEMA_FILE)
@@ -45,7 +45,7 @@ object PublishAssembler
       }
     })
 
-  private val numOfPages: Int = if (ConfigUtils.isPageLevelModel)
+  private val numOfPages: Int = if (ConfigValues.isPageLevelModel)
   {
     FlashMLConfig.getInt(FlashMLConstants.EXPERIMENT_NUMBER_OF_PAGES)
   }
@@ -66,7 +66,7 @@ object PublishAssembler
 
     val globalVar = mutable.Set[String]()
 
-    if (ConfigUtils.isPageLevelModel)
+    if (ConfigValues.isPageLevelModel)
     {
       val pageLevelJS = getPageLevelTopStructure
       var pagevarSetList = mutable.ArrayBuffer[mutable.Set[String]]()
@@ -97,11 +97,11 @@ object PublishAssembler
 
         val modelJS = ModelPublisher.generateJS(pageNumber, globalVar)
 
-        pageLevelJSTmp ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent) + "function " + ConfigUtils.mlAlgorithm + pageNumber + "(){"
+        pageLevelJSTmp ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent) + "function " + ConfigValues.mlAlgorithm + pageNumber + "(){"
 
         pageLevelJSTmp ++= featuresDefinitionJS ++ preprocessingJS ++ featureGenerationJS ++ vectorizationJS ++ modelJS
 
-        pageLevelJSTmp ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent) + "}" + PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent) + "return " + ConfigUtils.mlAlgorithm + +pageNumber + "();"
+        pageLevelJSTmp ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent) + "}" + PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent) + "return " + ConfigValues.mlAlgorithm + +pageNumber + "();"
       }
 
       pageLevelJSTmp ++= PublishUtils.getNewLine + PublishUtils.indent(1) + "}"
@@ -116,17 +116,17 @@ object PublishAssembler
       val featuresDefinitionJS = getFeaturesFromViewJS(0)
       val preprocessingJS = PreprocessingPublisher.generateJS(0, globalVar)
 
-      val featureGenerationJS = if(!ConfigUtils.featureGenerationConfig.isEmpty) FeatureGenerationPublisher.generateJS(0, globalVar) else new mutable.StringBuilder()
+      val featureGenerationJS = if(!ConfigValues.featureGenerationConfig.isEmpty) FeatureGenerationPublisher.generateJS(0, globalVar) else new mutable.StringBuilder()
       val vectorizationJS = VectorizationPublisher.generateJS(0, globalVar)
       val modelJS = ModelPublisher.generateJS(0, globalVar)
 
       val JS = new StringBuilder
-      JS ++= "function " + ConfigUtils.mlAlgorithm + "(){"
+      JS ++= "function " + ConfigValues.mlAlgorithm + "(){"
       JS ++= PublishUtils.getNewLine + PublishUtils.indent(1) + "var result = {};"
       JS ++= featuresDefinitionJS
       JS ++= globalVar.mkString("")
       JS ++= preprocessingJS ++ featureGenerationJS ++ vectorizationJS ++ modelJS
-      JS ++= PublishUtils.getNewLine + "}" + PublishUtils.getNewLine + ConfigUtils.mlAlgorithm + "();"
+      JS ++= PublishUtils.getNewLine + "}" + PublishUtils.getNewLine + ConfigValues.mlAlgorithm + "();"
     }
   }
 
@@ -135,14 +135,14 @@ object PublishAssembler
   {
     val featuresJS = new StringBuilder
     var isPageVariableInFeatures = false
-    val isSingleIntent = ConfigUtils
+    val isSingleIntent = ConfigValues
       .isSingleIntent
     val setOfVariables = mutable.Set[String]()
 
-    ConfigUtils.variablesScope match{
+    ConfigValues.variablesScope match{
       case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE =>
 
-        (ConfigUtils.scopeTextVariables1DArray ++ numericVariablesColumns.asInstanceOf[Array[String]] ++ categoricalVariableColumns.asInstanceOf[Array[String]])
+        (ConfigValues.scopeTextVariables1DArray ++ numericVariablesColumns.asInstanceOf[Array[String]] ++ categoricalVariableColumns.asInstanceOf[Array[String]])
           .foreach(i => {
 
             isPageVariableInFeatures = if (i.equals(pageVariable)) true
@@ -155,7 +155,7 @@ object PublishAssembler
 
       case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE =>
 
-        if(ConfigUtils.scopeTextVariables2DArray.isDefinedAt(index) && ConfigUtils.scopeTextVariables2DArray(index).nonEmpty){
+        if(ConfigValues.scopeTextVariables2DArray.isDefinedAt(index) && ConfigValues.scopeTextVariables2DArray(index).nonEmpty){
           textVariableColumns(index).asInstanceOf[Array[String]].filterNot(_.isEmpty).foreach(i => {
             isPageVariableInFeatures = if (i.equals(pageVariable)) true
             else isPageVariableInFeatures
@@ -198,13 +198,13 @@ object PublishAssembler
   {
     val featuresJS = new StringBuilder
     var isPageVariableInFeatures = false
-    val isSingleIntent = ConfigUtils
+    val isSingleIntent = ConfigValues
       .isSingleIntent
 
-    ConfigUtils.variablesScope match {
+    ConfigValues.variablesScope match {
       case FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE | FlashMLConstants.SCOPE_PARAMETER_NO_PAGE =>
 
-        (ConfigUtils.scopeTextVariables1DArray ++ numericVariablesColumns.asInstanceOf[Array[String]] ++ categoricalVariableColumns.asInstanceOf[Array[String]])
+        (ConfigValues.scopeTextVariables1DArray ++ numericVariablesColumns.asInstanceOf[Array[String]] ++ categoricalVariableColumns.asInstanceOf[Array[String]])
           .filterNot(_.isEmpty)
           .distinct
           .foreach(i => {
@@ -212,12 +212,12 @@ object PublishAssembler
             isPageVariableInFeatures = if (i.equals(pageVariable)) true
             else isPageVariableInFeatures
 
-            featuresJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var " + i + " = " + schema.getOrElse(i, null) + "." + i + ";"
+            featuresJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "var " + i + " = " + schema.getOrElse(i, null) + "." + i + ";"
           })
 
       case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE =>
 
-        if (ConfigUtils.scopeTextVariables2DArray.isDefinedAt(index) && ConfigUtils.scopeTextVariables2DArray(index).nonEmpty) {
+        if (ConfigValues.scopeTextVariables2DArray.isDefinedAt(index) && ConfigValues.scopeTextVariables2DArray(index).nonEmpty) {
           textVariableColumns(index)
             .asInstanceOf[Array[String]]
             .filterNot(_.isEmpty)
@@ -226,7 +226,7 @@ object PublishAssembler
               isPageVariableInFeatures = if (i.equals(pageVariable)) true
               else isPageVariableInFeatures
 
-              featuresJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var " + i + " = " + schema.getOrElse(i, null) + "." + i + ";"
+              featuresJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "var " + i + " = " + schema.getOrElse(i, null) + "." + i + ";"
             })
         }
 
@@ -239,7 +239,7 @@ object PublishAssembler
               isPageVariableInFeatures = if (i.equals(pageVariable)) true
               else isPageVariableInFeatures
 
-              featuresJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var " + i + " = " + schema.getOrElse(i, null) + "." + i + ";"
+              featuresJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "var " + i + " = " + schema.getOrElse(i, null) + "." + i + ";"
             })
         }
 
@@ -248,7 +248,7 @@ object PublishAssembler
             isPageVariableInFeatures = if (i.equals(pageVariable)) true
             else isPageVariableInFeatures
 
-            featuresJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var " + i + " = " + schema.getOrElse(i, null) + "." + i + ";"
+            featuresJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "var " + i + " = " + schema.getOrElse(i, null) + "." + i + ";"
 
           })
         }
@@ -256,7 +256,7 @@ object PublishAssembler
 
     if (isSingleIntent && !isPageVariableInFeatures)
     {
-      featuresJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var " + pageVariable + " = " + schema.getOrElse(pageVariable, null) + "." + pageVariable + ";"
+      featuresJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "var " + pageVariable + " = " + schema.getOrElse(pageVariable, null) + "." + pageVariable + ";"
     }
     featuresJS
   }

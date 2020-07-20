@@ -1,9 +1,9 @@
 package com.tfs.flashml.core
 
 import com.tfs.flashml.dal.SavePointManager
-import com.tfs.flashml.util.ConfigUtils._
+import com.tfs.flashml.util.ConfigValues._
 import com.tfs.flashml.util.conf.FlashMLConstants
-import com.tfs.flashml.util.{ConfigUtils, FlashMLConfig}
+import com.tfs.flashml.util.{ConfigValues, FlashMLConfig}
 import org.apache.spark.ml.PipelineModel
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.col
@@ -22,20 +22,20 @@ object Predict
 
     // The list of columns that needs to be retained.
     val columnsNames = (
-            ConfigUtils.primaryKeyColumns ++ Array(ConfigUtils.topVariable,
-                ConfigUtils.getIndexedResponseColumn,
+            ConfigValues.primaryKeyColumns ++ Array(ConfigValues.topVariable,
+                ConfigValues.getIndexedResponseColumn,
                 FlashMLConfig.getString(FlashMLConstants.DATE_VARIABLE),
-                ConfigUtils.pageColumn,
-                ConfigUtils.responseColumn,
-                if (ConfigUtils.isMultiIntent) FlashMLConstants.PREDICTION_LABEL
+                ConfigValues.pageColumn,
+                ConfigValues.responseColumn,
+                if (ConfigValues.isMultiIntent) FlashMLConstants.PREDICTION_LABEL
                 else "",
                 "rawPrediction",
-                if (ConfigUtils.mlAlgorithm.equals(FlashMLConstants.SVM) && !ConfigUtils.isPlattScalingReqd) ""
-                else if (ConfigUtils.isUplift) "modelProbability"
+                if (ConfigValues.mlAlgorithm.equals(FlashMLConstants.SVM) && !ConfigValues.isPlattScalingReqd) ""
+                else if (ConfigValues.isUplift) "modelProbability"
                 else "probability",
-                if (ConfigUtils.isUplift)
+                if (ConfigValues.isUplift)
                     "modelPrediction"
-                else "prediction") ++ ConfigUtils.additionalColumns
+                else "prediction") ++ ConfigValues.additionalColumns
             )
             .filter(_.nonEmpty)
             .distinct
@@ -50,7 +50,7 @@ object Predict
         }
             yield
                 {
-                    dfArray.tail.map(_.select((ConfigUtils.primaryKeyColumns ++ Array(ConfigUtils.responseColumn,
+                    dfArray.tail.map(_.select((ConfigValues.primaryKeyColumns ++ Array(ConfigValues.responseColumn,
                         FlashMLConstants.FEATURES)).map(col): _*).cache())
 
                     val defaultFilter: String = FlashMLConfig.getString(FlashMLConstants.RESPONSE_VARIABLE) + " is not null"
@@ -60,11 +60,11 @@ object Predict
 
                     var predictionArray: ArrayBuffer[DataFrame] = ArrayBuffer[DataFrame]()
 
-                    if (ConfigUtils.isPageLevelModel)
+                    if (ConfigValues.isPageLevelModel)
                     {
                         for (x <- dfArray.indices)
                         {
-                            predictionArray += modelArray(x % ConfigUtils.numPages).transform(dfArray(x)).filter(filter)
+                            predictionArray += modelArray(x % ConfigValues.numPages).transform(dfArray(x)).filter(filter)
                         }
                     }
                     else
@@ -78,13 +78,13 @@ object Predict
                     predictionArray.foreach(_.select(columnsNames.map(col): _*).persist())
 
                     // SavePoint, if required
-                    if (ConfigUtils.toSavePoint)
+                    if (ConfigValues.toSavePoint)
                     {
-                        if (ConfigUtils.isPageLevelModel)
+                        if (ConfigValues.isPageLevelModel)
                         {
                             for (x <- predictionArray.indices)
                             {
-                                SavePointManager.saveDataFrame(predictionArray(x).select(columnsNames.map(col): _*), x % ConfigUtils.numPages + 1, DataSetType(x / ConfigUtils.numPages), FlashMLConstants.SCORING)
+                                SavePointManager.saveDataFrame(predictionArray(x).select(columnsNames.map(col): _*), x % ConfigValues.numPages + 1, DataSetType(x / ConfigValues.numPages), FlashMLConstants.SCORING)
                             }
                         }
                         else

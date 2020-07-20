@@ -1,6 +1,6 @@
 package com.tfs.flashml.dal
 
-import com.tfs.flashml.util.ConfigUtils
+import com.tfs.flashml.util.ConfigValues
 import com.tfs.flashml.util.FlashMLConfig._
 import com.tfs.flashml.util.conf.FlashMLConstants
 import org.apache.spark.sql.expressions.Window
@@ -135,20 +135,20 @@ abstract class DataReader
 
         val filteredDF = df
                 .filter(filterCondition)
-                .select(ConfigUtils.columnNamesVariables
+                .select(ConfigValues.columnNamesVariables
                         .distinct
                         .map(col): _*)
 
         // Generate time on page variable
         def generateTimeOnPageColumn(df: DataFrame): DataFrame =
         {
-            if (!df.columns.contains(ConfigUtils.topVariable) && !ConfigUtils.cumulativeSessionTime.isEmpty)
+            if (!df.columns.contains(ConfigValues.topVariable) && !ConfigValues.cumulativeSessionTime.isEmpty)
             {
                 val window = Window
-                        .partitionBy(ConfigUtils.primaryKeyColumns.map(col): _*)
-                        .orderBy(ConfigUtils.pageColumn)
-                df.withColumn(ConfigUtils.topVariable, lead(ConfigUtils.cumulativeSessionTime, 1).over(window) - col
-                (ConfigUtils.cumulativeSessionTime))
+                        .partitionBy(ConfigValues.primaryKeyColumns.map(col): _*)
+                        .orderBy(ConfigValues.pageColumn)
+                df.withColumn(ConfigValues.topVariable, lead(ConfigValues.cumulativeSessionTime, 1).over(window) - col
+                (ConfigValues.cumulativeSessionTime))
 
             }
             else

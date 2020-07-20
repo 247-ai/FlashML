@@ -1,6 +1,6 @@
 package com.tfs.flashml.publish.preprocessing
 
-import com.tfs.flashml.util.{ConfigUtils, PublishUtils}
+import com.tfs.flashml.util.{ConfigValues, PublishUtils}
 
 import scala.collection.mutable
 
@@ -18,7 +18,7 @@ object SentenceMarkerPublisher
     else new StringBuilder
     globalVar += ("" + sentMarkerJsTmp)
     val sentMarkerJs = new StringBuilder
-    sentMarkerJs ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var " +
+    sentMarkerJs ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "var " +
       output + " = sentenceMarker(" + input + ");"
     sentMarkerJs
   }

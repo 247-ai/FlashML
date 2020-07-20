@@ -7,7 +7,7 @@ import com.tfs.flashml.core.modeltraining.ModelTrainingEngine
 import com.tfs.flashml.core.featuregeneration.FeatureGenerationEngine
 import com.tfs.flashml.core.preprocessing.PreprocessingEngine
 import com.tfs.flashml.core.sampling.TrainTestSampler
-import com.tfs.flashml.util.ConfigUtils._
+import com.tfs.flashml.util.ConfigValues._
 import com.tfs.flashml.util.{FlashMLConfig, Json}
 import com.typesafe.config.{Config, ConfigFactory}
 import org.slf4j.LoggerFactory

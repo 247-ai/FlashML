@@ -1,6 +1,6 @@
 package com.tfs.flashml.publish.featureengineering
 
-import com.tfs.flashml.util.{ConfigUtils, PublishUtils}
+import com.tfs.flashml.util.{ConfigValues, PublishUtils}
 
 import scala.collection.mutable
 
@@ -21,11 +21,11 @@ object CountVectorizerPublisher
     val cntVectorizerJs = new StringBuilder
     cntVectorizerJs ++= createVocabularyMap(vocabulary, output)
     cntVectorizerJs ++= ""
-    cntVectorizerJs ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var " +
+    cntVectorizerJs ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "var " +
       "binarizer_" + output + " = " + binarizer.toString + ";"
-    cntVectorizerJs ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var " +
+    cntVectorizerJs ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "var " +
       "size_" + output + " = " + vocabSize + ";"
-    cntVectorizerJs ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var " +
+    cntVectorizerJs ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "var " +
       output + " = countVectorizer("
     cntVectorizerJs ++= input + ",countVectorizerMap_" + output + " ,binarizer_" + output + ");"
     cntVectorizerJs
@@ -34,15 +34,15 @@ object CountVectorizerPublisher
   def createVocabularyMap(vocabulary: Array[String], output: String): StringBuilder =
   {
     val vocabMapJS = new StringBuilder
-    vocabMapJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var " +
+    vocabMapJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "var " +
       "countVectorizerMap_" + output + " ={"
 
     for ((value, index) <- vocabulary.zipWithIndex)
     {
-      vocabMapJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 2) + "'" +
-        value + "'" + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + ": " + index + ","
+      vocabMapJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 2) + "'" +
+        value + "'" + PublishUtils.indent(ConfigValues.defaultIndent + 1) + ": " + index + ","
     }
-    vocabMapJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "}"
+    vocabMapJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "}"
     vocabMapJS
   }
 

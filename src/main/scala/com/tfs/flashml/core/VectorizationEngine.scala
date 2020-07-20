@@ -2,9 +2,9 @@ package com.tfs.flashml.core
 
 import java.util
 import com.tfs.flashml.core.preprocessing.PreprocessingEngine.{loadPreprocessingConfig, log}
-import com.tfs.flashml.util.ConfigUtils.{binningConfigPageVariables, featureGenerationGramsConfig}
+import com.tfs.flashml.util.ConfigValues.{binningConfigPageVariables, featureGenerationGramsConfig}
 import com.tfs.flashml.util.conf.{ConfigValidatorException, FlashMLConstants}
-import com.tfs.flashml.util.{ConfigUtils, FlashMLConfig}
+import com.tfs.flashml.util.{ConfigValues, FlashMLConfig}
 import org.apache.spark.ml.feature._
 import org.apache.spark.ml.{Pipeline, PipelineModel, PipelineStage}
 import org.apache.spark.sql.DataFrame
@@ -27,12 +27,12 @@ object VectorizationEngine extends Engine with Validator
 
         odfArray.map(dfArray =>
         {
-            if (ConfigUtils.isModel)
+            if (ConfigValues.isModel)
             {
-                if (ConfigUtils.isPageLevelModel)
+                if (ConfigValues.isPageLevelModel)
                 {
                     log.info(s"Vectorization: Page level processing.")
-                    (1 to ConfigUtils.numPages)
+                    (1 to ConfigValues.numPages)
                             .foreach
                             { pageNumber: Int =>
                                 log.info(s"Vectorization: Building Pipeline for Page $pageNumber.")
@@ -41,7 +41,7 @@ object VectorizationEngine extends Engine with Validator
 
                     dfArray.indices.foreach
                     { index: Int =>
-                        outputDFArrayBuffer += pipelineModelArray(index % ConfigUtils.numPages).transform(dfArray
+                        outputDFArrayBuffer += pipelineModelArray(index % ConfigValues.numPages).transform(dfArray
                         (index))
                     }
                 }
@@ -57,16 +57,16 @@ object VectorizationEngine extends Engine with Validator
             }
             else
             {
-                if (ConfigUtils.isPageLevelModel)
+                if (ConfigValues.isPageLevelModel)
                 {
-                    (1 to ConfigUtils.numPages).foreach
+                    (1 to ConfigValues.numPages).foreach
                     { pageNumber: Int =>
                         pipelineModelArray += loadPipelineModel(pageNumber)
                     }
 
                     dfArray.indices.foreach
                     { index: Int =>
-                        outputDFArrayBuffer += pipelineModelArray(index % ConfigUtils.numPages).transform(dfArray
+                        outputDFArrayBuffer += pipelineModelArray(index % ConfigValues.numPages).transform(dfArray
                         (index))
                     }
                 }
@@ -92,23 +92,23 @@ object VectorizationEngine extends Engine with Validator
         val allStages = ArrayBuffer[PipelineStage]()
 
         // Text Column Vectorization
-        val textVectorizationConfig = ConfigUtils.loadTextVectorizationConfig
+        val textVectorizationConfig = ConfigValues.loadTextVectorizationConfig
 
         if (textVectorizationConfig.nonEmpty)
         {
 
-            val textVectorizationMapArr = ConfigUtils.textVectorizationScope.toLowerCase match
+            val textVectorizationMapArr = ConfigValues.textVectorizationScope.toLowerCase match
             {
 
                 case FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE | FlashMLConstants.SCOPE_PARAMETER_NO_PAGE =>
 
-                    ConfigUtils
+                    ConfigValues
                             .loadTextVectorizationConfig
                             .asInstanceOf[Array[util.HashMap[String, Any]]]
 
                 case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE =>
 
-                    val currTextVectorConfig = ConfigUtils
+                    val currTextVectorConfig = ConfigValues
                             .loadTextVectorizationConfig
                             .asInstanceOf[Array[Array[util.HashMap[String, Any]]]]
 
@@ -141,7 +141,7 @@ object VectorizationEngine extends Engine with Validator
 
         // Column to be assembled into a feature vector. For each page, in case of page level model
         val columnsToAssemble: Array[String] =
-            ConfigUtils.getColumnsToAssemble(if (pageCount == 0) 0
+            ConfigValues.getColumnsToAssemble(if (pageCount == 0) 0
             else pageCount - 1)
 
         val vectorAssembler = new VectorAssembler()
@@ -163,7 +163,6 @@ object VectorizationEngine extends Engine with Validator
 
     private def getPipelineStagesForColumn(map: util.HashMap[String, Any]): Array[PipelineStage] =
     {
-
         val inputColumnName = map
                 .get(FlashMLConstants.INPUT_VARIABLE)
                 .asInstanceOf[String]
@@ -192,7 +191,6 @@ object VectorizationEngine extends Engine with Validator
 
         opName match
         {
-
             case FlashMLConstants.HASHING_TF => Array(new HashingTF()
                     .setInputCol(inputColumnName)
                     .setOutputCol(outputColumn)
@@ -245,11 +243,10 @@ object VectorizationEngine extends Engine with Validator
         (inputVariable, operations.toArray)
     }
 
-
     private val savePipelineModel: (PipelineModel, Int) => Unit = savePipelineModel(_: PipelineModel, _: Int,
-        "vectorization")
+        FlashMLConstants.VECTORIZATION)
 
-    val loadPipelineModel: Int => PipelineModel = loadPipelineModel(_: Int, "vectorization")
+    val loadPipelineModel: Int => PipelineModel = loadPipelineModel(_: Int, FlashMLConstants.VECTORIZATION)
 
     /**
       * Validating flashml Vectorization configuration for checking whether the input variables
@@ -266,29 +263,29 @@ object VectorizationEngine extends Engine with Validator
             FlashMLConstants.TF_IDF
         )
         // validate if vectorization config is not empty
-        if (ConfigUtils.loadTextVectorizationConfig.nonEmpty)
+        if (ConfigValues.loadTextVectorizationConfig.nonEmpty)
         {
             // Validating based on page level and scope
-            if (ConfigUtils.isPageLevelModel)
+            if (ConfigValues.isPageLevelModel)
             {
-                if (ConfigUtils.textVectorizationScope.toLowerCase.equals(FlashMLConstants.SCOPE_PARAMETER_NO_PAGE))
+                if (ConfigValues.textVectorizationScope.toLowerCase.equals(FlashMLConstants.SCOPE_PARAMETER_NO_PAGE))
                 {
-                    val msg = s"Scope cannot be ${ConfigUtils.textVectorizationScope} for page level model"
+                    val msg = s"Scope cannot be ${ConfigValues.textVectorizationScope} for page level model"
                     log.error(msg)
                     throw new ConfigValidatorException(msg)
                 }
 
-                (0 until ConfigUtils.numPages).foreach(pageNumber =>
+                (0 until ConfigValues.numPages).foreach(pageNumber =>
                 {
                     // fetching vectorization config steps pagewise
                     val textVectorizationSteps: Array[util.HashMap[String, Any]] =
-                        ConfigUtils.textVectorizationScope.toLowerCase match
+                        ConfigValues.textVectorizationScope.toLowerCase match
                         {
                             case FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE =>
-                                ConfigUtils.loadTextVectorizationConfig.asInstanceOf[Array[util.HashMap[String, Any]]]
+                                ConfigValues.loadTextVectorizationConfig.asInstanceOf[Array[util.HashMap[String, Any]]]
 
                             case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE =>
-                                val currTextVectorConfig = ConfigUtils.loadTextVectorizationConfig
+                                val currTextVectorConfig = ConfigValues.loadTextVectorizationConfig
                                         .asInstanceOf[Array[Array[util.HashMap[String, Any]]]]
 
                                 if (currTextVectorConfig.isDefinedAt(pageNumber) && currTextVectorConfig(pageNumber)
@@ -305,7 +302,7 @@ object VectorizationEngine extends Engine with Validator
                     if (featureGenerationGramsConfig.nonEmpty)
                     {
 
-                        val featureGenerationGrams = ConfigUtils.featureGenerationScope match
+                        val featureGenerationGrams = ConfigValues.featureGenerationScope match
                         {
                             case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE
                             => featureGenerationGramsConfig
@@ -320,7 +317,7 @@ object VectorizationEngine extends Engine with Validator
                     if (loadPreprocessingConfig.nonEmpty)
                     {
 
-                        val preprocessingStepsPageWise = ConfigUtils.preprocessingVariablesScope match
+                        val preprocessingStepsPageWise = ConfigValues.preprocessingVariablesScope match
                         {
                             case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE =>
                                 loadPreprocessingConfig
@@ -344,10 +341,10 @@ object VectorizationEngine extends Engine with Validator
             else
             {
                 //throwing an error if the scope is perpage or allpage for non page level variables
-                ConfigUtils.textVectorizationScope.toLowerCase match
+                ConfigValues.textVectorizationScope.toLowerCase match
                 {
                     case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE =>
-                        val msg = s"Scope cannot be ${ConfigUtils.textVectorizationScope} for non page level model"
+                        val msg = s"Scope cannot be ${ConfigValues.textVectorizationScope} for non page level model"
                         log.error(msg)
                         throw new ConfigValidatorException(msg)
 
@@ -371,7 +368,7 @@ object VectorizationEngine extends Engine with Validator
                         }
 
                         // function call to validate
-                        variableDependencyValidation(ConfigUtils.loadTextVectorizationConfig.asInstanceOf[Array[util.HashMap[String, Any]]], previousStepOutputvariables.toArray, transformations)
+                        variableDependencyValidation(ConfigValues.loadTextVectorizationConfig.asInstanceOf[Array[util.HashMap[String, Any]]], previousStepOutputvariables.toArray, transformations)
                 }
             }
         }

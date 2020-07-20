@@ -1,6 +1,6 @@
 package com.tfs.flashml.publish.preprocessing
 
-import com.tfs.flashml.util.{ConfigUtils, PublishUtils}
+import com.tfs.flashml.util.{ConfigValues, PublishUtils}
 
 import scala.collection.mutable
 
@@ -14,7 +14,7 @@ object ImputerPublisher
     else new StringBuilder
     globalVar += ("" ++ imputerJStmp)
     val imputerJS = new StringBuilder
-    imputerJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + s"$inputCol = " +
+    imputerJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + s"$inputCol = " +
       s"nullChecker( $inputCol,'$replaceValue');"
     imputerJS
   }

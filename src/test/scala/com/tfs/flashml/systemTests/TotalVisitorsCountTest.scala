@@ -2,7 +2,7 @@ package com.tfs.flashml.systemTests
 
 import com.tfs.flashml.core.PipelineSteps
 import com.tfs.flashml.dal.SavePointManager
-import com.tfs.flashml.util.{ConfigUtils, FlashMLConfig}
+import com.tfs.flashml.util.{ConfigValues, FlashMLConfig}
 import com.tfs.flashml.util.conf.FlashMLConstants
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.log4j.{Level, Logger}
@@ -44,12 +44,12 @@ class TotalVisitorsCountTest extends AnyFlatSpec {
   PipelineSteps.run()
 
   var vectorizedDf: DataFrame =  SavePointManager.loadData(FlashMLConstants.VECTORIZATION)(0)
-    .withColumn("visitors", concat(ConfigUtils.primaryKeyColumns.map(col): _*))
+    .withColumn("visitors", concat(ConfigValues.primaryKeyColumns.map(col): _*))
 
   var vectorizedTotalVisitors: Long = vectorizedDf.select("visitors").distinct().count
 
   var predictDf: DataFrame = SavePointManager.loadData(FlashMLConstants.SCORING)(0)
-    .withColumn("visitors", concat(ConfigUtils.primaryKeyColumns.map(col): _*))
+    .withColumn("visitors", concat(ConfigValues.primaryKeyColumns.map(col): _*))
 
   val predictTotalVisitors: Long = predictDf.select("visitors").distinct().count()
 

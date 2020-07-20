@@ -1,31 +1,25 @@
 package com.tfs.flashml.core
 
-import java.io
 import java.util.concurrent.TimeUnit
 
-import com.tfs.flashml.core.VectorizationEngine.log
 import com.tfs.flashml.core.featuregeneration.FeatureGenerationEngine
-import com.tfs.flashml.core.metrics.{MetricsEvaluator, StandardMetricsEvaluator}
-import com.tfs.flashml.core.preprocessing.PreprocessingEngine
+import com.tfs.flashml.core.metrics.MetricsEvaluator
 import com.tfs.flashml.core.modeltraining.ModelTrainingEngine
+import com.tfs.flashml.core.preprocessing.PreprocessingEngine
 import com.tfs.flashml.core.sampling.TrainTestSampler
 import com.tfs.flashml.dal.{DataReaderFactory, SavePointManager}
 import com.tfs.flashml.publish.Publish
-import com.tfs.flashml.publish.transformer.HotleadTransformer
-import com.tfs.flashml.util.ConfigUtils.{DataSetType, binningConfigPageVariables}
-import com.tfs.flashml.util.{ConfigUtils, FlashMLConfig}
+import com.tfs.flashml.util.ConfigValues.DataSetType
 import com.tfs.flashml.util.conf.{ConfigValidator, FlashMLConstants}
+import com.tfs.flashml.util.{ConfigValues, FlashMLConfig}
 import com.typesafe.config.ConfigRenderOptions
 import org.apache.hadoop.fs.Path
-import org.apache.spark.ml.{Pipeline, PipelineModel}
-import org.apache.spark.ml.linalg.SparseVector
-import org.apache.spark.sql.{DataFrame, SaveMode}
+import org.apache.spark.ml.PipelineModel
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.col
 import org.slf4j.LoggerFactory
 
-import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
-import org.apache.spark.sql.functions.{array, concat, lit}
 
 
 /**
@@ -42,12 +36,12 @@ object PipelineSteps
     {
         //Save config parameter on hdfs
         val configFilePath = DirectoryCreator.getBasePath + "/config.json"
-        if (ConfigUtils.fs.exists(new Path(configFilePath)))
+        if (ConfigValues.fs.exists(new Path(configFilePath)))
         {
-            ConfigUtils.fs.delete(new Path(configFilePath), true)
+            ConfigValues.fs.delete(new Path(configFilePath), true)
             log.debug("Deleted config parameter on HDFS ")
         }
-        val os = ConfigUtils.fs.create(new Path(DirectoryCreator.getBasePath + "/config.json"), true)
+        val os = ConfigValues.fs.create(new Path(DirectoryCreator.getBasePath + "/config.json"), true)
         os.write(FlashMLConfig.config.root().render(ConfigRenderOptions.concise().setJson(true).setFormatted(true))
                 .getBytes)
         os.close()
@@ -96,7 +90,7 @@ object PipelineSteps
           * The page level split is happening outside the preprocessing step, because for publishing mleap supported models we need to fit the pipeline again with the data.
           * And if the publish step is running as a separate step then we need to make it available there.
           */
-        val pageLevelDataFrameArray: Option[Array[DataFrame]] = if (ConfigUtils.isPageLevelModel)
+        val pageLevelDataFrameArray: Option[Array[DataFrame]] = if (ConfigValues.isPageLevelModel)
         {
             splitPageLevel(samplingDF)
         }
@@ -108,7 +102,7 @@ object PipelineSteps
         // The PreprocessingEngine.process() function also saves the computed DFs to HDFS proj Directory
         val preprocessingDF: Option[Array[DataFrame]] = if (steps.contains(FlashMLConstants.PREPROCESSING))
         {
-            if (ConfigUtils.isPageLevelModel)
+            if (ConfigValues.isPageLevelModel)
             {
                 PreprocessingEngine.process(pageLevelDataFrameArray)
             }
@@ -142,13 +136,13 @@ object PipelineSteps
             None
 
         // Cache Preprocessing DF
-        if (ConfigUtils.pagewisePreprocessingIntVariables.nonEmpty)
+        if (ConfigValues.pagewisePreprocessingIntVariables.nonEmpty)
             preprocessingDF
                     .map(_.indices
                             .map(index => preprocessingDF
                                     .get
                                     .apply(index)
-                                    .drop(ConfigUtils.pagewisePreprocessingIntVariables(index / 2): _*)
+                                    .drop(ConfigValues.pagewisePreprocessingIntVariables(index / 2): _*)
                                     .cache()))
         else preprocessingDF.map(_.map(_.cache()))
 
@@ -167,15 +161,15 @@ object PipelineSteps
         val filteredVectorizationDf: Option[Array[DataFrame]] = if (steps.contains(FlashMLConstants.VECTORIZATION))
         {
             // Columns which are needed for next steps.
-            val columnsNames = (ConfigUtils.primaryKeyColumns ++
-                    Array(ConfigUtils.topVariable,
-                        ConfigUtils.pageColumn,
+            val columnsNames = (ConfigValues.primaryKeyColumns ++
+                    Array(ConfigValues.topVariable,
+                        ConfigValues.pageColumn,
                         FlashMLConstants.FEATURES,
-                        ConfigUtils.upliftColumn,
-                        ConfigUtils.responseColumn,
-                        ConfigUtils.dateVariable,
-                        ConfigUtils.randomVariable) ++
-                    ConfigUtils.additionalColumns)
+                        ConfigValues.upliftColumn,
+                        ConfigValues.responseColumn,
+                        ConfigValues.dateVariable,
+                        ConfigValues.randomVariable) ++
+                    ConfigValues.additionalColumns)
                     .filter(_.nonEmpty)
                     .distinct
 
@@ -183,18 +177,18 @@ object PipelineSteps
                     .map(_.map(_.select(columnsNames.map(col): _*)))
 
             // SavePoint if required
-            if (ConfigUtils.toSavePoint)
+            if (ConfigValues.toSavePoint)
             {
                 oVectorizationDF.map(_.map(_.cache))
                 oVectorizationDF.foreach(vectorizationDf =>
                 {
-                    if (ConfigUtils.isPageLevelModel)
+                    if (ConfigValues.isPageLevelModel)
                     {
                         for (x <- vectorizationDf.indices)
                         {
                             SavePointManager.saveDataFrame(vectorizationDf(x),
-                                x % ConfigUtils.numPages + 1,
-                                DataSetType(x / ConfigUtils.numPages),
+                                x % ConfigValues.numPages + 1,
+                                DataSetType(x / ConfigValues.numPages),
                                 FlashMLConstants.VECTORIZATION)
                         }
                     }
@@ -260,7 +254,7 @@ object PipelineSteps
         }
 
         // Custom Metrics Evaluation
-        if (steps.contains(FlashMLConstants.CUSTOM_METRICS) && ConfigUtils.isSingleIntent)
+        if (steps.contains(FlashMLConstants.CUSTOM_METRICS) && ConfigValues.isSingleIntent)
         {
             MetricsEvaluator.evaluateCustomMetrics(predictionDf.get, "metrics")
             log.info(s"Time till computing custom metrics: ${TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - startTime)} sec")
@@ -285,7 +279,7 @@ object PipelineSteps
             {
                 case FlashMLConstants.PUBLISH_JS => Publish.generateJS
                 //passing the df as parameter because we are fitting it again inside the function.
-                case FlashMLConstants.PUBLISH_MLEAP => Publish.generateMleap(if (ConfigUtils.isPageLevelModel) pageLevelDataFrameArray
+                case FlashMLConstants.PUBLISH_MLEAP => Publish.generateMleapBundle(if (ConfigValues.isPageLevelModel) pageLevelDataFrameArray
                 else samplingDF)
                 case _ => new IllegalArgumentException(s"The value provided - '$format' is not supported for " +
                         s"publishing")
@@ -317,14 +311,14 @@ object PipelineSteps
     {
         odfArray.map(dfArray =>
         {
-            val pageVariableColumnName: String = ConfigUtils.pageColumn
+            val pageVariableColumnName: String = ConfigValues.pageColumn
             val pageLevelDFArray = new ArrayBuffer[DataFrame]()
             dfArray.foreach
             { df: DataFrame =>
-                (1 to ConfigUtils.numPages).foreach
+                (1 to ConfigValues.numPages).foreach
                 { pageNumber: Int =>
                     val filterCondition =
-                        if (pageNumber < ConfigUtils.numPages)
+                        if (pageNumber < ConfigValues.numPages)
                             s"$pageVariableColumnName == $pageNumber"
                         else s"$pageVariableColumnName >= $pageNumber"
                     pageLevelDFArray += df.filter(filterCondition)

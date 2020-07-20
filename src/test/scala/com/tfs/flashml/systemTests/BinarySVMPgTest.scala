@@ -1,5 +1,6 @@
 package com.tfs.flashml.systemTests
 
+import com.tfs.flashml.TestUtils
 import com.tfs.flashml.core.PipelineSteps
 import com.tfs.flashml.dal.SavePointManager
 import com.tfs.flashml.util._
@@ -47,7 +48,12 @@ class BinarySVMPgTest extends AnyFlatSpec {
   PipelineSteps.run()
   import ss.implicits._
 
-  var svmSIPGPredictionDF: Array[RDD[(Double,Double)]] = SavePointManager.loadData(FlashMLConstants.SCORING).map(_.withColumn("positive_probability", ConfigUtils.pos_prob(col("probability"))).select("positive_probability", ConfigUtils.getIndexedResponseColumn).as[(Double, Double)].rdd)
+  var svmSIPGPredictionDF: Array[RDD[(Double,Double)]] = SavePointManager
+          .loadData(FlashMLConstants.SCORING)
+          .map(_.withColumn("positive_probability", TestUtils.pos_prob(col("probability")))
+                  .select("positive_probability", ConfigValues.getIndexedResponseColumn)
+                  .as[(Double, Double)].rdd
+          )
 
   val svmSIPGEvaluator1 = new BinaryClassificationMetrics(svmSIPGPredictionDF(0))
   "SVM-SingleIntent-PG-TrainAUC page1" should "match" in {

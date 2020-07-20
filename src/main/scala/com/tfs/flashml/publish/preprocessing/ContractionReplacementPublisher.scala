@@ -1,7 +1,7 @@
 package com.tfs.flashml.publish.preprocessing
 
 import com.tfs.flashml.util.conf.FlashMLConstants
-import com.tfs.flashml.util.{ConfigUtils, PublishUtils}
+import com.tfs.flashml.util.{ConfigValues, PublishUtils}
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ArrayBuffer
@@ -21,7 +21,7 @@ object ContractionReplacementPublisher
     val contReplJs = if (contReplFunction) contReplFunctionJS(pattern)
     else new StringBuilder
     contReplJs ++= expansionMapJS(expansionMap)
-    contReplJs ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var " + output + " = contractionReplacement("
+    contReplJs ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "var " + output + " = contractionReplacement("
     contReplJs ++= input + ",expansionsMap);"
     contReplJs
   }
@@ -29,9 +29,9 @@ object ContractionReplacementPublisher
   def contReplFunctionJS(pattern: String) =
   {
     val contReplString = new StringBuilder
-    contReplString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "function " +
+    contReplString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "function " +
       "contractionReplacement(line,expansionMap){"
-    contReplString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 2) + "var " +
+    contReplString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 2) + "var " +
       "termArr = line.replace(/\\\"/g,\"\\\\\\\"\")"
     contReplString ++= ".split(/"
     val javaPattern = pattern.stripPrefix("[").stripSuffix("]").replace("//", "\\/\\/").split('|').fold("")(
@@ -52,19 +52,19 @@ object ContractionReplacementPublisher
           accumulator + "+|\\" + subPattern
       }) + "+/);"
     contReplString ++= javaPattern.substring(2)
-    contReplString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 2) + "for (i in " +
+    contReplString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 2) + "for (i in " +
       "termArr){"
-    contReplString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 3) + "var update" +
+    contReplString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 3) + "var update" +
       " = expansionsMap[termArr[i]]"
-    contReplString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 3) + "if (update" +
+    contReplString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 3) + "if (update" +
       " != undefined){"
-    contReplString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 4) + "termArr[i]" +
+    contReplString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 4) + "termArr[i]" +
       " = update;"
-    contReplString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 3) + "}"
-    contReplString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 2) + "}"
-    contReplString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 2) + "return " +
+    contReplString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 3) + "}"
+    contReplString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 2) + "}"
+    contReplString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 2) + "return " +
       "termArr.join(\"" + FlashMLConstants.CUSTOM_DELIMITER + "\");"
-    contReplString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "}"
+    contReplString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "}"
     contReplString
   }
 
@@ -72,14 +72,14 @@ object ContractionReplacementPublisher
   {
     val expansionsMapString = new StringBuilder
     val expansionsMapArray = new ArrayBuffer[String]()
-    expansionsMapString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var " +
+    expansionsMapString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "var " +
       "expansionsMap = {"
     for (i <- expansionMap)
     {
-      expansionsMapArray += PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 2) + "\"" + i.split(",")(0) + "\" : \"" + i.split(",")(1) + "\""
+      expansionsMapArray += PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 2) + "\"" + i.split(",")(0) + "\" : \"" + i.split(",")(1) + "\""
     }
     expansionsMapString ++= expansionsMapArray.mkString(",")
-    expansionsMapString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "}"
+    expansionsMapString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "}"
 
     expansionsMapString
   }

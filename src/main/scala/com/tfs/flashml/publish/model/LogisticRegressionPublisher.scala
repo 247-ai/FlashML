@@ -3,7 +3,7 @@ package com.tfs.flashml.publish.model
 import java.text.DecimalFormat
 
 import com.tfs.flashml.publish.model.SVMPublisher.doubleToString
-import com.tfs.flashml.util.{ConfigUtils, PublishUtils}
+import com.tfs.flashml.util.{ConfigValues, PublishUtils}
 import org.apache.spark.ml.linalg.Vector
 
 import scala.collection.mutable.ArrayBuffer
@@ -14,9 +14,9 @@ object LogisticRegressionPublisher {
 
     val js =new StringBuilder
     if(idx == -1){
-      js ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var intercept = " + intercept  + ";"
+      js ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "var intercept = " + intercept  + ";"
     }else{
-      js ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var intercept_"+ idx+ " = " + intercept  + ";"
+      js ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "var intercept_"+ idx+ " = " + intercept  + ";"
     }
     js ++= createCoefficientsMap(coefficients.toArray, idx)
     //js ++= generateDotProductString
@@ -31,17 +31,17 @@ object LogisticRegressionPublisher {
     val mapArray = new ArrayBuffer[String]()
     var formatString = s"#.${"#" * ModelPublisher.decimalPrecision}"
     if(idx == -1){
-      mapString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var coefficients = { "
+      mapString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "var coefficients = { "
     }else{
-      mapString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var coefficients_" + idx + " = { "
+      mapString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "var coefficients_" + idx + " = { "
     }
 
     for((value,index) <- coefficientsArray.zipWithIndex){
       if (value != 0)
-      mapArray += PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 2) + index + PublishUtils.indent(2) + ": " + doubleToString(value, formatString).toDouble
+      mapArray += PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 2) + index + PublishUtils.indent(2) + ": " + doubleToString(value, formatString).toDouble
     }
     mapString ++= mapArray.mkString(",")
-    mapString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "};"
+    mapString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "};"
     mapString
   }
 
@@ -58,7 +58,7 @@ object LogisticRegressionPublisher {
   }
 
   def generateProbabilityString : StringBuilder = {
-    if (ConfigUtils.isUplift) {
+    if (ConfigValues.isUplift) {
       var probString = new StringBuilder
       probString ++= PublishUtils.getNewLine + PublishUtils.indent(2) + "var score_0 = 1.0/(1+Math.exp(-dotProduct));"
       probString ++= PublishUtils.getNewLine + PublishUtils.indent(2) + "if(coefficients[shiftKey] != undefined){"

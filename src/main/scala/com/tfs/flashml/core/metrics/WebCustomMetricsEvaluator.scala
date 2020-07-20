@@ -3,9 +3,9 @@ package com.tfs.flashml.core.metrics
 import java.text.DecimalFormat
 
 import com.tfs.flashml.core.DirectoryCreator
-import com.tfs.flashml.util.ConfigUtils.DataSetType
+import com.tfs.flashml.util.ConfigValues.DataSetType
 import com.tfs.flashml.util.conf.FlashMLConstants
-import com.tfs.flashml.util.{ConfigUtils, FlashMLConfig}
+import com.tfs.flashml.util.{ConfigValues, FlashMLConfig}
 import org.apache.spark.ml.linalg.DenseVector
 import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -29,7 +29,7 @@ object WebCustomMetricsEvaluator
 
   private val posProbUDF = udf((a: DenseVector) => a(1))
   private val primaryKey = FlashMLConfig.getStringArray(FlashMLConstants.PRIMARY_KEY)
-  private val responseVariable = ConfigUtils.getIndexedResponseColumn
+  private val responseVariable = ConfigValues.getIndexedResponseColumn
   private val pageVariable = FlashMLConfig.getString(FlashMLConstants.PAGE_VARIABLE)
   private val customMetricsType = FlashMLConfig.getString(FlashMLConstants.CUSTOM_METRICS_TYPE)
   private val topVariable = FlashMLConfig.getString(FlashMLConstants.TOP_VARIABLE)
@@ -43,7 +43,7 @@ object WebCustomMetricsEvaluator
   {
     val ss = SparkSession.builder().getOrCreate()
     import ss.implicits._
-    val responseVariable = ConfigUtils.getIndexedResponseColumn
+    val responseVariable = ConfigValues.getIndexedResponseColumn
     val predictDF = df.withColumn("positive_probability", posProbUDF(col("probability"))).select("positive_probability", responseVariable)
     val predictionAndLabelsRdd = predictDF.as[(Double, Double)].rdd
     val metrics = new BinaryClassificationMetrics(predictionAndLabelsRdd)

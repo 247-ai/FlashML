@@ -27,8 +27,8 @@ object FlashML
     def main(args: Array[String]): Unit =
     {
       // Set up the config file to be used
-      ConfigUtils.configFilePath = if (args.length > 0) args(0) else "config.json"
-      log.info(s"Using ${ConfigUtils.configFilePath} as config file.")
+      ConfigValues.configFilePath = if (args.length > 0) args(0) else "config.json"
+      log.info(s"Using ${ConfigValues.configFilePath} as config file.")
 
       log.info("Starting FlashML application")
 

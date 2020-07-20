@@ -7,8 +7,8 @@ import com.tfs.flashml.core.VectorizationEngine.log
 import com.tfs.flashml.core.preprocessing.transformer._
 import com.tfs.flashml.dal.SavePointManager
 import com.tfs.flashml.util.conf.{ConfigValidatorException, FlashMLConstants}
-import com.tfs.flashml.util.{ConfigUtils, FlashMLConfig}
-import com.tfs.flashml.util.ConfigUtils.{DataSet, DataSetType}
+import com.tfs.flashml.util.{ConfigValues, FlashMLConfig}
+import com.tfs.flashml.util.ConfigValues.{DataSet, DataSetType}
 import org.apache.spark.SparkException
 import org.apache.spark.ml.feature.{ImputerCustom, RegexTokenizer, StopWordsRemoverCustom}
 import org.apache.spark.ml.{Pipeline, PipelineModel, PipelineStage}
@@ -65,20 +65,20 @@ object PreprocessingEngine extends Engine with Validator
           .map(dfArray =>
           {
 
-              if (ConfigUtils.isModel)
+              if (ConfigValues.isModel)
               {
-                  if (ConfigUtils.preprocessingVariablesScope == FlashMLConstants.PREPROCESSING_SCOPE_NONE)
+                  if (ConfigValues.preprocessingVariablesScope == FlashMLConstants.PREPROCESSING_SCOPE_NONE)
                       return Some(dfArray)
                   else
                   {
 
                       log.info(s"Preprocessing: Loading config.")
 
-                      if (ConfigUtils.isPageLevelModel)
+                      if (ConfigValues.isPageLevelModel)
                       {
                           log.info(s"Preprocessing: Page Level Processing.")
 
-                          (1 to ConfigUtils.numPages)
+                          (1 to ConfigValues.numPages)
                             .foreach
                             { pageNumber: Int =>
 
@@ -91,7 +91,7 @@ object PreprocessingEngine extends Engine with Validator
                             .indices
                             .foreach
                             { index: Int =>
-                                val currentDF = pipelineModelArray(index % ConfigUtils.numPages)
+                                val currentDF = pipelineModelArray(index % ConfigValues.numPages)
                                   .transform(dfArray(index))
 
                                 outputDFArrayBuffer += currentDF
@@ -123,11 +123,11 @@ object PreprocessingEngine extends Engine with Validator
 
                   log.info(s"Preprocessing: Loading config.")
 
-                  if (ConfigUtils.isPageLevelModel)
+                  if (ConfigValues.isPageLevelModel)
                   {
                       //Page Level Model requires an ArrayBuffer[ArrayBuffer[String]] to denote required
                       // intermediate columns to be dropped
-                      (1 to ConfigUtils.numPages).foreach
+                      (1 to ConfigValues.numPages).foreach
                       { pageNumber: Int =>
                           pipelineModelArray += loadPipelineModel(pageNumber)
 
@@ -137,7 +137,7 @@ object PreprocessingEngine extends Engine with Validator
                         .indices
                         .foreach
                         { index: Int =>
-                            val currentDF = pipelineModelArray(index % ConfigUtils.numPages)
+                            val currentDF = pipelineModelArray(index % ConfigValues.numPages)
                               .transform(dfArray(index))
                             outputDFArrayBuffer += currentDF
                         }
@@ -169,12 +169,12 @@ object PreprocessingEngine extends Engine with Validator
     def preprocessingConfigLoader(pageNum: Int) =
     {
 
-        if (ConfigUtils.isPageLevelModel && ConfigUtils.preprocessingVariablesScope == FlashMLConstants
+        if (ConfigValues.isPageLevelModel && ConfigValues.preprocessingVariablesScope == FlashMLConstants
           .SCOPE_PARAMETER_PER_PAGE)
             loadPreprocessingConfig(if (pageNum == 0) 0
             else pageNum - 1).isInstanceOf[customArrayHashMap]
 
-        if (ConfigUtils.preprocessingVariablesScope == FlashMLConstants.SCOPE_PARAMETER_NO_PAGE || ConfigUtils
+        if (ConfigValues.preprocessingVariablesScope == FlashMLConstants.SCOPE_PARAMETER_NO_PAGE || ConfigValues
           .preprocessingVariablesScope == FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE)
             loadPreprocessingConfig
               .asInstanceOf[Array[util.HashMap[String, Any]]]
@@ -186,7 +186,7 @@ object PreprocessingEngine extends Engine with Validator
      *
      * @return
      */
-    def loadPreprocessingConfig = ConfigUtils
+    def loadPreprocessingConfig = ConfigValues
       .preprocessingVariablesScope match
     {
 
@@ -212,8 +212,8 @@ object PreprocessingEngine extends Engine with Validator
           .asInstanceOf[Array[Array[util.HashMap[String, Any]]]]
 
         case _ =>
-            log.info(ConfigUtils.scopeProcessingErrorMessage)
-            throw new Exception(ConfigUtils.scopeProcessingErrorMessage)
+            log.info(ConfigValues.scopeProcessingErrorMessage)
+            throw new Exception(ConfigValues.scopeProcessingErrorMessage)
     }
 
     override def buildPipelineModel(df: DataFrame, pageCount: Int): PipelineModel =
@@ -222,11 +222,11 @@ object PreprocessingEngine extends Engine with Validator
         val preProcessingMapArray =
         {
 
-            ConfigUtils.preprocessingVariablesScope match
+            ConfigValues.preprocessingVariablesScope match
             {
                 case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE =>
 
-                    if (ConfigUtils.isPageLevelModel)
+                    if (ConfigValues.isPageLevelModel)
                         loadPreprocessingConfig(if (pageCount == 0) 0
                         else pageCount - 1)
                     else
@@ -328,7 +328,7 @@ object PreprocessingEngine extends Engine with Validator
                           {
                               val intermediateCol =  s"${inputCol}_Col${indexValue}_${preprocessingMarkers.getOrElse(preprocessingType, "")}"
 
-                              ConfigUtils.pagewisePreprocessingIntVariables(pageNum) += intermediateCol
+                              ConfigValues.pagewisePreprocessingIntVariables(pageNum) += intermediateCol
                               intermediateCol
                           }
                           else outputCol
@@ -508,33 +508,33 @@ object PreprocessingEngine extends Engine with Validator
         // loading the preprocessing steps
         val preprocessingSteps = loadPreprocessingConfig
         // Validating based on page level and scope
-        if (ConfigUtils.isPageLevelModel)
-            (0 until ConfigUtils.numPages)
+        if (ConfigValues.isPageLevelModel)
+            (0 until ConfigValues.numPages)
               .foreach(pageNumber =>
               {
                   // fetching the text variables
-                  val textVariables = ConfigUtils.variablesScope match
+                  val textVariables = ConfigValues.variablesScope match
                   {
-                      case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE => ConfigUtils.scopeTextVariables
-                      case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE => ConfigUtils.scopeTextVariables(pageNumber)
+                      case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE => ConfigValues.scopeTextVariables
+                      case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE => ConfigValues.scopeTextVariables(pageNumber)
                   }
                   // fetching the categorical variables
-                  val categoricalVariables = ConfigUtils.variablesScope match
+                  val categoricalVariables = ConfigValues.variablesScope match
                   {
-                      case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE => ConfigUtils.scopeCategoricalVariables
-                      case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE => ConfigUtils.scopeCategoricalVariables(pageNumber)
+                      case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE => ConfigValues.scopeCategoricalVariables
+                      case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE => ConfigValues.scopeCategoricalVariables(pageNumber)
                   }
                   // fetching numerical variables
-                  val numericalVariables = ConfigUtils.variablesScope match
+                  val numericalVariables = ConfigValues.variablesScope match
                   {
-                      case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE => ConfigUtils.scopeNumericalVariables
-                      case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE => ConfigUtils.scopeNumericalVariables(pageNumber)
+                      case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE => ConfigValues.scopeNumericalVariables
+                      case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE => ConfigValues.scopeNumericalVariables(pageNumber)
                   }
 
                   var variableUnion = textVariables.asInstanceOf[Array[String]].toSet ++ numericalVariables.asInstanceOf[Array[String]].toSet ++ categoricalVariables.asInstanceOf[Array[String]].toSet
 
                   // fetching preprocessing steps based on preprocessing scope
-                  val preprocessingStepsPageWise = ConfigUtils.preprocessingVariablesScope match
+                  val preprocessingStepsPageWise = ConfigValues.preprocessingVariablesScope match
                   {
                       case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE => preprocessingSteps(pageNumber)
                       case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE => preprocessingSteps
@@ -545,14 +545,14 @@ object PreprocessingEngine extends Engine with Validator
         else
         {
             //throwing an error if the scope is perpage or allpage for non page level variables
-            ConfigUtils.preprocessingVariablesScope match
+            ConfigValues.preprocessingVariablesScope match
             {
                 case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE =>
-                    val msg = s"Scope cannot be ${ConfigUtils.preprocessingVariablesScope} for non page level model"
+                    val msg = s"Scope cannot be ${ConfigValues.preprocessingVariablesScope} for non page level model"
                     log.error(msg)
                     throw new ConfigValidatorException(msg)
                 case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE =>
-                    var variableUnion = ConfigUtils.scopeTextVariables.asInstanceOf[Array[String]].toSet ++ ConfigUtils.scopeNumericalVariables.asInstanceOf[Array[String]].toSet ++ ConfigUtils.scopeCategoricalVariables.asInstanceOf[Array[String]].toSet
+                    var variableUnion = ConfigValues.scopeTextVariables.asInstanceOf[Array[String]].toSet ++ ConfigValues.scopeNumericalVariables.asInstanceOf[Array[String]].toSet ++ ConfigValues.scopeCategoricalVariables.asInstanceOf[Array[String]].toSet
                     variableDependencyValidation(preprocessingSteps.asInstanceOf[Array[util.HashMap[String, Any]]], variableUnion.asInstanceOf[Set[String]], transformations)
             }
         }
@@ -612,7 +612,7 @@ object PreprocessingEngine extends Engine with Validator
               .foreach(x =>
               {
                   SavePointManager
-                    .saveDataFrame(dfArray(x), x % ConfigUtils.numPages + 1, DataSetType(x / ConfigUtils.numPages), FlashMLConstants.PREPROCESSING)
+                    .saveDataFrame(dfArray(x), x % ConfigValues.numPages + 1, DataSetType(x / ConfigValues.numPages), FlashMLConstants.PREPROCESSING)
               })
         }
         else
@@ -671,7 +671,7 @@ object PreprocessingEngine extends Engine with Validator
                           {
                               val intermediateCol =  s"${inputColumnName}_Col${index}_${preprocessingMarkers.getOrElse(preprocessingType, "")}"
 
-                              ConfigUtils.pagewisePreprocessingIntVariables(pgNum) += intermediateCol
+                              ConfigValues.pagewisePreprocessingIntVariables(pgNum) += intermediateCol
                               intermediateCol
                           }
                           else outputColName
@@ -713,7 +713,7 @@ object PreprocessingEngine extends Engine with Validator
 
             case FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE => val preprocessingConfig = loadPreprocessingConfig
               .asInstanceOf[Array[util.HashMap[String,Any]]]
-                (0 until ConfigUtils.numPages)
+                (0 until ConfigValues.numPages)
                   .foreach(pGindx => {
                       preprocessingConfig
                         .zipWithIndex

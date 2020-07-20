@@ -2,6 +2,10 @@ package com.tfs.flashml
 
 import java.nio.file.{Files, Paths}
 
+import org.apache.spark.ml.linalg.DenseVector
+import org.apache.spark.sql.expressions.UserDefinedFunction
+import org.apache.spark.sql.functions.udf
+
 object TestUtils
 {
     /**
@@ -23,4 +27,9 @@ object TestUtils
             case None => throw new RuntimeException(s"Unable to find data folder in [${folders.mkString(":")}]")
         }
     }
+
+    /**
+      * UDF for obtaining the positive probability column
+      */
+    val pos_prob: UserDefinedFunction = udf((a: DenseVector) => a(1))
 }

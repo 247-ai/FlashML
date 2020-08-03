@@ -5,9 +5,9 @@ import java.text.DecimalFormat
 
 import com.tfs.flashml.core.{DirectoryCreator}
 import com.tfs.flashml.core.modeltraining.ModelTrainingEngine
-import com.tfs.flashml.util.ConfigUtils.DataSetType
+import com.tfs.flashml.util.ConfigValues.DataSetType
 import com.tfs.flashml.util.conf.FlashMLConstants
-import com.tfs.flashml.util.{ConfigUtils, FlashMLConfig}
+import com.tfs.flashml.util.{ConfigValues, FlashMLConfig}
 import org.apache.hadoop.fs.Path
 import org.apache.spark.ml.feature.StringIndexerModel
 import org.apache.spark.ml.linalg.DenseVector
@@ -31,13 +31,13 @@ object StandardMetricsEvaluator
   private val log = LoggerFactory.getLogger(getClass)
   val columnsNames =
     {
-      if (ConfigUtils.isUplift)
-        ConfigUtils.primaryKeyColumns ++ Array(ConfigUtils.getIndexedResponseColumn, "modelPrediction",
-          "modelProbability", ConfigUtils.responseColumn)
+      if (ConfigValues.isUplift)
+        ConfigValues.primaryKeyColumns ++ Array(ConfigValues.getIndexedResponseColumn, "modelPrediction",
+          "modelProbability", ConfigValues.responseColumn)
       else
-        ConfigUtils.primaryKeyColumns ++ Array(ConfigUtils.getIndexedResponseColumn,
-          if (ConfigUtils.isProbabilityColGenerated) "probability" else "",
-          "prediction", ConfigUtils.responseColumn)
+        ConfigValues.primaryKeyColumns ++ Array(ConfigValues.getIndexedResponseColumn,
+          if (ConfigValues.isProbabilityColGenerated) "probability" else "",
+          "prediction", ConfigValues.responseColumn)
       }
       .filter(_.nonEmpty)
       .distinct
@@ -76,41 +76,41 @@ object StandardMetricsEvaluator
       .map(_.cache())
     MetricsEvaluator.csvMetrics ++= "Standard Metrics \n"
 
-    if (ConfigUtils.isSingleIntent)
+    if (ConfigValues.isSingleIntent)
     {
 
-      if (ConfigUtils.isPageLevelModel)
+      if (ConfigValues.isPageLevelModel)
       {
         val standardSinglePageLevel = new ListBuffer[mutable.LinkedHashMap[String, Any]]()
         for (x <- filteredPredArray.indices)
         {
-          val pageNumber = x % ConfigUtils.numPages + 1
-          val metrics = if (ConfigUtils.isUplift)
+          val pageNumber = x % ConfigValues.numPages + 1
+          val metrics = if (ConfigValues.isUplift)
           {
 
             new BinaryClassificationMetrics(filteredPredArray(x)
               .withColumn("positive_probability", posProbUDF(col("modelProbability")))
-              .select("positive_probability", ConfigUtils.getIndexedResponseColumn)
+              .select("positive_probability", ConfigValues.getIndexedResponseColumn)
               .as[(Double, Double)].rdd)
           }
           else
           {
             new BinaryClassificationMetrics(filteredPredArray(x)
               .withColumn("positive_probability", posProbUDF(col("probability")))
-              .select("positive_probability", ConfigUtils.getIndexedResponseColumn)
+              .select("positive_probability", ConfigValues.getIndexedResponseColumn)
               .as[(Double, Double)].rdd)
           }
-          val myMetrics = if (ConfigUtils.isUplift)
+          val myMetrics = if (ConfigValues.isUplift)
           {
             new MulticlassMetrics(filteredPredArray(x)
-              .select("modelPrediction", ConfigUtils.getIndexedResponseColumn)
+              .select("modelPrediction", ConfigValues.getIndexedResponseColumn)
               .as[(Double, Double)]
               .rdd)
           }
           else
           {
             new MulticlassMetrics(filteredPredArray(x)
-              .select("prediction", ConfigUtils.getIndexedResponseColumn)
+              .select("prediction", ConfigValues.getIndexedResponseColumn)
               .as[(Double, Double)]
               .rdd)
           }
@@ -122,7 +122,7 @@ object StandardMetricsEvaluator
             .head()
             .getDouble(0)
 
-          val dfType = if (x < ConfigUtils.numPages) "Train"
+          val dfType = if (x < ConfigValues.numPages) "Train"
           else "Test"
 
           standardSinglePageLevel += mutable.LinkedHashMap(
@@ -146,12 +146,12 @@ object StandardMetricsEvaluator
         for (x <- filteredPredArray.indices)
         {
 
-          val metrics = if (ConfigUtils.isUplift)
+          val metrics = if (ConfigValues.isUplift)
           {
 
             new BinaryClassificationMetrics(filteredPredArray(x)
               .withColumn("positive_probability", posProbUDF(col("modelProbability")))
-              .select("positive_probability", ConfigUtils.getIndexedResponseColumn)
+              .select("positive_probability", ConfigValues.getIndexedResponseColumn)
               .as[(Double, Double)]
               .rdd)
           }
@@ -159,19 +159,19 @@ object StandardMetricsEvaluator
           {
             new BinaryClassificationMetrics(filteredPredArray(x)
               .withColumn("positive_probability", posProbUDF(col("probability")))
-              .select("positive_probability", ConfigUtils.getIndexedResponseColumn)
+              .select("positive_probability", ConfigValues.getIndexedResponseColumn)
               .as[(Double, Double)].rdd)
           }
-          val myMetrics = if (ConfigUtils.isUplift)
+          val myMetrics = if (ConfigValues.isUplift)
           {
             new MulticlassMetrics(filteredPredArray(x)
-              .select("modelPrediction", ConfigUtils.getIndexedResponseColumn)
+              .select("modelPrediction", ConfigValues.getIndexedResponseColumn)
               .as[(Double, Double)].rdd)
           }
           else
           {
             new MulticlassMetrics(filteredPredArray(x)
-              .select("prediction", ConfigUtils.getIndexedResponseColumn)
+              .select("prediction", ConfigValues.getIndexedResponseColumn)
               .as[(Double, Double)].rdd)
           }
 
@@ -193,10 +193,10 @@ object StandardMetricsEvaluator
         MetricsEvaluator.metricsMap += ("StandardMetrics" -> standardSingle.toList)
       }
     }
-    else if (ConfigUtils.isMultiIntent)
+    else if (ConfigValues.isMultiIntent)
     {
       //log.info("\nStandard Metrics")
-      if (ConfigUtils.isPageLevelModel)
+      if (ConfigValues.isPageLevelModel)
       {
         val standardMultiplePageLevel = new ListBuffer[mutable.LinkedHashMap[String, Any]]()
 
@@ -204,21 +204,21 @@ object StandardMetricsEvaluator
         val responseVariableLabels: Array[Array[String]] = ModelTrainingEngine.loadPipelineArray.map(_.stages(0).asInstanceOf[StringIndexerModel].labels)
 
         //Holder for Map between Index and Label across all pages
-        val responseVariableMapArray = new Array[Map[Double, String]](ConfigUtils.numPages)
+        val responseVariableMapArray = new Array[Map[Double, String]](ConfigValues.numPages)
         for (x <- filteredPredArray.indices)
         {
-          val pageNumber = x % ConfigUtils.numPages + 1
+          val pageNumber = x % ConfigValues.numPages + 1
 
           //Populate the Holder if not already done
-          if(!responseVariableMapArray.isDefinedAt(x % ConfigUtils.numPages)) {
-            responseVariableMapArray(x % ConfigUtils.numPages) = ( (for(i <- responseVariableLabels(x % ConfigUtils.numPages).indices) yield i.toDouble) zip responseVariableLabels(x % ConfigUtils.numPages)).toMap
+          if(!responseVariableMapArray.isDefinedAt(x % ConfigValues.numPages)) {
+            responseVariableMapArray(x % ConfigValues.numPages) = ( (for(i <- responseVariableLabels(x % ConfigValues.numPages).indices) yield i.toDouble) zip responseVariableLabels(x % ConfigValues.numPages)).toMap
           }
 
-          if (!ConfigUtils.isUplift)
+          if (!ConfigValues.isUplift)
           {
 
             val metrics = new MulticlassMetrics(filteredPredArray(x)
-              .select("prediction", ConfigUtils.getIndexedResponseColumn)
+              .select("prediction", ConfigValues.getIndexedResponseColumn)
               .as[(Double, Double)].rdd)
 
             log.info(s"Page$pageNumber Accuracy: ${decimalFormat.format(metrics.accuracy)} Weighted " +
@@ -230,7 +230,7 @@ object StandardMetricsEvaluator
                   .weightedFalsePositiveRate)
               }")
 
-            val dfType = if (x < ConfigUtils.numPages) "Train"
+            val dfType = if (x < ConfigValues.numPages) "Train"
             else "Test"
 
             standardMultiplePageLevel += mutable.LinkedHashMap(
@@ -245,8 +245,8 @@ object StandardMetricsEvaluator
             )
 
             val predictionCount = filteredPredArray(x)
-              .groupBy(ConfigUtils.getIndexedResponseColumn)
-              .agg(sum(col(ConfigUtils.getIndexedResponseColumn)))
+              .groupBy(ConfigValues.getIndexedResponseColumn)
+              .agg(sum(col(ConfigValues.getIndexedResponseColumn)))
               .as[(Double, Double)]
               .map(x => (x._1, x._2))
               .collect
@@ -261,7 +261,7 @@ object StandardMetricsEvaluator
 
             for (i <- labels)
             {
-              metricsArray += responseVariableMapArray(x % ConfigUtils.numPages) + "\t\t" + (metrics.truePositiveRate(i) *
+              metricsArray += responseVariableMapArray(x % ConfigValues.numPages) + "\t\t" + (metrics.truePositiveRate(i) *
                 predictionCount(i)).toInt.toString + "\t\t" + (metrics.falsePositiveRate(i) *
                 predictionCount(i)).toInt.toString + "\t\t" + metrics.precision(i).toInt.toString + "\t\t" + metrics.recall(i).toInt.toString
             }
@@ -293,12 +293,12 @@ object StandardMetricsEvaluator
 
         for (x <- filteredPredArray.indices)
         {
-          if (!ConfigUtils.isUplift)
+          if (!ConfigValues.isUplift)
           {
             // Obtain the multi-class metrics for this dataset.
             // Note: available from the underlying RDD object.
             val metrics = new MulticlassMetrics(filteredPredArray(x)
-              .select("prediction", ConfigUtils.getIndexedResponseColumn)
+              .select("prediction", ConfigValues.getIndexedResponseColumn)
               .as[(Double, Double)].rdd)
 
             val dataSetType = DataSetType(x)
@@ -315,8 +315,8 @@ object StandardMetricsEvaluator
 
             // Calculate the intent level confusion metrics
             val predictionCount = filteredPredArray(x)
-              .groupBy(ConfigUtils.getIndexedResponseColumn)
-              .agg(count(col(ConfigUtils.getIndexedResponseColumn)))
+              .groupBy(ConfigValues.getIndexedResponseColumn)
+              .agg(count(col(ConfigValues.getIndexedResponseColumn)))
               .as[(Double, Double)]
               .map(x => (x._1, x._2))
               .collect

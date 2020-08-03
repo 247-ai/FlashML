@@ -4,7 +4,7 @@ import java.text.DecimalFormat
 
 import com.tfs.flashml.core.Validator
 import com.tfs.flashml.util.conf.{ConfigValidatorException, FlashMLConstants}
-import com.tfs.flashml.util.{ConfigUtils, FlashMLConfig}
+import com.tfs.flashml.util.{ConfigValues, FlashMLConfig}
 import org.apache.spark.sql.functions.{max, min}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.slf4j.LoggerFactory
@@ -29,7 +29,7 @@ object TrainTestSampler extends Validator
         odf.map(df =>
         {
             // This is used for positive class validation and data balance
-            if (ConfigUtils.isSingleIntent)
+            if (ConfigValues.isSingleIntent)
             {
                 val labels: Array[_] = findResponseColumnLabels(df)
                 minorityClassLabel = labels(0)
@@ -174,7 +174,7 @@ object TrainTestSampler extends Validator
             if (FlashMLConfig.getString(FlashMLConstants.BUILD_TYPE).toLowerCase == FlashMLConstants
                     .BUILD_TYPE_BINOMIAL)
             {
-                val minorityClassCount: Double = df.filter(s"${ConfigUtils.responseColumn} == $minorityClassLabel")
+                val minorityClassCount: Double = df.filter(s"${ConfigValues.responseColumn} == $minorityClassLabel")
                         .count()
                 val totalCount: Double = df.count()
                 if (minorityClassCount / totalCount < FlashMLConstants.MINORITY_CLASS_THRESHOLD)
@@ -205,8 +205,8 @@ object TrainTestSampler extends Validator
     def dataBalance(df: DataFrame, samplingType: String): DataFrame =
     {
         var balancedDf: DataFrame = null
-        val dfMin = df.filter(s"${ConfigUtils.responseColumn} == $minorityClassLabel")
-        val dfMaj = df.filter(s"${ConfigUtils.responseColumn} == $majorityClassLabel")
+        val dfMin = df.filter(s"${ConfigValues.responseColumn} == $minorityClassLabel")
+        val dfMaj = df.filter(s"${ConfigValues.responseColumn} == $majorityClassLabel")
 
         val minorityClassCount: Double = dfMin.count()
         val totalCount: Double = df.count()
@@ -248,10 +248,10 @@ object TrainTestSampler extends Validator
                 log.info(s"Minority Class: Required = $requiredMinorityClassPercent% Actual = " +
                         s"$minorityClassProportion% => Majority Class Undersampled")
 
-                val rvMin = dfMaj.agg(min(dfMaj.col(ConfigUtils.randomVariable))).head().getDouble(0)
-                val rvMax = dfMaj.agg(max(dfMaj.col(ConfigUtils.randomVariable))).head().getDouble(0)
+                val rvMin = dfMaj.agg(min(dfMaj.col(ConfigValues.randomVariable))).head().getDouble(0)
+                val rvMax = dfMaj.agg(max(dfMaj.col(ConfigValues.randomVariable))).head().getDouble(0)
 
-                val dfMajUndersampled = dfMaj.filter(s"${ConfigUtils.randomVariable} < ${
+                val dfMajUndersampled = dfMaj.filter(s"${ConfigValues.randomVariable} < ${
                     rvMin + (minorityClassCount / (totalCount -
                             minorityClassCount) * (100 - requiredMinorityClassPercent.toInt) /
                             requiredMinorityClassPercent.toInt *
@@ -263,8 +263,8 @@ object TrainTestSampler extends Validator
             {
                 log.info(s"Minority Class: Required = $requiredMinorityClassPercent% Actual = " +
                         s"$minorityClassProportion% => Majority Class Oversampled")
-                val rvMin = dfMaj.agg(min(dfMaj.col(ConfigUtils.randomVariable))).head().getDouble(0)
-                val rvMax = dfMaj.agg(max(dfMaj.col(ConfigUtils.randomVariable))).head().getDouble(0)
+                val rvMin = dfMaj.agg(min(dfMaj.col(ConfigValues.randomVariable))).head().getDouble(0)
+                val rvMax = dfMaj.agg(max(dfMaj.col(ConfigValues.randomVariable))).head().getDouble(0)
                 var dfMajMultiplier = minorityClassProportion * totalCount / requiredMinorityClassPercent.toInt /
                         (totalCount - minorityClassCount)
                 var dfMajOversampled = dfMaj
@@ -273,7 +273,7 @@ object TrainTestSampler extends Validator
                     dfMajOversampled = dfMajOversampled.union(dfMaj)
                     dfMajMultiplier = dfMajMultiplier - 1
                 }
-                val dfMajUndersampled = dfMaj.filter(s"${ConfigUtils.randomVariable} < ${rvMin + ((dfMajMultiplier -
+                val dfMajUndersampled = dfMaj.filter(s"${ConfigValues.randomVariable} < ${rvMin + ((dfMajMultiplier -
                         1) * (rvMax - rvMin))}")
                 balancedDf = dfMajOversampled.union(dfMajUndersampled).union(dfMin)
             }
@@ -291,10 +291,10 @@ object TrainTestSampler extends Validator
     def findResponseColumnLabels(df: DataFrame): Array[_] =
     {
         df
-                .groupBy(ConfigUtils.responseColumn)
+                .groupBy(ConfigValues.responseColumn)
                 .count()
                 .orderBy("count")
-                .select(ConfigUtils.responseColumn)
+                .select(ConfigValues.responseColumn)
                 .collect
                 .map(_.get(0))
     }
@@ -309,7 +309,7 @@ object TrainTestSampler extends Validator
                 .getString(FlashMLConstants.SAMPLING_TYPE)
                 .toLowerCase
 
-        if (ConfigUtils.isSingleIntent && samplingType.equals(FlashMLConstants.SAMPLING_TYPE_STRATIFIED))
+        if (ConfigValues.isSingleIntent && samplingType.equals(FlashMLConstants.SAMPLING_TYPE_STRATIFIED))
         {
             val msg = s"Sampling Type: $samplingType is not supported for single intent classifiers"
             log.error(msg)

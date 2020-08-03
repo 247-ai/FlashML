@@ -7,7 +7,7 @@ import com.google.gson.Gson
 import com.tfs.flashml.core.DirectoryCreator
 import com.tfs.flashml.core.metrics.MetricsEvaluator
 import com.tfs.flashml.util.conf.FlashMLConstants
-import com.tfs.flashml.util.{ConfigUtils, FlashMLConfig}
+import com.tfs.flashml.util.{ConfigValues, FlashMLConfig}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
@@ -79,7 +79,7 @@ class CrossValidatorCustom(override val uid: String)
     private val logger = Logger.getLogger(getClass)
     logger.setLevel(Level.INFO)
 
-    private val algorithm: String = ConfigUtils.mlAlgorithm
+    private val algorithm: String = ConfigValues.mlAlgorithm
 
     case class cvMetricsClass(foldNo: Int, paramMap: String, accuracy: Double, weightedPrecision: Double,
                               weightedRecall: Double)
@@ -152,7 +152,7 @@ class CrossValidatorCustom(override val uid: String)
         //colsToSave - While saving the prediction DFs to HDFS we need only prediction and probability along with
         // primary key
         val colsToSelect = FlashMLConfig.getStringArray(FlashMLConstants.PRIMARY_KEY) ++ Array(FlashMLConstants
-                .FEATURES, ConfigUtils.getIndexedResponseColumn)
+                .FEATURES, ConfigValues.getIndexedResponseColumn)
         val colsToSave = FlashMLConfig.getStringArray(FlashMLConstants.PRIMARY_KEY) ++ Array("prediction",
             "probability")
 
@@ -188,17 +188,17 @@ class CrossValidatorCustom(override val uid: String)
                                             val estimator = est.asInstanceOf[Estimator[_]]
 
                                             allStages += estimator
-                                            if (ConfigUtils.isPlattScalingReqd)
+                                            if (ConfigValues.isPlattScalingReqd)
                                                 allStages += new PlattScalar()
-                                                        .setIsMultiIntent(ConfigUtils.isMultiIntent)
-                                                        .setLabelCol(ConfigUtils.getIndexedResponseColumn)
+                                                        .setIsMultiIntent(ConfigValues.isMultiIntent)
+                                                        .setLabelCol(ConfigValues.getIndexedResponseColumn)
 
                                             val modelPipeline = new Pipeline().setStages(allStages.toArray)
                                             val model = modelPipeline.fit(trainingDataset, paramMap)
                                             val intermediateDf = model.transform(validationDataset, paramMap)
                                             paramLevelPredictDf += intermediateDf
                                             val combinedMetrics = new MulticlassMetrics(intermediateDf
-                                                    .select("prediction", ConfigUtils.getIndexedResponseColumn)
+                                                    .select("prediction", ConfigValues.getIndexedResponseColumn)
                                                     .as[(Double, Double)]
                                                     .rdd)
 

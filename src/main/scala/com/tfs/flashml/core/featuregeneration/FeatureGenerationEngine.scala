@@ -5,9 +5,9 @@ import java.util
 import com.tfs.flashml.core.{Engine, Validator}
 import com.tfs.flashml.core.featuregeneration.transformer.{CategoricalColumnsTransformer, GramAssembler, SkipGramGenerator}
 import com.tfs.flashml.core.preprocessing.PreprocessingEngine.loadPreprocessingConfig
-import com.tfs.flashml.util.ConfigUtils.{featureGenerationBinningConfig, featureGenerationGramsConfig}
+import com.tfs.flashml.util.ConfigValues.{featureGenerationBinningConfig, featureGenerationGramsConfig}
 import com.tfs.flashml.util.conf.{ConfigValidatorException, FlashMLConstants}
-import com.tfs.flashml.util.{ConfigUtils, FlashMLConfig}
+import com.tfs.flashml.util.{ConfigValues, FlashMLConfig}
 import org.apache.spark.ml.feature.{Bucketizer, NGram, QuantileDiscretizer}
 import org.apache.spark.ml.{Pipeline, PipelineModel, PipelineStage}
 import org.apache.spark.sql.functions.{max, min}
@@ -36,14 +36,14 @@ object FeatureGenerationEngine extends Engine with Validator {
   def process(odfArray: Option[Array[DataFrame]]): Option[Array[DataFrame]] = {
 
     odfArray.map(dfArray => {
-      if (ConfigUtils.isModel) {
+      if (ConfigValues.isModel) {
 
         if (FlashMLConfig
           .config
           .getList
           (FlashMLConstants.EXPERIMENT_FEATURE_GENERATION_GRAMS)
           .unwrapped()
-          .asInstanceOf[java.util.ArrayList[Any]].isEmpty && ConfigUtils.categoricalColumns.asInstanceOf[Array[Any]].isEmpty)
+          .asInstanceOf[java.util.ArrayList[Any]].isEmpty && ConfigValues.categoricalColumns.asInstanceOf[Array[Any]].isEmpty)
           return Some(dfArray)
         else {
           if (FlashMLConfig
@@ -55,10 +55,10 @@ object FeatureGenerationEngine extends Engine with Validator {
             log.info(s"Feature Generation: Loading config.")
           }
 
-          if (ConfigUtils.isPageLevelModel) {
+          if (ConfigValues.isPageLevelModel) {
             log.info(s"Feature Generation: Page Level Processing.")
 
-            (1 to ConfigUtils.numPages)
+            (1 to ConfigValues.numPages)
               .foreach { pageNumber: Int =>
                 log.info(s"Feature Generation: Building Pipeline for Page $pageNumber.")
                 pipelineModelArray += buildPipelineModel(dfArray(pageNumber - 1), pageNumber)
@@ -67,7 +67,7 @@ object FeatureGenerationEngine extends Engine with Validator {
             dfArray
               .indices
               .foreach { index: Int =>
-                outputDFArrayBuffer += pipelineModelArray(index % ConfigUtils.numPages).
+                outputDFArrayBuffer += pipelineModelArray(index % ConfigValues.numPages).
                   transform(dfArray(index))
               }
 
@@ -81,13 +81,13 @@ object FeatureGenerationEngine extends Engine with Validator {
         }
       }
       else {
-        if (ConfigUtils.isPageLevelModel) {
-          (1 to ConfigUtils.numPages).foreach { pageNumber: Int =>
+        if (ConfigValues.isPageLevelModel) {
+          (1 to ConfigValues.numPages).foreach { pageNumber: Int =>
             pipelineModelArray += loadPipelineModel(pageNumber)
           }
 
           dfArray.indices.foreach { index: Int =>
-            outputDFArrayBuffer += pipelineModelArray(index % ConfigUtils.numPages)
+            outputDFArrayBuffer += pipelineModelArray(index % ConfigValues.numPages)
               .transform(dfArray(index))
           }
         }
@@ -114,7 +114,7 @@ object FeatureGenerationEngine extends Engine with Validator {
 
     if(featureGenerationBinningConfig.nonEmpty){
 
-      ConfigUtils.featureGenerationScope match {
+      ConfigValues.featureGenerationScope match {
 
         case FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE | FlashMLConstants.SCOPE_PARAMETER_NO_PAGE =>
 
@@ -135,13 +135,13 @@ object FeatureGenerationEngine extends Engine with Validator {
     }
 
     //Check if categorical columns are present and process them
-    ConfigUtils.featureGenerationScope match {
+    ConfigValues.featureGenerationScope match {
       case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE  =>
 
-        if(ConfigUtils.categoricalColumns1DArray.nonEmpty){
+        if(ConfigValues.categoricalColumns1DArray.nonEmpty){
           log.info(s"Feature Generation: Adding categorical concat transformer to the pipeline")
 
-          val inputColArray = ConfigUtils.categoricalColumns1DArray
+          val inputColArray = ConfigValues.categoricalColumns1DArray
 
           val outputCol = FlashMLConstants.CATEGORICAL_ARRAY
 
@@ -165,12 +165,12 @@ object FeatureGenerationEngine extends Engine with Validator {
 
       case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE =>
 
-        if(ConfigUtils.categoricalColumns2DArray.nonEmpty && ConfigUtils.categoricalColumns2DArray
-          .isDefinedAt(pageNum) && ConfigUtils.categoricalColumns2DArray(pageNum).nonEmpty){
+        if(ConfigValues.categoricalColumns2DArray.nonEmpty && ConfigValues.categoricalColumns2DArray
+          .isDefinedAt(pageNum) && ConfigValues.categoricalColumns2DArray(pageNum).nonEmpty){
 
           log.info(s"Feature Generation: Adding categorical concat transformer to the pipeline")
 
-          val inputColArray = ConfigUtils.categoricalColumns2DArray(pageNum)
+          val inputColArray = ConfigValues.categoricalColumns2DArray(pageNum)
 
           val outputCol = FlashMLConstants.CATEGORICAL_ARRAY
 
@@ -195,8 +195,8 @@ object FeatureGenerationEngine extends Engine with Validator {
         }
 
       case _ =>
-        log.info(ConfigUtils.scopeProcessingErrorMessage)
-        throw new Exception(ConfigUtils.scopeProcessingErrorMessage)
+        log.info(ConfigValues.scopeProcessingErrorMessage)
+        throw new Exception(ConfigValues.scopeProcessingErrorMessage)
 
     }
 
@@ -220,16 +220,16 @@ object FeatureGenerationEngine extends Engine with Validator {
   private def getBinningPipelineStages(pageSpecificBinningConfig: Array[java.util.HashMap[String, Any]], df: DataFrame, pageNum: Int): Array[PipelineStage] = {
 
     //The binningConfigPageVariables value may be a 2D or 1D Array
-    val binnedColumnsPageSpecific = ConfigUtils.featureGenerationScope match {
+    val binnedColumnsPageSpecific = ConfigValues.featureGenerationScope match {
 
       case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE  =>
-        ConfigUtils
+        ConfigValues
           .binningConfigPageVariables
           .asInstanceOf[Array[(String,String)]]
           .toMap
 
       case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE =>
-        ConfigUtils
+        ConfigValues
           .binningConfigPageVariables(pageNum)
           .asInstanceOf[Array[(String,String)]]
           .toMap
@@ -416,20 +416,20 @@ object FeatureGenerationEngine extends Engine with Validator {
     // validate only if feature generation grams config is non empty
     if (featureGenerationGramsConfig.nonEmpty) {
       // Validating based on page level and scope
-      if (ConfigUtils.isPageLevelModel) {
-        (0 to ConfigUtils.numPages-1).foreach(pageNumber =>{
+      if (ConfigValues.isPageLevelModel) {
+        (0 to ConfigValues.numPages-1).foreach(pageNumber =>{
           //loading preprocessing  steps based on a preprocessing scope
-          val preprocessingStepsPageWise = ConfigUtils.preprocessingVariablesScope match {
+          val preprocessingStepsPageWise = ConfigValues.preprocessingVariablesScope match {
             case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE => loadPreprocessingConfig
             case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE => loadPreprocessingConfig(pageNumber)
           }
           //fetching text variables
-          val textVariables = ConfigUtils.variablesScope match {
-            case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE => ConfigUtils.scopeTextVariables.asInstanceOf[Array[String]]
-            case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE => ConfigUtils.scopeTextVariables(pageNumber).asInstanceOf[Array[String]]
+          val textVariables = ConfigValues.variablesScope match {
+            case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE => ConfigValues.scopeTextVariables.asInstanceOf[Array[String]]
+            case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE => ConfigValues.scopeTextVariables(pageNumber).asInstanceOf[Array[String]]
           }
           // validating based on featuregeneration scope
-          ConfigUtils.featureGenerationScope match {
+          ConfigValues.featureGenerationScope match {
             case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE =>
               if (featureGenerationGramsConfig
                 .asInstanceOf[Array[util.HashMap[String, Any]]].nonEmpty) {
@@ -475,9 +475,9 @@ object FeatureGenerationEngine extends Engine with Validator {
         })
       }else{
         //throwing an error if the scope is perpage or allpage for non page level variables
-        ConfigUtils.featureGenerationScope match {
+        ConfigValues.featureGenerationScope match {
           case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE =>
-            val msg = s"Scope cannot be ${ConfigUtils.featureGenerationScope} for non page level model"
+            val msg = s"Scope cannot be ${ConfigValues.featureGenerationScope} for non page level model"
             log.error(msg)
             throw new ConfigValidatorException(msg)
           case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE =>
@@ -486,7 +486,7 @@ object FeatureGenerationEngine extends Engine with Validator {
               // feature generation grams array from config for each page
               val featureGenerationGrams = featureGenerationGramsConfig.asInstanceOf[Array[util.HashMap[String, Any]]]
               //fetching text variables
-              val textVariables = ConfigUtils.scopeTextVariables.asInstanceOf[Array[String]]
+              val textVariables = ConfigValues.scopeTextVariables.asInstanceOf[Array[String]]
               // fetching valid preprocessing output variables for each page
               val preprocessingOutputVars = loadPreprocessingConfig
                 .asInstanceOf[Array[util.HashMap[String, Any]]]

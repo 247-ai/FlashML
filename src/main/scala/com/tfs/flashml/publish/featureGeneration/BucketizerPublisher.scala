@@ -1,13 +1,13 @@
 package com.tfs.flashml.publish.featureGeneration
 
 import com.tfs.flashml.publish.preprocessing.StopWordsProcessorPublisher.stopWordsFuncJS
-import com.tfs.flashml.util.{ConfigUtils, PublishUtils}
+import com.tfs.flashml.util.{ConfigValues, PublishUtils}
 
 object BucketizerPublisher {
 
   def generateJS(inputCol: String, outputCol:String, splits : Array[Double]): StringBuilder = {
     val bucketizerJS = /*getBucketizerJSFunction */ new StringBuilder
-    bucketizerJS ++= PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var " + outputCol + " = " + "binning(" + inputCol + "," + "[" + splits.dropRight(1).drop(1).mkString(",") + "]);"
+    bucketizerJS ++= PublishUtils.indent(ConfigValues.defaultIndent + 1) + "var " + outputCol + " = " + "binning(" + inputCol + "," + "[" + splits.dropRight(1).drop(1).mkString(",") + "]);"
   }
 
   def getBucketizerJSFunction : StringBuilder = {

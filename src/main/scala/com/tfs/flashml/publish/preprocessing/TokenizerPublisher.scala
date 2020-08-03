@@ -1,6 +1,6 @@
 package com.tfs.flashml.publish.preprocessing
 
-import com.tfs.flashml.util.{ConfigUtils, PublishUtils}
+import com.tfs.flashml.util.{ConfigValues, PublishUtils}
 
 /**
  * Class for publishing JS code for tokenization.
@@ -13,7 +13,7 @@ object TokenizerPublisher
   def generateJS(pattern: String, input: String, output: String) =
   {
     val tokenizerJs = new StringBuilder
-    tokenizerJs ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var " +
+    tokenizerJs ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "var " +
       output + " = " + input + ".replace(/\\\"/g,\"\\\\\\\"\")"
     tokenizerJs ++= ".split(/"
     val javaPattern = pattern.stripPrefix("[").stripSuffix("]").replace("//", "\\/\\/").split('|').fold("")(

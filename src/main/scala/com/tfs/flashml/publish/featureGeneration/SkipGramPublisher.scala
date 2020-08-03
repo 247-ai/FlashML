@@ -1,6 +1,6 @@
 package com.tfs.flashml.publish.preprocessing
 
-import com.tfs.flashml.util.{ConfigUtils, PublishUtils}
+import com.tfs.flashml.util.{ConfigValues, PublishUtils}
 
 import scala.collection.mutable
 
@@ -17,7 +17,7 @@ object SkipGramPublisher
     else new StringBuilder
     globalVar += ("" + andRulesJsTmp)
     val andRulesJs = new StringBuilder
-    andRulesJs ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var " + output + " = "
+    andRulesJs ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "var " + output + " = "
     andRulesJs ++= input + ".concat(andRules(" + input + "," + windowSize + "));"
     //println(andRulesJs)
     andRulesJs

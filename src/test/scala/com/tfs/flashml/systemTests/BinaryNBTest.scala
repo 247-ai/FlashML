@@ -3,7 +3,7 @@ package com.tfs.flashml.systemTests
 import com.tfs.flashml.core.PipelineSteps
 import com.tfs.flashml.dal.SavePointManager
 import com.tfs.flashml.util.conf.FlashMLConstants
-import com.tfs.flashml.util.{ConfigUtils, FlashMLConfig}
+import com.tfs.flashml.util.{ConfigValues, FlashMLConfig}
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.ml.evaluation.BinaryClassificationEvaluator
@@ -50,7 +50,7 @@ class BinaryNBTest extends AnyFlatSpec {
 
     var binaryPrediction: Array[DataFrame] = SavePointManager.loadData(FlashMLConstants.SCORING)
     val binaryEvaluator: BinaryClassificationEvaluator = new BinaryClassificationEvaluator()
-            .setLabelCol(ConfigUtils.getIndexedResponseColumn)
+            .setLabelCol(ConfigValues.getIndexedResponseColumn)
 
     "The BinaryTrainAUROC" should "match" in {
         withClue("BinaryTrainAUROC: ") {

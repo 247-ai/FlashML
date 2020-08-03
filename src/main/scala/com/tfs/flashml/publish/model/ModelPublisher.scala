@@ -2,7 +2,7 @@ package com.tfs.flashml.publish.model
 
 import com.tfs.flashml.core.modeltraining.ModelTrainingEngine
 import com.tfs.flashml.core.modeltraining.ModelTrainingUtils.log
-import com.tfs.flashml.util.{ConfigUtils, FlashMLConfig, PublishUtils}
+import com.tfs.flashml.util.{ConfigValues, FlashMLConfig, PublishUtils}
 import com.tfs.flashml.util.conf.FlashMLConstants
 import org.apache.spark.SparkException
 import org.apache.spark.ml.classification.{LinearSVCModel, LogisticRegressionModel, OneVsRestCustomModel, PlattScalarModel}
@@ -17,11 +17,11 @@ import scala.collection.mutable.ArrayBuffer
  */
 object ModelPublisher {
 
-  private val name = ConfigUtils.mlAlgorithm.toLowerCase
+  private val name = ConfigValues.mlAlgorithm.toLowerCase
   private val nPages = FlashMLConfig.getIntArray(FlashMLConstants.PUBLISH_PAGES)
   private val pageVariable = FlashMLConfig.getString(FlashMLConstants.PAGE_VARIABLE)
   private val thresholds = FlashMLConfig.getDoubleArray(FlashMLConstants.PUBLISH_THRESHOLDS)
-  private val isMultiIntent = ConfigUtils.modelingMethod.contains(FlashMLConstants.EXPERIMENT_MODELING_METHOD_MULTI_INTENT)
+  private val isMultiIntent = ConfigValues.modelingMethod.contains(FlashMLConstants.EXPERIMENT_MODELING_METHOD_MULTI_INTENT)
   private val isOVR = FlashMLConfig.getString(FlashMLConstants.BUILD_TYPE).toLowerCase.equals(FlashMLConstants.BUILD_TYPE_OVR)
   private var pageNum = 0
   private val log = LoggerFactory.getLogger(getClass)
@@ -85,7 +85,7 @@ object ModelPublisher {
 
     binarySVMJS ++= SVMPublisher.generateJS(svmCoefficients, svmIntercept, svmFeaturesCol, lrCoefficients, lrIntercept, globalVar)
 
-    binarySVMJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var score = svmModel(svmIntercept, calibIntercept, svmCoefficients, calibCoefficients, "+ svmFeaturesCol+",shiftKey);"
+    binarySVMJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "var score = svmModel(svmIntercept, calibIntercept, svmCoefficients, calibCoefficients, "+ svmFeaturesCol+",shiftKey);"
 
     binarySVMJS ++= binaryModelActionJS
     binarySVMJS
@@ -109,7 +109,7 @@ object ModelPublisher {
     globalVar+=(""+binaryLrGlobalJS)
 
     binaryLrJS ++= LogisticRegressionPublisher.generateJS(coefficients, intercept, featuresCol, -1)
-    binaryLrJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var score = lrModel(intercept, coefficients, "+ featuresCol+ ", shiftKey);"
+    binaryLrJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "var score = lrModel(intercept, coefficients, "+ featuresCol+ ", shiftKey);"
 
     binaryLrJS ++= binaryModelActionJS
     binaryLrJS
@@ -117,7 +117,7 @@ object ModelPublisher {
 
   def generateOvrLogisticRegressionJS(globalVar:mutable.Set[String]): StringBuilder = {
     val pageString = if (pageNum == 0) "noPage" else "page" + pageNum
-    val ovrLrJS = new StringBuilder(PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var scoreArray = [];")
+    val ovrLrJS = new StringBuilder(PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "var scoreArray = [];")
 
     val lrModel = ModelTrainingEngine.loadPipelineModel(pageNum).stages(1).asInstanceOf[OneVsRestCustomModel]
     val featuresCol = lrModel.getFeaturesCol
@@ -138,18 +138,18 @@ object ModelPublisher {
       //modelJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "function lrModel_" + pageString + "_" + idx + "(){"
       modelJS ++= LogisticRegressionPublisher.generateJS(coefficients, intercept, featuresCol, idx)
       //modelJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "}"
-      modelJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "scoreArray[" + idx + "] = lrModel(intercept_"+idx+", coefficients_"+idx+", "+featuresCol+", shiftKey);"
+      modelJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "scoreArray[" + idx + "] = lrModel(intercept_"+idx+", coefficients_"+idx+", "+featuresCol+", shiftKey);"
       ovrLrJS ++= modelJS
     }
-    ovrLrJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "maxScore = Math.max(...scoreArray);"
-    ovrLrJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "index = scoreArray.indexOf(maxScore);"
-    ovrLrJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "return index;"
+    ovrLrJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "maxScore = Math.max(...scoreArray);"
+    ovrLrJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "index = scoreArray.indexOf(maxScore);"
+    ovrLrJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "return index;"
     ovrLrJS
   }
 
   def generateMultinomialLogisticRegressionJS(globalVar:mutable.Set[String]): StringBuilder = {
     val pageString = if (pageNum == 0) "noPage" else "page" + pageNum
-    val multinomialJS = new StringBuilder(PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var scoreArray = [];")
+    val multinomialJS = new StringBuilder(PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "var scoreArray = [];")
     var multinomialGlobalJS = new StringBuilder
 
     val lrModel = ModelTrainingEngine.loadPipelineModel(pageNum).stages(1).asInstanceOf[LogisticRegressionModel]
@@ -170,13 +170,13 @@ object ModelPublisher {
       //modelJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "function lrModel_" + pageString + "_" + idx + "(intercept, coefficients, "+featuresCol+"){"
       modelJS ++= LogisticRegressionPublisher.generateJS(i, interceptVector(idx), featuresCol, idx)
       //modelJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "}"
-      modelJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "scoreArray[" + idx + "] = lrModel(intercept_"+idx+", coefficients_"+idx+", "+featuresCol+",shiftKey);"
+      modelJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "scoreArray[" + idx + "] = lrModel(intercept_"+idx+", coefficients_"+idx+", "+featuresCol+",shiftKey);"
       multinomialJS ++= modelJS
       idx = idx + 1
     }
-    multinomialJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "maxScore = Math.max(...scoreArray);"
-    multinomialJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "index = scoreArray.indexOf(maxScore);"
-    multinomialJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "return index;"
+    multinomialJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "maxScore = Math.max(...scoreArray);"
+    multinomialJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "index = scoreArray.indexOf(maxScore);"
+    multinomialJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "return index;"
     multinomialJS
   }
 
@@ -185,14 +185,14 @@ object ModelPublisher {
     val conditionsList = ArrayBuffer[String]()
     if (pageNum == 0) {
       for ((p, t) <- nPages.zipAll(thresholds, 0, 0)) {
-        conditionsJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var condition" + p + " = "
+        conditionsJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "var condition" + p + " = "
         conditionsJS ++= "(score >= " + t + " && " + pageVariable + (if (p.equals(nPages.max)) " >= "
         else " == ") + p + ");"
         conditionsList.append("condition" + p)
       }
     }
     else {
-      conditionsJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var condition" + pageNum + " = "
+      conditionsJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "var condition" + pageNum + " = "
       conditionsJS ++= "(score >= " + thresholds(pageNum - 1) + ");"
       conditionsList.append("condition" + pageNum)
     }
@@ -207,10 +207,10 @@ object ModelPublisher {
     //conditionsJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 3) + "return false;"
     //conditionsJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 2) + "}"
     //conditionsJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "}"
-    conditionsJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var model_result = (" + conditionsList.mkString(" || ") + ")?true:false"
-    conditionsJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "result['output_flag'] = model_result;"
-    conditionsJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "result['score'] = score;"
-    conditionsJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "return result;"
+    conditionsJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "var model_result = (" + conditionsList.mkString(" || ") + ")?true:false"
+    conditionsJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "result['output_flag'] = model_result;"
+    conditionsJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "result['score'] = score;"
+    conditionsJS ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "return result;"
     conditionsJS
   }
 

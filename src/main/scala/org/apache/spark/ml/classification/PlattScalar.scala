@@ -2,7 +2,8 @@ package org.apache.spark.ml.classification
 
 import java.util.UUID
 
-import com.tfs.flashml.util.ConfigUtils
+import com.tfs.flashml.util.ConfigValues
+import com.tfs.flashml.util.conf.FlashMLConstants
 import org.apache.hadoop.fs.Path
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
@@ -551,7 +552,7 @@ object PlattScalar extends MLReadable[PlattScalar]
         {
             val metadata = PlattScalarParams.loadImpl(path, sc, className)
             val plattScalar = new PlattScalar(metadata.uid)
-                    .setParallelism(ConfigUtils.parallelism)
+                    .setParallelism(FlashMLConstants.parallelism)
 
             metadata.getAndSetParams(plattScalar)
             plattScalar

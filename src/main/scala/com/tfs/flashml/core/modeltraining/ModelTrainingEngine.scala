@@ -2,9 +2,9 @@ package com.tfs.flashml.core.modeltraining
 
 import com.tfs.flashml.core.{Engine, Validator}
 import com.tfs.flashml.core.sampling.{StratifiedTrainTestSplitter, TrainTestSampler}
-import com.tfs.flashml.util.ConfigUtils.{isUplift, upliftColumn}
+import com.tfs.flashml.util.ConfigValues.{isUplift, upliftColumn}
 import com.tfs.flashml.util.conf.{ConfigValidatorException, FlashMLConstants}
-import com.tfs.flashml.util.{ConfigUtils, FlashMLConfig}
+import com.tfs.flashml.util.{ConfigValues, FlashMLConfig}
 import org.apache.spark.SparkException
 import org.apache.spark.ml._
 import org.apache.spark.ml.classification._
@@ -28,13 +28,13 @@ object ModelTrainingEngine extends Engine with Validator
 {
 
     override val log: Logger = LoggerFactory.getLogger(getClass)
-    val columnsNames = (ConfigUtils.primaryKeyColumns ++ Array(ConfigUtils.responseColumn,FlashMLConstants.FEATURES))
+    val columnsNames = (ConfigValues.primaryKeyColumns ++ Array(ConfigValues.responseColumn,FlashMLConstants.FEATURES))
             .filter(_.nonEmpty)
             .distinct
 
     private val seedValue : Int = 999
 
-    private val algorithm: String = ConfigUtils.mlAlgorithm
+    private val algorithm: String = ConfigValues.mlAlgorithm
 
     def fit(odfArray: Option[Array[DataFrame]]): Option[Array[PipelineModel]] =
     {
@@ -52,13 +52,13 @@ object ModelTrainingEngine extends Engine with Validator
                         "than 50")
                 return null
             }
-            if (ConfigUtils.isModel)
+            if (ConfigValues.isModel)
             {
-                if (ConfigUtils.isPageLevelModel)
+                if (ConfigValues.isPageLevelModel)
                 {
-                    (1 to ConfigUtils.numPages).foreach
+                    (1 to ConfigValues.numPages).foreach
                     { pageNumber: Int =>
-                        if (ConfigUtils.isSingleIntent)
+                        if (ConfigValues.isSingleIntent)
                         {
                             // Positive Class Validation
                             log.info(s"Running positive class validation for page $pageNumber training data")
@@ -85,7 +85,7 @@ object ModelTrainingEngine extends Engine with Validator
                 }
                 else
                 {
-                    if (ConfigUtils.isSingleIntent)
+                    if (ConfigValues.isSingleIntent)
                     {
                         // Positive Class Validation
                         log.info(s"Running positive class validation for training data")
@@ -114,9 +114,9 @@ object ModelTrainingEngine extends Engine with Validator
 
     def loadPipelineArray: Array[PipelineModel] =
     {
-        if (ConfigUtils.isPageLevelModel)
+        if (ConfigValues.isPageLevelModel)
         {
-            (1 to ConfigUtils.numPages)
+            (1 to ConfigValues.numPages)
                     .foreach
                     { pageNumber: Int =>
                         pipelineModelArray += loadPipelineModel(pageNumber)
@@ -135,20 +135,20 @@ object ModelTrainingEngine extends Engine with Validator
         log.info(s"Model Training: Adding String Indexer to the pipeline")
 
         //String Indexer for indexing response variable
-        val responseColumnIndexer = if (ConfigUtils.isSingleIntent)
+        val responseColumnIndexer = if (ConfigValues.isSingleIntent)
         {
 
             new StringIndexer()
-                    .setInputCol(ConfigUtils.responseColumn)
-                    .setOutputCol(ConfigUtils.getIndexedResponseColumn)
+                    .setInputCol(ConfigValues.responseColumn)
+                    .setOutputCol(ConfigValues.getIndexedResponseColumn)
                     .setHandleInvalid("skip")
         }
         else
         {
 
             new StringIndexer()
-                    .setInputCol(ConfigUtils.responseColumn)
-                    .setOutputCol(ConfigUtils.getIndexedResponseColumn)
+                    .setInputCol(ConfigValues.responseColumn)
+                    .setOutputCol(ConfigValues.getIndexedResponseColumn)
                     .setStringOrderType("alphabetAsc")
                     .setHandleInvalid("skip")
         }
@@ -172,30 +172,29 @@ object ModelTrainingEngine extends Engine with Validator
         log.info(s"Model Training: Adding ${estimator.getClass.getSimpleName} to the pipeline")
         allStages += estimator
 
-        val isPlattScalingRequired = ConfigUtils.isPlattScalingReqd
+        val isPlattScalingRequired = ConfigValues.isPlattScalingReqd
 
         if (isPlattScalingRequired)
         {
             log.info(s"Model Training: Adding PlattScaler to the pipeline")
             allStages += new PlattScalar()
-                    .setIsMultiIntent(ConfigUtils.isMultiIntent)
-                    .setLabelCol(ConfigUtils.getIndexedResponseColumn)
-                    .setParallelism(ConfigUtils.parallelism)
+                    .setIsMultiIntent(ConfigValues.isMultiIntent)
+                    .setLabelCol(ConfigValues.getIndexedResponseColumn)
+                    .setParallelism(FlashMLConstants.parallelism)
         }
 
         // Uplift and TopKIntents require fitted models.
         val intermediatePipeline = new Pipeline()
                 .setStages(allStages.toArray)
 
-        val intermediateModel = intermediatePipeline
-                .fit(df)
+        val intermediateModel = intermediatePipeline.fit(df)
 
         log.debug("Model Training: Fitted intermediate pipeline")
 
         // Add Uplift, if required
-        if (ConfigUtils.isUplift)
+        if (ConfigValues.isUplift)
         {
-            if (ConfigUtils.isMultiIntent)
+            if (ConfigValues.isMultiIntent)
                 throwException("Uplift Transformation is not applicable for Multi Intent Models")
             else
             {
@@ -225,7 +224,7 @@ object ModelTrainingEngine extends Engine with Validator
                 (FlashMLConstants.probabilitySupportedAlgorithms.contains(algorithm) || isPlattScalingRequired || algorithm == FlashMLConstants.LOGISTIC_REGRESSION) */
 
         // Add Top K Intent Derivation, if required
-        if (ConfigUtils.isTopKPossible)
+        if (ConfigValues.isTopKPossible)
         {
 
             val stringIndexerModel = intermediateModel
@@ -234,8 +233,8 @@ object ModelTrainingEngine extends Engine with Validator
 
             val topKIntents = new TopKIntents()
                     .setInputCol()
-                    .setKValue(ConfigUtils.topKValue)
-                    .setOutputCol(ConfigUtils.topKIntentColumnName)
+                    .setKValue(ConfigValues.topKValue)
+                    .setOutputCol(ConfigValues.topKIntentColumnName)
                     .setLabels(stringIndexerModel.labels)
 
             log.info(s"Model Training: Adding TopK Intent model to the pipeline")
@@ -244,7 +243,7 @@ object ModelTrainingEngine extends Engine with Validator
 
 
         // Add IndexToString transformer to convert prediction indexes to corresponding labels
-        if (!ConfigUtils.isSingleIntent)
+        if (!ConfigValues.isSingleIntent)
         {
             val stringIndexerModel = intermediateModel
                     .stages(0)
@@ -286,22 +285,18 @@ object ModelTrainingEngine extends Engine with Validator
 
 
         // Fit the pipeline of the dataframe and then save
-        val modelTrainingModel = modelTrainingPipeline
-                .fit(df)
-
-        savePipelineModel(modelTrainingModel, pageCount)
-
-        modelTrainingModel
+        val trainedModel = modelTrainingPipeline.fit(df)
+        savePipelineModel(trainedModel, pageCount)
+        trainedModel
     }
 
     private def getCrossValidator(crossValidationFolds: Int): CrossValidatorCustom =
     {
-        def getAlgoName(algoStr: String) = algoStr
-                .substring(algoStr.lastIndexOf(".") + 1)
+        def getAlgoName(algoStr: String) = algoStr.substring(algoStr.lastIndexOf(".") + 1)
 
         val evaluator = new MulticlassClassificationEvaluator()
                 .setMetricName("weightedPrecision")
-                .setLabelCol(ConfigUtils.getIndexedResponseColumn)
+                .setLabelCol(ConfigValues.getIndexedResponseColumn)
 
         val estimator = ModelTrainingUtils.getEstimator
 
@@ -312,13 +307,13 @@ object ModelTrainingEngine extends Engine with Validator
                 .setEvaluator(evaluator)
                 .setEstimatorParamMaps(paramGrid)
                 .setNumFolds(crossValidationFolds)
-                .setParallelism(ConfigUtils.parallelism)
+                .setParallelism(FlashMLConstants.parallelism)
                 .setSeed(seedValue)
     }
 
-    private val savePipelineModel: (PipelineModel, Int) => Unit = savePipelineModel(_: PipelineModel, _: Int, "modelTraining")
+    private val savePipelineModel: (PipelineModel, Int) => Unit = savePipelineModel(_: PipelineModel, _: Int, FlashMLConstants.MODEL_TRAINING)
 
-    val loadPipelineModel: Int => PipelineModel = loadPipelineModel(_: Int, "modelTraining")
+    val loadPipelineModel: Int => PipelineModel = loadPipelineModel(_: Int, FlashMLConstants.MODEL_TRAINING)
 
     def throwException(msg: String) =
     {
@@ -354,11 +349,11 @@ object ModelTrainingEngine extends Engine with Validator
 
         val evaluator = new MulticlassClassificationEvaluator()
                 .setMetricName("weightedPrecision")
-                .setLabelCol(ConfigUtils.getIndexedResponseColumn)
+                .setLabelCol(ConfigValues.getIndexedResponseColumn)
 
         val estimator = ModelTrainingUtils.getEstimator
         val algoName = getAlgoName(estimator.getClass.getCanonicalName)
-        val responseVariable = ConfigUtils.getIndexedResponseColumn
+        val responseVariable = ConfigValues.getIndexedResponseColumn
 
         // max iterations to be used in hyperband, setting a default value of 1000. This value is updated based on
         // configuration specified for each algorithm
@@ -371,7 +366,7 @@ object ModelTrainingEngine extends Engine with Validator
                 .setEvaluator(evaluator)
                 .setMaxIterationsFinalModel(maxIterV)
                 .setParamGenerator(new RandomParamSetGenerator(paramRangeSpec,seedValue))
-                .setParallelism(ConfigUtils.parallelism)
+                .setParallelism(FlashMLConstants.parallelism)
                 .setSeed(seedValue)
 
         // Following keys are optional

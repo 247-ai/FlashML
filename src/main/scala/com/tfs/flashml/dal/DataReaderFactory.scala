@@ -1,6 +1,6 @@
 package com.tfs.flashml.dal
 
-import com.tfs.flashml.util.{ConfigUtils, FlashMLConfig}
+import com.tfs.flashml.util.{ConfigValues, FlashMLConfig}
 import com.tfs.flashml.util.conf.FlashMLConstants
 import org.apache.spark.SparkException
 import org.slf4j.LoggerFactory

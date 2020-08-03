@@ -2,10 +2,10 @@ package com.tfs.flashml.dal
 
 import com.tfs.flashml.core.DirectoryCreator
 import com.tfs.flashml.core.sampling.TrainTestSampler
-import com.tfs.flashml.util.ConfigUtils._
+import com.tfs.flashml.util.ConfigValues._
 import com.tfs.flashml.util.conf.FlashMLConstants
 import org.apache.hadoop.fs.Path
-import com.tfs.flashml.util.{ConfigUtils, FlashMLConfig}
+import com.tfs.flashml.util.{ConfigValues, FlashMLConfig}
 import org.apache.spark.sql._
 import org.slf4j.LoggerFactory
 
@@ -20,7 +20,7 @@ object SavePointManager
 
     private val inputDataPath: Path = DirectoryCreator.getInputDataPath
 
-    private val modelingMethod: Array[String] = ConfigUtils.modelingMethod
+    private val modelingMethod: Array[String] = ConfigValues.modelingMethod
 
     /**
      * Method to save input dataframe. This is the final dataset (after applying SQL queries mentioned
@@ -77,7 +77,7 @@ object SavePointManager
     }
 
     def saveConfigToHadoop(path:String):Unit = {
-        ConfigUtils.fs.copyFromLocalFile(new Path(path),new Path(DirectoryCreator.getBasePath + "/config.json"))
+        ConfigValues.fs.copyFromLocalFile(new Path(path),new Path(DirectoryCreator.getBasePath + "/config.json"))
         log.debug("Saved config parameter on HDFS ")
     }
 
@@ -93,7 +93,7 @@ object SavePointManager
         inputData
           .map(df => {
               // This is used for positive class validation and data balance
-              if (ConfigUtils.isSingleIntent) {
+              if (ConfigValues.isSingleIntent) {
                   val labels: Array[_] = TrainTestSampler.findResponseColumnLabels(df)
                   TrainTestSampler.minorityClassLabel = labels(0)
                   TrainTestSampler.majorityClassLabel = labels(1)
@@ -110,7 +110,7 @@ object SavePointManager
                 {
                     if (modelingMethod.contains("page_level"))
                     {
-                        for (x <- 1 to ConfigUtils.numPages)
+                        for (x <- 1 to ConfigValues.numPages)
                         {
                             val path = FlashMLConfig.getString(FlashMLConstants.NAME_NODE_URI) + "/" + basePath.toString +
                               s"/page$x/noSegment/data/$process${DataSetType(i)}"

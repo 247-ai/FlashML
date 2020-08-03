@@ -1,7 +1,7 @@
 package com.tfs.flashml.core.metrics
 
 import com.tfs.flashml.util.conf.FlashMLConstants
-import com.tfs.flashml.util.{ConfigUtils, FlashMLConfig}
+import com.tfs.flashml.util.{ConfigValues, FlashMLConfig}
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.col
 import org.slf4j.LoggerFactory
@@ -18,7 +18,7 @@ object MetricsEvaluator
     val metricsMap = mutable.Map[String, AnyRef]()
     val csvMetrics = new StringBuilder
 
-  val columnsNames = (ConfigUtils.primaryKeyColumns ++ Array(ConfigUtils.topVariable, ConfigUtils.getIndexedResponseColumn, ConfigUtils.pageColumn, "probability"))
+  val columnsNames = (ConfigValues.primaryKeyColumns ++ Array(ConfigValues.topVariable, ConfigValues.getIndexedResponseColumn, ConfigValues.pageColumn, "probability"))
     .filter(_.nonEmpty)
     .distinct
 
@@ -30,7 +30,7 @@ object MetricsEvaluator
   def evaluateCustomMetrics(predictionArray: Array[DataFrame], step: String):Unit={
 
     val dfArray =
-      if (ConfigUtils.isPageLevelModel)
+      if (ConfigValues.isPageLevelModel)
         pageLevelTransform(predictionArray)
       else predictionArray.map(_.select(columnsNames.map(col): _*))
 
@@ -52,7 +52,7 @@ object MetricsEvaluator
 
     val outputArray: ArrayBuffer[DataFrame] = ArrayBuffer[DataFrame]()
     for (x <- inputArray.indices) {
-      if (x % ConfigUtils.numPages == 0) {
+      if (x % ConfigValues.numPages == 0) {
 
         tempDf = inputArray(x)
           .select(columnsNames.map(col): _*)
@@ -63,7 +63,7 @@ object MetricsEvaluator
             .select(columnsNames
               .map(col): _*))
 
-        if ((x + 1) % ConfigUtils.numPages == 0) {
+        if ((x + 1) % ConfigValues.numPages == 0) {
           outputArray.append(tempDf)
         }
       }

@@ -20,7 +20,7 @@ import scala.collection.mutable.ArrayBuffer
   * and is "" by default.
   *
   */
-object ConfigUtils
+object ConfigValues
 {
 
     private val log = LoggerFactory.getLogger(getClass)
@@ -57,8 +57,7 @@ object ConfigUtils
     lazy val isMultiIntent: Boolean = modelingMethod.contains(FlashMLConstants.EXPERIMENT_MODELING_METHOD_MULTI_INTENT)
 
     lazy val isUplift: Boolean = modelingMethod.contains(FlashMLConstants.UPLIFT)
-    lazy val upliftColumn: String = if (isUplift) FlashMLConfig.getString(FlashMLConstants.UPLIFT_VARIABLE)
-    else ""
+    lazy val upliftColumn: String = if (isUplift) FlashMLConfig.getString(FlashMLConstants.UPLIFT_VARIABLE) else ""
 
     lazy val variablesScope = FlashMLConfig
             .getString(FlashMLConstants.VARIABLES_SCOPE)
@@ -108,9 +107,9 @@ object ConfigUtils
 
     lazy val numericalColumns =
     {
-        if (!FlashMLConfig.hasKey(FlashMLConstants.EXPERIMENT_FEATURE_GENERATION_BINNING) || ConfigUtils.binningConfigPageVariables.isEmpty)
+        if (!FlashMLConfig.hasKey(FlashMLConstants.EXPERIMENT_FEATURE_GENERATION_BINNING) || ConfigValues.binningConfigPageVariables.isEmpty)
         {
-            ConfigUtils.scopeNumericalVariables
+            ConfigValues.scopeNumericalVariables
         }
         else
         {
@@ -136,7 +135,7 @@ object ConfigUtils
                                     .map({
                                         case (obj, index) =>
                                         {
-                                            ConfigUtils.scopeNumericalVariables.asInstanceOf[Array[String]]
+                                            ConfigValues.scopeNumericalVariables.asInstanceOf[Array[String]]
                                                     .filterNot(obj.map(_._1).toSet)
                                         }
                                     })
@@ -153,7 +152,7 @@ object ConfigUtils
                     {
 
                         case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE =>
-                            ConfigUtils
+                            ConfigValues
                                     .scopeNumericalVariables
                                     .asInstanceOf[Array[String]]
                                     .filterNot(binningConfigPageVariables
@@ -171,10 +170,10 @@ object ConfigUtils
                     {
                         case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE =>
 
-                            ConfigUtils
+                            ConfigValues
                                     .scopeNumericalVariables
                                     .indices
-                                    .map(pageIndex => ConfigUtils
+                                    .map(pageIndex => ConfigValues
                                             .scopeNumericalVariables(pageIndex)
                                             .asInstanceOf[Array[String]]
                                             .filterNot(binningConfigPageVariables(pageIndex)
@@ -225,7 +224,7 @@ object ConfigUtils
 
                         case FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE | FlashMLConstants.SCOPE_PARAMETER_PER_PAGE =>
 
-                            ConfigUtils
+                            ConfigValues
                                     .binningConfigPageVariables
                                     .asInstanceOf[Array[Array[(String, String)]]]
                                     .zipWithIndex
@@ -253,14 +252,14 @@ object ConfigUtils
                     {
                         case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE =>
 
-                            val currentPageLevelCategoricalCol: Array[String] = ConfigUtils
+                            val currentPageLevelCategoricalCol: Array[String] = ConfigValues
                                     .binningConfigPageVariables
                                     .asInstanceOf[Array[(String, String)]]
                                     .map(_._2)
 
-                            if (ConfigUtils.scopeCategoricalVariables.nonEmpty)
+                            if (ConfigValues.scopeCategoricalVariables.nonEmpty)
                             {
-                                ConfigUtils.scopeCategoricalVariables1DArray ++ currentPageLevelCategoricalCol
+                                ConfigValues.scopeCategoricalVariables1DArray ++ currentPageLevelCategoricalCol
                             }
                             else
                                 currentPageLevelCategoricalCol
@@ -301,12 +300,12 @@ object ConfigUtils
                 }
 
                 case _ =>
-                    throw new Exception(ConfigUtils.scopeProcessingErrorMessage)
+                    throw new Exception(ConfigValues.scopeProcessingErrorMessage)
             }
         }
     }
 
-    lazy val isTopKPossible = ConfigUtils.isMultiIntent && !ConfigUtils.topKIntentColumnName.isEmpty &&
+    lazy val isTopKPossible = ConfigValues.isMultiIntent && !ConfigValues.topKIntentColumnName.isEmpty &&
             (FlashMLConstants.probabilitySupportedAlgorithms.contains(mlAlgorithm) || isPlattScalingReqd || mlAlgorithm == FlashMLConstants.LOGISTIC_REGRESSION)
 
     lazy val isProbabilityColGenerated = FlashMLConstants.probabilitySupportedAlgorithms.contains(mlAlgorithm) || isPlattScalingReqd
@@ -428,7 +427,7 @@ object ConfigUtils
                 case FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE =>
                     //Building 2D Array of binning Config variables
 
-                    (0 until ConfigUtils.numPages)
+                    (0 until ConfigValues.numPages)
                             .map(index =>
                             {
                                 featureGenerationBinningConfig
@@ -456,15 +455,13 @@ object ConfigUtils
                 .nonEmpty)
         {
 
-            ConfigUtils
+            ConfigValues
                     .textVectorizationScope
                     .toLowerCase match
             {
-
                 case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE =>
-
                     columns(0) ++=
-                            ConfigUtils.
+                            ConfigValues.
                                     loadTextVectorizationConfig
                                     .asInstanceOf[Array[util.HashMap[String, Any]]]
                                     .map(vectorizationMap =>
@@ -473,46 +470,30 @@ object ConfigUtils
                                     })
 
                 case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE =>
-
                     loadTextVectorizationConfig
                             .asInstanceOf[Array[Array[util.HashMap[String, Any]]]]
                             .zipWithIndex
                             .foreach
                             { case (obj, indx) =>
-
-                                columns(indx) ++= obj
-                                        .map(vectorizationMap =>
-                                        {
-
-                                            vectorizationMap.get(FlashMLConstants.INPUT_VARIABLE) + "_" + vectorizationMap.get(FlashMLConstants.VECTORIZATION_TEXT_METHOD).asInstanceOf[String]
-                                        }
-                                        )
+                                columns(indx) ++= obj.map(vectorizationMap =>
+                                {
+                                    vectorizationMap.get(FlashMLConstants.INPUT_VARIABLE) + "_" + vectorizationMap.get(FlashMLConstants.VECTORIZATION_TEXT_METHOD).asInstanceOf[String]
+                                })
                             }
 
                 case FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE =>
-
                     val allPageTextVectorizationOutputCols: Array[String] =
                         loadTextVectorizationConfig
                                 .asInstanceOf[Array[util.HashMap[String, Any]]]
-                                .map({ vectorizationMap =>
-
-                                    vectorizationMap.get(FlashMLConstants.INPUT_VARIABLE) + "_" + vectorizationMap.get(FlashMLConstants.VECTORIZATION_TEXT_METHOD).asInstanceOf[String]
-
-                                })
-
+                                .map(vectorizationMap => vectorizationMap.get(FlashMLConstants.INPUT_VARIABLE) + "_" + vectorizationMap.get(FlashMLConstants.VECTORIZATION_TEXT_METHOD).asInstanceOf[String])
                     columns
-                            .indices
-                            .foreach(indx =>
-                            {
-                                columns(indx) ++= allPageTextVectorizationOutputCols
-
-                            })
+                        .indices
+                        .foreach(index => columns(index) ++= allPageTextVectorizationOutputCols)
             }
         }
 
-        ConfigUtils.variablesScope match
+        ConfigValues.variablesScope match
         {
-
             case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE =>
             {
                 for (x <- columns.indices)
@@ -539,7 +520,7 @@ object ConfigUtils
                         .indices
                         .foreach(index =>
                         {
-                            if (ConfigUtils.numPages > 1 && FlashMLConfig.hasKey(FlashMLConstants.EXPERIMENT_FEATURE_GENERATION_BINNING) && binningConfigPageVariables.nonEmpty)
+                            if (ConfigValues.numPages > 1 && FlashMLConfig.hasKey(FlashMLConstants.EXPERIMENT_FEATURE_GENERATION_BINNING) && binningConfigPageVariables.nonEmpty)
                             {
                                 if (categoricalColumns2DArray.nonEmpty)
                                     columns(index) += FlashMLConstants.CATEGORICAL_ARRAY + "_" + FlashMLConfig.getString(FlashMLConstants.CATEGORICAL_VARIABLES_VECTORIZATION_METHOD)
@@ -575,13 +556,12 @@ object ConfigUtils
     lazy val processedCategoricalColumns = new ArrayBuffer[Array[String]]()
 
     lazy val cumulativeSessionTime = FlashMLConfig.getString(FlashMLConstants.CUMULATIVE_SESSION_TIME)
-    lazy val topOrCumSessionTime = if (cumulativeSessionTime.isEmpty) topVariable
-    else cumulativeSessionTime
+    lazy val topOrCumSessionTime = if (cumulativeSessionTime.isEmpty) topVariable else cumulativeSessionTime
 
     lazy val allNumericVariables: Array[String] =
     {
 
-        ConfigUtils.variablesScope match
+        ConfigValues.variablesScope match
         {
 
             case FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE =>
@@ -603,7 +583,7 @@ object ConfigUtils
     lazy val allCategoricalVariables: Array[String] =
     {
 
-        ConfigUtils.variablesScope match
+        ConfigValues.variablesScope match
         {
             case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE => categoricalColumns1DArray
 
@@ -627,17 +607,17 @@ object ConfigUtils
         }
     }
 
-    lazy val randomVariable1: String = FlashMLConfig.getString(FlashMLConstants.RANDOM_VARIABLE)
+    lazy val randomVariableName: String = FlashMLConfig.getString(FlashMLConstants.RANDOM_VARIABLE)
     lazy val dateVariable: String = FlashMLConfig.getString(FlashMLConstants.DATE_VARIABLE)
     lazy val randomNumGenVariable: String = FlashMLConfig.getString(FlashMLConstants.RANDOM_NUMBER_GENEARATOR_VARIABLE)
 
-    lazy val singleValuesVariables: Array[String] = Array(randomVariable1, randomNumGenVariable, topOrCumSessionTime, pageColumn, responseColumn, upliftColumn, dateVariable)
+    lazy val singleValuesVariables: Array[String] = Array(randomVariableName, randomNumGenVariable, topOrCumSessionTime, pageColumn, responseColumn, upliftColumn, dateVariable)
 
     lazy val textVectorizationScope = FlashMLConfig.getString(FlashMLConstants.EXPERIMENT_TEXT_VECTORIZATION_SCOPE)
 
     lazy val columnNamesVariables: Array[String] =
     {
-        val numericalAndCategoricalVariables = ConfigUtils.variablesScope match
+        val numericalAndCategoricalVariables = ConfigValues.variablesScope match
         {
 
             case FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE | FlashMLConstants.SCOPE_PARAMETER_NO_PAGE => originalCategoricalColumns1DArray ++ originalNumericalColumns1DArray
@@ -650,7 +630,7 @@ object ConfigUtils
 
     lazy val originalNumericalColumns =
     {
-        ConfigUtils.variablesScope match
+        ConfigValues.variablesScope match
         {
             case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE => FlashMLConfig.getStringArray(FlashMLConstants.VARIABLES_NUMERICAL_COL)
             case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE => FlashMLConfig.get2DStringArray(FlashMLConstants.VARIABLES_NUMERICAL_COL)
@@ -659,7 +639,7 @@ object ConfigUtils
 
     lazy val originalCategoricalColumns =
     {
-        ConfigUtils.variablesScope match
+        ConfigValues.variablesScope match
         {
             case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE => FlashMLConfig.getStringArray(FlashMLConstants.VARIABLES_CATEGORICAL_COL)
             case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE => FlashMLConfig.get2DStringArray(FlashMLConstants.VARIABLES_CATEGORICAL_COL)
@@ -705,7 +685,7 @@ object ConfigUtils
 
     lazy val columnVariables: Array[String] =
     {
-        val pageVariables = ConfigUtils.variablesScope match
+        val pageVariables = ConfigValues.variablesScope match
         {
 
             case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE =>
@@ -723,7 +703,7 @@ object ConfigUtils
         val currentPageAssembledColumns = new ArrayBuffer[String]()
         currentPageAssembledColumns ++= primaryKeyColumns ++ additionalColumns ++ singleValuesVariables
 
-        ConfigUtils.variablesScope match
+        ConfigValues.variablesScope match
         {
 
             case FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE | FlashMLConstants.SCOPE_PARAMETER_NO_PAGE =>
@@ -742,7 +722,6 @@ object ConfigUtils
                     currentPageAssembledColumns ++= scopeTextVariables2DArray(pageNum)
 
         }
-
         currentPageAssembledColumns
                 .filterNot(_.isEmpty)
                 .distinct
@@ -776,33 +755,27 @@ object ConfigUtils
 
     type DataSet = DataSetType.Value
 
-    //PREPROCESSING STEP - VECTORIZATION STEP CHANGES
-    lazy val pagewisePreprocessingIntVariables: ArrayBuffer[ArrayBuffer[String]] = ArrayBuffer.fill(if (isPageLevelModel) numPages
-    else 1)(ArrayBuffer[String]())
+    // PREPROCESSING STEP - VECTORIZATION STEP CHANGES
+    lazy val pagewisePreprocessingIntVariables: ArrayBuffer[ArrayBuffer[String]] =
+        ArrayBuffer.fill(if (isPageLevelModel) numPages else 1)(ArrayBuffer[String]())
 
     /**
       * Number of spaces (indentation) used for formatting publish scripts.
       */
-    lazy val defaultIndent: Int = if (modelingMethod.contains(FlashMLConstants.PAGE_LEVEL)) 2
-    else 0
+    lazy val defaultIndent: Int = if (modelingMethod.contains(FlashMLConstants.PAGE_LEVEL)) 2 else 0
 
     /**
       * Number of pages for page level models
       */
-    lazy val numPageConfig: String = FlashMLConfig
-            .getString(FlashMLConstants.EXPERIMENT_NUMBER_OF_PAGES)
+    lazy val numPageConfig: String = FlashMLConfig.getString(FlashMLConstants.EXPERIMENT_NUMBER_OF_PAGES)
 
     lazy val numPages: Int = numPageConfig.toInt
 
-    lazy val isPageLevelModel: Boolean = modelingMethod
-            .contains(FlashMLConstants.PAGE_LEVEL)
+    lazy val isPageLevelModel: Boolean = modelingMethod.contains(FlashMLConstants.PAGE_LEVEL)
+
+    lazy val isHotleadModel: Boolean = FlashMLConfig.getBool(FlashMLConstants.PUBLISH_IS_HOTLEAD_MODEL)
 
     lazy val toSavePoint: Boolean = FlashMLConfig.getBool(FlashMLConstants.SAVEPOINTING_REQUIRED)
 
     lazy val scopeProcessingErrorMessage = "Unidentified Scope option selected! Users can select between the options noPage, allPage or perPage (case insensitive)"
-
-    val pos_prob: UserDefinedFunction = udf((a: DenseVector) => a(1))
-
-    // Hard coded for optimal efficiency
-    lazy val parallelism = 3
 }

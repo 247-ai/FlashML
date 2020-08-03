@@ -1,6 +1,6 @@
 package com.tfs.flashml.publish.featureengineering
 
-import com.tfs.flashml.util.{ConfigUtils, PublishUtils}
+import com.tfs.flashml.util.{ConfigValues, PublishUtils}
 
 import scala.collection.mutable
 
@@ -20,11 +20,11 @@ object HashingTFPublisher
 
     globalVar += ("" + hashingTFJsTmp)
     var hashingTFJs = new StringBuilder
-    hashingTFJs ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var " +
+    hashingTFJs ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "var " +
       "binarizer_" + output + " = " + binarizer.toString + ";"
-    hashingTFJs ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var size_" +
+    hashingTFJs ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "var size_" +
       output + " = " + numFeatures + ";"
-    hashingTFJs ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var " +
+    hashingTFJs ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "var " +
       output + " = hashingTF("
     hashingTFJs ++= input + ",size_" + output + ",binarizer_" + output + ");"
     hashingTFJs

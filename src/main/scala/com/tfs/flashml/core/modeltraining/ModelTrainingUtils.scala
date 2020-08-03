@@ -2,15 +2,13 @@ package com.tfs.flashml.core.modeltraining
 
 import com.tfs.flashml.dal.SavePointManager
 import com.tfs.flashml.util.conf.{ConfigValidatorException, FlashMLConstants}
-import com.tfs.flashml.util.{ConfigUtils, FlashMLConfig}
+import com.tfs.flashml.util.{ConfigValues, FlashMLConfig}
 import org.apache.spark.SparkException
 import org.apache.spark.ml.Estimator
 import org.apache.spark.ml.classification._
-import org.apache.spark.ml.feature.StringIndexerModel
 import org.apache.spark.ml.linalg.SparseVector
 import org.apache.spark.ml.param.{Param, ParamMap}
 import org.apache.spark.ml.tuning.{ParamGridBuilder, ParamRangeSpecifier}
-import org.apache.spark.mllib.tree.model.GradientBoostedTreesModel
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConverters._
@@ -24,7 +22,7 @@ object ModelTrainingUtils
     val log: Logger = LoggerFactory.getLogger(getClass)
 
     lazy val isHyperParam = FlashMLConfig.hasKey(FlashMLConstants.HYPER_PARAM_OP) && FlashMLConfig.getBool(FlashMLConstants.HYPER_PARAM_OP)
-    private val algorithm: String = ConfigUtils.mlAlgorithm
+    private val algorithm: String = ConfigValues.mlAlgorithm
 
     // Question asking for better solution of the same, unanswered on StackOverflow since April 2017. URL: https://stackoverflow.com/questions/42984702/how-to-get-feature-vector-column-length-in-spark-pipeline
     // When using ML Algorithm MultiLayerPerceptron, inputFeaturesSize value are to be computed internally and not accepted from the user
@@ -221,12 +219,12 @@ object ModelTrainingUtils
         def getOvr(classifier: Classifier[_, _, _]): Estimator[_] =
         {
             new OneVsRestCustom()
-                    .setParallelism(ConfigUtils.parallelism)
+                    .setParallelism(FlashMLConstants.parallelism)
                     .setClassifier(classifier)
-                    .setLabelCol(ConfigUtils.getIndexedResponseColumn)
+                    .setLabelCol(ConfigValues.getIndexedResponseColumn)
         }
 
-        ConfigUtils.mlAlgorithm match
+        ConfigValues.mlAlgorithm match
         {
             case FlashMLConstants.LOGISTIC_REGRESSION =>
                 val lr = if (!isParamGridUsed)
@@ -237,7 +235,7 @@ object ModelTrainingUtils
                             .setRegParam(FlashMLConfig.getDouble(FlashMLConstants.LR_REGULARISATION))
                             .setMaxIter(FlashMLConfig.getInt(FlashMLConstants.LR_ITERATIONS))
                             .setElasticNetParam(FlashMLConfig.getDouble(FlashMLConstants.LR_ELASTIC_NET))
-                            .setLabelCol(ConfigUtils.getIndexedResponseColumn)
+                            .setLabelCol(ConfigValues.getIndexedResponseColumn)
                             .setStandardization(FlashMLConfig.getBool(FlashMLConstants.LR_STANDARDIZATION))
                 }
                 else
@@ -245,7 +243,7 @@ object ModelTrainingUtils
                     new LogisticRegression()
                             .setTol(1E-6)
                             .setFitIntercept(true)
-                            .setLabelCol(ConfigUtils.getIndexedResponseColumn)
+                            .setLabelCol(ConfigValues.getIndexedResponseColumn)
                 }
 
                 if (isOvr)
@@ -267,7 +265,7 @@ object ModelTrainingUtils
                             .setFitIntercept(true)
                             .setRegParam(FlashMLConfig.getDouble(FlashMLConstants.SVM_REGULARISATION))
                             .setMaxIter(FlashMLConfig.getInt(FlashMLConstants.SVM_ITERATIONS))
-                            .setLabelCol(ConfigUtils.getIndexedResponseColumn)
+                            .setLabelCol(ConfigValues.getIndexedResponseColumn)
                             .setStandardization(FlashMLConfig.getBool(FlashMLConstants.SVM_STANDARDIZATION))
                 }
                 else
@@ -275,7 +273,7 @@ object ModelTrainingUtils
                     new LinearSVC()
                             .setTol(1E-6)
                             .setFitIntercept(true)
-                            .setLabelCol(ConfigUtils.getIndexedResponseColumn)
+                            .setLabelCol(ConfigValues.getIndexedResponseColumn)
                 }
 
                 // SVC only supports binary classification. Hence for multi-class
@@ -296,7 +294,7 @@ object ModelTrainingUtils
                 val rf = if (!isParamGridUsed)
                 {
                     new RandomForestClassifier()
-                            .setLabelCol(ConfigUtils.getIndexedResponseColumn)
+                            .setLabelCol(ConfigValues.getIndexedResponseColumn)
                             .setNumTrees(FlashMLConfig.getInt(FlashMLConstants.RF_NUMBER_OF_TREES))
                             .setSeed(seedValue)
                             .setImpurity(FlashMLConfig.getString(FlashMLConstants.RF_IMPURITY))
@@ -310,7 +308,7 @@ object ModelTrainingUtils
                 {
                     new RandomForestClassifier()
                             .setSeed(seedValue)
-                            .setLabelCol(ConfigUtils.getIndexedResponseColumn)
+                            .setLabelCol(ConfigValues.getIndexedResponseColumn)
                             .setProbabilityCol("probability")
                             .setRawPredictionCol("rawPrediction")
                 }
@@ -323,7 +321,7 @@ object ModelTrainingUtils
                 val gbt = if (!isParamGridUsed)
                 {
                     new GBTClassifier()
-                            .setLabelCol(ConfigUtils.getIndexedResponseColumn)
+                            .setLabelCol(ConfigValues.getIndexedResponseColumn)
                             .setMaxIter(FlashMLConfig.getInt(FlashMLConstants.GBT_MAX_ITER))
                             .setFeatureSubsetStrategy(FlashMLConfig.getString(FlashMLConstants.GBT_FEATURESUBSETSTRATEGY))
                             .setSeed(seedValue)
@@ -335,7 +333,7 @@ object ModelTrainingUtils
                 else
                 {
                     new GBTClassifier()
-                            .setLabelCol(ConfigUtils.getIndexedResponseColumn)
+                            .setLabelCol(ConfigValues.getIndexedResponseColumn)
                             .setSeed(seedValue)
                             .setProbabilityCol("probability")
                             .setRawPredictionCol("rawPrediction")
@@ -349,7 +347,7 @@ object ModelTrainingUtils
                 val dt = if (!isParamGridUsed)
                 {
                     new DecisionTreeClassifier()
-                            .setLabelCol(ConfigUtils.getIndexedResponseColumn)
+                            .setLabelCol(ConfigValues.getIndexedResponseColumn)
                             .setImpurity(FlashMLConfig.getString(FlashMLConstants.DT_IMPURITY))
                             .setSeed(seedValue)
                             .setMaxDepth(FlashMLConfig.getInt(FlashMLConstants.DT_MAX_DEPTH))
@@ -362,7 +360,7 @@ object ModelTrainingUtils
                 {
                     new DecisionTreeClassifier()
                             .setSeed(seedValue)
-                            .setLabelCol(ConfigUtils.getIndexedResponseColumn)
+                            .setLabelCol(ConfigValues.getIndexedResponseColumn)
                             .setProbabilityCol("probability")
                             .setRawPredictionCol("rawPrediction")
                 }
@@ -375,7 +373,7 @@ object ModelTrainingUtils
                 {
                     new MultilayerPerceptronClassifier()
                             .setSeed(seedValue)
-                            .setLabelCol(ConfigUtils.getIndexedResponseColumn)
+                            .setLabelCol(ConfigValues.getIndexedResponseColumn)
                             .setBlockSize(FlashMLConfig.getInt(FlashMLConstants.MLP_BLOCK_SIZE))
                             .setMaxIter(FlashMLConfig.getInt(FlashMLConstants.MLP_MAX_ITERATIONS))
                             .setLayers(Array(inputFeaturesSizeMLP)++FlashMLConfig.getIntArray(FlashMLConstants.MLP_INTERMEDIATE_LAYERS)++Array(finalclassesMLP))
@@ -386,7 +384,7 @@ object ModelTrainingUtils
                 {
                     new MultilayerPerceptronClassifier()
                             .setSeed(seedValue)
-                            .setLabelCol(ConfigUtils.getIndexedResponseColumn)
+                            .setLabelCol(ConfigValues.getIndexedResponseColumn)
                             .setProbabilityCol("probability")
                             .setRawPredictionCol("rawPrediction")
                 }
@@ -398,14 +396,14 @@ object ModelTrainingUtils
 
                 val nb = if(!isParamGridUsed){
                     new NaiveBayes()
-                        .setLabelCol(ConfigUtils.getIndexedResponseColumn)
+                        .setLabelCol(ConfigValues.getIndexedResponseColumn)
                         .setProbabilityCol("probability")
                         .setRawPredictionCol("rawPrediction")
                         .setSmoothing(FlashMLConfig.getInt(FlashMLConstants.NB_SMOOTHING))
                         .setModelType(FlashMLConfig.getString(FlashMLConstants.NB_MODEL_TYPE)) }
                 else{
                     new NaiveBayes()
-                            .setLabelCol(ConfigUtils.getIndexedResponseColumn)
+                            .setLabelCol(ConfigValues.getIndexedResponseColumn)
                             .setProbabilityCol("probability")
                             .setRawPredictionCol("rawPrediction")
                 }

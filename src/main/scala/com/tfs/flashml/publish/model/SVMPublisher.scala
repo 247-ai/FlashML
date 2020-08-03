@@ -2,7 +2,7 @@ package com.tfs.flashml.publish.model
 
 import java.text.DecimalFormat
 
-import com.tfs.flashml.util.{ConfigUtils, PublishUtils}
+import com.tfs.flashml.util.{ConfigValues, PublishUtils}
 import com.tfs.flashml.util.conf.FlashMLConstants
 import org.apache.spark.ml.linalg.Vector
 
@@ -13,8 +13,8 @@ object SVMPublisher {
 
   def generateJS(svmCoefficients:Vector, svmIntercept:Double, svmFeatureCol:String, calibCoefficients:Vector, calibIntercept:Double, globalVar:mutable.Set[String]) : StringBuilder = {
     val js = new StringBuilder
-    js ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var svmIntercept = " + svmIntercept  + ";"
-    js ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var calibIntercept = " + calibIntercept  + ";"
+    js ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "var svmIntercept = " + svmIntercept  + ";"
+    js ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "var calibIntercept = " + calibIntercept  + ";"
     js ++= createSVMCoefficientsMap(svmCoefficients.toArray)
     js ++= createCalibCoefficientsMap(calibCoefficients.toArray)
     //js ++= generateSVMDotProductString(svmFeatureCol)
@@ -28,13 +28,13 @@ object SVMPublisher {
     val mapString = new StringBuilder
     val mapArray = new ArrayBuffer[String]()
     var formatString = s"#.${"#" * ModelPublisher.decimalPrecision}"
-    mapString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var svmCoefficients = { "
+    mapString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "var svmCoefficients = { "
     for((value,index) <- svmCoefficientsArray.zipWithIndex){
       if (value != 0)
-        mapArray += PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 2) + index + PublishUtils.indent(2) + ": " + doubleToString(value, formatString).toDouble
+        mapArray += PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 2) + index + PublishUtils.indent(2) + ": " + doubleToString(value, formatString).toDouble
     }
     mapString ++= mapArray.mkString(",")
-    mapString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "};"
+    mapString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "};"
     mapString
   }
 
@@ -42,13 +42,13 @@ object SVMPublisher {
 
     val mapString = new StringBuilder
     val mapArray = new ArrayBuffer[String]()
-    mapString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "var calibCoefficients = { "
+    mapString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "var calibCoefficients = { "
     for((value,index) <- calibCoefficientsArray.zipWithIndex){
       if (value != 0)
-        mapArray += PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 2) + index + PublishUtils.indent(2) + ": " + value
+        mapArray += PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 2) + index + PublishUtils.indent(2) + ": " + value
     }
     mapString ++= mapArray.mkString(",")
-    mapString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigUtils.defaultIndent + 1) + "};"
+    mapString ++= PublishUtils.getNewLine + PublishUtils.indent(ConfigValues.defaultIndent + 1) + "};"
     mapString
   }
 
@@ -76,7 +76,7 @@ object SVMPublisher {
   }
 
   def generateProbabilityString : StringBuilder = {
-    if (ConfigUtils.modelingMethod.contains(FlashMLConstants.UPLIFT))
+    if (ConfigValues.modelingMethod.contains(FlashMLConstants.UPLIFT))
     {
       val probString = new StringBuilder
       probString ++= PublishUtils.getNewLine + PublishUtils.indent(2) + "var dotProduct = calibrator(svmDotProduct);"

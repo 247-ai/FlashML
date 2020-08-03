@@ -47,7 +47,7 @@ class MultiIntentLRRandomSamplingTest extends AnyFlatSpec {
 
   import ss.implicits._
 
-  var multiIntentLRPredictionDF: Array[RDD[(Double,Double)]] = SavePointManager.loadData(FlashMLConstants.SCORING).map(_.select("prediction", ConfigUtils.getIndexedResponseColumn).as[(Double, Double)].rdd)
+  var multiIntentLRPredictionDF: Array[RDD[(Double,Double)]] = SavePointManager.loadData(FlashMLConstants.SCORING).map(_.select("prediction", ConfigValues.getIndexedResponseColumn).as[(Double, Double)].rdd)
 
   val multiIntentLREvaluatorTrain = new MulticlassMetrics(multiIntentLRPredictionDF(0))
 

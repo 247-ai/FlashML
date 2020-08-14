@@ -180,7 +180,7 @@ object ModelTrainingEngine extends Engine with Validator
             allStages += new PlattScalar()
                     .setIsMultiIntent(ConfigValues.isMultiIntent)
                     .setLabelCol(ConfigValues.getIndexedResponseColumn)
-                    .setParallelism(FlashMLConstants.parallelism)
+                    .setParallelism(ConfigValues.flashmlParallelism)
         }
 
         // Uplift and TopKIntents require fitted models.
@@ -307,7 +307,7 @@ object ModelTrainingEngine extends Engine with Validator
                 .setEvaluator(evaluator)
                 .setEstimatorParamMaps(paramGrid)
                 .setNumFolds(crossValidationFolds)
-                .setParallelism(FlashMLConstants.parallelism)
+                .setParallelism(ConfigValues.flashmlParallelism)
                 .setSeed(seedValue)
     }
 
@@ -366,7 +366,7 @@ object ModelTrainingEngine extends Engine with Validator
                 .setEvaluator(evaluator)
                 .setMaxIterationsFinalModel(maxIterV)
                 .setParamGenerator(new RandomParamSetGenerator(paramRangeSpec,seedValue))
-                .setParallelism(FlashMLConstants.parallelism)
+                .setParallelism(ConfigValues.flashmlParallelism)
                 .setSeed(seedValue)
 
         // Following keys are optional

@@ -9,7 +9,7 @@ import org.apache.spark.ml.feature._
 import org.apache.spark.ml.{Pipeline, PipelineModel, PipelineStage}
 import org.apache.spark.sql.DataFrame
 import org.slf4j.{Logger, LoggerFactory}
-import scala.collection.JavaConversions
+import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
 
 /**
@@ -87,7 +87,6 @@ object VectorizationEngine extends Engine with Validator
 
     override def buildPipelineModel(df: DataFrame, pageCount: Int): PipelineModel =
     {
-
         // Container for pipeline stages
         val allStages = ArrayBuffer[PipelineStage]()
 
@@ -236,7 +235,7 @@ object VectorizationEngine extends Engine with Validator
     def getVariablesForTextVectorization(map: util.HashMap[String, String]): (String, Array[String]) =
     {
         val inputVariable = map.get(FlashMLConstants.INPUT_VARIABLE)
-        val keys: scala.collection.mutable.Set[String] = JavaConversions.asScalaSet(map.keySet())
+        val keys: scala.collection.mutable.Set[String] = map.keySet().asScala
         val toRemove = List(FlashMLConstants.INPUT_VARIABLE)
         val operations = keys.filterNot(toRemove.contains(_))
 

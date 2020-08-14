@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory
   *
   * @since 19/7/18
   */
-
 class CustomSparkListener extends SparkListener
 {
     private val log = LoggerFactory.getLogger(getClass)
@@ -24,7 +23,6 @@ class CustomSparkListener extends SparkListener
         log.info(s"Application Start at ${applicationStart.time}")
         val projectId = FlashMLConfig.getString(FlashMLConstants.FLASHML_PROJECT_ID)
         val modelId = FlashMLConfig.getString(FlashMLConstants.FLASHML_MODEL_ID)
-        val jobId = FlashMLConfig.getString(FlashMLConstants.FLASHML_JOB_ID)
         val status = FlashMLConstants.RUNNING
 
         val url = FlashMLConfig.getString(FlashMLConstants.APOLLO_API_URL)
@@ -52,7 +50,6 @@ class CustomSparkListener extends SparkListener
         log.info(s"Application Completed at ${applicationEnd.time}")
         val projectId = FlashMLConfig.getString(FlashMLConstants.FLASHML_PROJECT_ID)
         val modelId = FlashMLConfig.getString(FlashMLConstants.FLASHML_MODEL_ID)
-        val jobId = FlashMLConfig.getString(FlashMLConstants.FLASHML_JOB_ID)
         val status = FlashMLConstants.COMPLETED
 
         val url = FlashMLConfig.getString(FlashMLConstants.APOLLO_API_URL)
@@ -63,7 +60,7 @@ class CustomSparkListener extends SparkListener
 
         val client = HttpClientBuilder.create().build()
 
-        // send the post request
+        // Send the post request
         try
         {
             val response = client.execute(post)

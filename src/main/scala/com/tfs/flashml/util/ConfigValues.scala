@@ -595,7 +595,6 @@ object ConfigValues
     {
         variablesScope match
         {
-
             case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE =>
                 scopeTextVariables1DArray
 
@@ -619,7 +618,6 @@ object ConfigValues
     {
         val numericalAndCategoricalVariables = ConfigValues.variablesScope match
         {
-
             case FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE | FlashMLConstants.SCOPE_PARAMETER_NO_PAGE => originalCategoricalColumns1DArray ++ originalNumericalColumns1DArray
 
             case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE => originalNumericalColumns2DArray.flatten.distinct ++ originalCategoricalColumns2DArray.flatten.distinct
@@ -656,30 +654,28 @@ object ConfigValues
 
     lazy val loadTextVectorizationConfig =
     {
-
-        FlashMLConfig.getString(FlashMLConstants.EXPERIMENT_TEXT_VECTORIZATION_SCOPE)
-                .toLowerCase match
+        FlashMLConfig.getString(FlashMLConstants.EXPERIMENT_TEXT_VECTORIZATION_SCOPE).toLowerCase match
         {
             case FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE | FlashMLConstants.SCOPE_PARAMETER_NO_PAGE =>
 
                 FlashMLConfig
-                        .config
-                        .getList(FlashMLConstants.EXPERIMENT_TEXT_VECTORIZATION_STEPS)
-                        .unwrapped()
-                        .asInstanceOf[java.util.ArrayList[util.HashMap[String, Any]]]
-                        .asScala
-                        .toArray
-                        .asInstanceOf[Array[util.HashMap[String, Any]]]
+                    .config
+                    .getList(FlashMLConstants.EXPERIMENT_TEXT_VECTORIZATION_STEPS)
+                    .unwrapped()
+                    .asInstanceOf[java.util.ArrayList[util.HashMap[String, Any]]]
+                    .asScala
+                    .toArray
+                    .asInstanceOf[Array[util.HashMap[String, Any]]]
 
             case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE =>
                 FlashMLConfig
-                        .config
-                        .getList(FlashMLConstants.EXPERIMENT_TEXT_VECTORIZATION_STEPS)
-                        .asScala
-                        .map(_.unwrapped()
-                                .asInstanceOf[java.util.ArrayList[util.HashMap[String, Any]]]
-                                .asScala.toArray)
-                        .to[Array]
+                    .config
+                    .getList(FlashMLConstants.EXPERIMENT_TEXT_VECTORIZATION_STEPS)
+                    .asScala
+                    .map(_.unwrapped()
+                            .asInstanceOf[java.util.ArrayList[util.HashMap[String, Any]]]
+                            .asScala.toArray)
+                    .to[Array]
         }
     }
 
@@ -763,6 +759,8 @@ object ConfigValues
       * Number of spaces (indentation) used for formatting publish scripts.
       */
     lazy val defaultIndent: Int = if (modelingMethod.contains(FlashMLConstants.PAGE_LEVEL)) 2 else 0
+
+    lazy val flashmlParallelism = if(FlashMLConfig.hasKey(FlashMLConstants.EXPERIMENT_PARALLELISM)) FlashMLConfig.getInt(FlashMLConstants.EXPERIMENT_PARALLELISM) else FlashMLConstants.parallelism
 
     /**
       * Number of pages for page level models

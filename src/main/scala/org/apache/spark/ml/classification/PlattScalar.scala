@@ -552,7 +552,7 @@ object PlattScalar extends MLReadable[PlattScalar]
         {
             val metadata = PlattScalarParams.loadImpl(path, sc, className)
             val plattScalar = new PlattScalar(metadata.uid)
-                    .setParallelism(FlashMLConstants.parallelism)
+                    .setParallelism(ConfigValues.flashmlParallelism)
 
             metadata.getAndSetParams(plattScalar)
             plattScalar

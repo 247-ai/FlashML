@@ -38,6 +38,7 @@ object FlashMLConstants
     val EXPERIMENT_TYPE_MONITORING = "monitoring"
     val EXPERIMENT_MODELING_METHOD = "experiment.modelingMethod"
     val EXPERIMENT_NUMBER_OF_PAGES = "experiment.pageLevel.numberOfPages"
+    val EXPERIMENT_PARALLELISM = "experiment.parallelism"
 
     val EXPERIMENT_MODELING_METHOD_SINGLE_INTENT = "single_intent"
     val EXPERIMENT_MODELING_METHOD_MULTI_INTENT = "multi_intent"
@@ -283,7 +284,7 @@ object FlashMLConstants
 
     val CONFIG_CHECKS = "/configChecks.json"
 
-    // Hard coded for optimal efficiency
+    // Default value for parallelism
     val parallelism = 3
 
     val probabilitySupportedAlgorithms = Set(

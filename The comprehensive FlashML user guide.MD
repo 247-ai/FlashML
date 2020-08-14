@@ -17,6 +17,7 @@ FlashML serves as a prediction model building tool for the following use cases:
 	- [Loading data from Hive](#loading-data-from-hive)
 	- [Loading data from HDFS](#loading-data-from-hdfs)
 -   [Pipeline Steps](#the-pipeline-steps)
+    - [Parallelism in FlashML](#parallelism-in-flashml)
 	- [Understanding scope in FlashML](#understanding-scope-in-flashml)
 	- [Step details](#step-details)
 		-   [Data Reader](#datareader)
@@ -85,7 +86,7 @@ Alternatively, the user can also enter SQL type queries if the requirement is to
 
 The parameter <code>project.data.location.queries</code> accepts an array of SQL query strings. When multiple SQL queries are entered, The queries are processed in order of the array indices. The parameter <code>project.data.location..temp_table_prefix</code> denotes the table name that will be used to denote the intermediate tables used when multiple queries are submitted. The output of a previous query can be referred to in the subsequent queries as <code>{temp_table_prefix}_1, {temp_table_prefix}_2</code> and so on as shown below. The output of the final query would be used as the input data to FlashML.
 
-##### Config. snippet 3. Loading segmented data from a Hive
+##### Config. snippet 3. Loading segmented data from a Hive table
 
 ```
 {
@@ -131,12 +132,15 @@ Here the different steps regarding the model job will be elaborated in sequence 
 
 In pipeline steps, FlashML supports scope-processing of user-entered parameters allowing entry of variables and variable-transformations once in the case of multi-page level models. This method allows users the flexibility to declare variables and transformation methods in multi-page level models, considerably reducing the size of the JSON config file and enhancing the user experience. A few sample configuration snippets have been listed here to demonstrate the flexibility to declare variables.
 
+### Parallelism in FlashML
+By default, FlashML uses a value of 3 for running various parts of the pipeline in parallel. This value can be overridden in the config file using the config parameter `experiment.parallelism`, in the `experiment` block. A recommended value would be to leave 2 cores for the system functions and use the rest of the cores for FlashML.
+
 ### Understanding scope in FlashML
 The key `experiment.variables.scope` accepts the following options (case insensitive):
 <ul>
- <li><strong>allPage:</strong> This option allows the user to enter variables for a multi-page level model where the variables are the same for all pages</li>
- <li><strong>noPage:</strong> This option allows the user to enter variables for a non-page level model</li>
- <li><strong>perPage:</strong> This option allows the user to custom-specify required variables for a multi-page level model</li>
+ <li><strong>allPage:</strong> This option allows the user to enter variables and other configurations for a multi-page level model where the variables and configurations are the same for all pages</li>
+ <li><strong>perPage:</strong> This option allows the user to custom-specify required variables and configurations for a multi-page level model</li>
+ <li><strong>noPage:</strong> This option allows the user to enter variables for a non-page level model, e.g., an NLP model</li>
 </ul>
 
 ##### Config. snippet 4. noPage scope option here pertains to a non-page level model

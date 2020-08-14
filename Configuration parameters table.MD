@@ -12,12 +12,13 @@ The
 
 <br />
 
-For the block `experiment`
+For the block `experiment` (all the parameters listed below would have to be prepended by `experiment.`):
 
 
 | Parameter | Accepted values   |   Remarks |
 |:------------------|:-------------------|:---------------------|
-| modelingMethod   | Accepts an array of strings. Accepted values in the array include: (Case insensitive) <br /><ul><li>```single_intent```</li><li>```uplift```</li><li>```page_level```</li><li>```multi_intent```</li></ul>   | customized workflow path based on use case and prediction (subject to availability of mentioned features in input Data)              |
+|parallelism|Accepts integer|Default value is 3, if not mentioned in the config file.|
+| modelingMethod| Accepts an array of strings. Accepted values in the array include: (Case insensitive) <br /><ul><li>```single_intent```</li><li>```uplift```</li><li>```page_level```</li><li>```multi_intent```</li></ul>   | customized workflow path based on use case and prediction (subject to availability of mentioned features in input Data)              |
 | type    | Accepted values include: (Case insensitive) <br /><ul><li>```model```</li><li>```predict```</li><li>```monitoring```</li><ul>    | This support allows the user to use a model generated once, multiple times for testing purposes as different jobs, rather than overwrite model training jobs   |
 | variables.scope          |  Accepted values include: (Case insensitive) <br /><ul><li>```allPage```</li><li>```NoPage```</li><li>```PerPage```</li></ul>                | Users can choose from the supported option to build their models. This approach allows users to smoothly build multi page level models.    |
 | preprocessing.scope          | Accepted values include: (Case insensitive) <br /><ul><li>```allPage```</li><li>```NoPage```</li><li>```PerPage```</li></ul>                      |  Scope declaration option applicable only to Preprocessing section of the config. file                     |
@@ -31,13 +32,13 @@ For the block `experiment`
 | primaryKey   | Accepts array of String (unique columns in the table)      | Mentioned columns should exist in the hive loaded  table  |
 | responseVariable      | Accepts string      | output column/ required prediction column       |
 | pageVariable    |   Accepts String   | column in table denoting page number  |
-| dateVariable                                   |  date value is accepted (as any one of the many accepted standard date formats)                                                                                                                                                                                                                                                                                                                                                                       | used in QA                                                                                                                                                                                                                                    |
-| randomVariable                                 | name for new variable generated randomly                                                                                                                                                                                                                                                                                                                                                   |                                                                                                                                                                                                                                               |
+| dateVariable|  Date value is accepted (as any one of the many accepted standard date formats) | used in QA |
+| randomVariable| name for new variable generated randomly| |
 | randomNumberGeneratorVariable                  | Applied on an existing column, to generate random IDs   | Users must ensure the first 8 characters are hexadecimal   |
-| uplift.treatmentVariable                       |  Column name used for uplift                                                                                                                                                                                                                                                                                                                                                                                           |                                                                                                                                                                                                                                               |
+| uplift.treatmentVariable|   |Column name used for uplift |
 | cumulativeSessionTime  | String accepted (variable)  |   new column name, this is will store exact time spent on each page |
 | additionalVariables    | Array of strings accepted    | columns not used in model building, but needed for reporting or insights.,etc.   |
-| customFilter   | SQL type variable conditional value          | to check for any filter conditions in column values (for eg null check)      |
+| customFilter   | SQL type variable conditional value          | To check for any filter conditions in column values (for eg null check)      |
 | postPredictFilter  | String accepted (condition involving minimum one column)  | Used in Cross Validation wherein the input dataset is first transformed (and then CV is carried out for each fold)  |
 | sample.type                                    |  Accepted values include: (Case insensitive) <br /><ul><li>```random``` </li><li> ```conditional``` </li><li> ```stratified``` </li><ul>         |            |
 | sample.split         |   Array of two integers accepted   | 80, 20 (for example)     |
@@ -58,8 +59,7 @@ For the block `experiment`
 | preprocessing.steps                            | <pre>{<br />  "experiment": {<br />    "preprocessing": {<br />      "steps": [<br />        [<br />          {<br />            "inputVariable": "chatContent",<br />            "outputVariable": "chatContent1",<br />             "transformations": [<br />              {<br />                "type":"tokenizer",<br />                "parameter":"/"<br />              }<br />            ]<br />          }<br />        ]<br />      ]<br />    } <br />  } <br />} </pre>  |                       |
 | vectorization.categorical.method          | Accepted values include: (case insensitive) <br /> <ul><li>```hashingtf```</li> <li>```count_vectorizer```</li><li>```word2vec```</li> <li>```tfidf```</li></ul>      |           |
 | vectorization.categorical.slots           | 1000 (for example)   |     |
-| vectorization.text.steps                  | <pre> [ <br />  {"input_variable":"current_page_url1", "method": "hashingtf",
-                                                                                                                   "slots": 2000  },   <br />  {"input_variable":"referrer1", "method": "hashingtf", "slots": 2000 },   <br />  {"input_variable":"referrer2", "method":"tfidf","slots":2000 }   <br /> ] </pre>                                                                                                                                                                   | Supports all text variable columns only, with one of following text processing methods (hashingtf, count_vectorizer, word2vec, tfidf) in a JSON Array format  |
+| vectorization.text.steps                  | | Supports all text variable columns only, with one of following text processing methods (hashingtf, count_vectorizer, word2vec, tfidf) in a JSON Array format  |
 | algorithm.type    | Accepted values include: (case insensitive) <br><ul><li>```logistic_regression```</li><li>```naive_bayes```</li><li>```svm```</li>     |          |
 | multiIntent.topIntentsColumn    |    String accepted     |  new column to store intents        |
 | multiIntent.maxTopIntents    |  Integer accepted        |  Maximum number of intents to be listed in order of their probability values  |

@@ -219,7 +219,7 @@ object ModelTrainingUtils
         def getOvr(classifier: Classifier[_, _, _]): Estimator[_] =
         {
             new OneVsRestCustom()
-                    .setParallelism(FlashMLConstants.parallelism)
+                    .setParallelism(ConfigValues.flashmlParallelism)
                     .setClassifier(classifier)
                     .setLabelCol(ConfigValues.getIndexedResponseColumn)
         }

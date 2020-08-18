@@ -173,11 +173,25 @@
         "datatype" : "boolean"
       },
       {
+        "path" : "experiment.cv.metric",
+        "pattern" : "f1|weightedPrecision|weightedRecall|accuracy",
+        "range" : "",
+        "canBeEmpty" : true,
+        "datatype" : "string"
+      },
+      {
         "path": "experiment.algorithm.svm.plattScalingEnabled",
         "pattern":"true|false",
         "range": "",
         "canBeEmpty": true,
         "datatype": "boolean"
+      },
+      {
+        "path": "experiment.parallelism",
+        "pattern":"[\\d]+",
+        "range": "",
+        "canBeEmpty": true,
+        "datatype": "int"
       }
     ]
   },

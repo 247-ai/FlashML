@@ -213,6 +213,8 @@ object FlashMLConstants
     val CROSS_VALIDATION = "experiment.cv.folds"
     val HYPER_PARAM_OP = "experiment.hyperparamop"
     val CV_PREDICT_SAVEPOINT = "experiment.cv.predictSavepoint"
+    val CV_EVAL_METRIC = "experiment.cv.metric"
+    val CV_EVAL_METRIC_DEFAULT = "weightedPrecision"
 
     // Hyperband related
     // TODO include these in comments
@@ -282,7 +284,7 @@ object FlashMLConstants
     val PAGE_LEVEL = "page_level"
     val UPLIFT = "uplift"
 
-    val CONFIG_CHECKS = "/configChecks.json"
+    val CONFIG_CHECKS_LIST = "/configChecks.json"
 
     // Default value for parallelism
     val parallelism = 3

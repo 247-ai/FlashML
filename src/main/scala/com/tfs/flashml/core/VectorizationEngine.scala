@@ -208,7 +208,7 @@ object VectorizationEngine extends Engine with Validator
             case FlashMLConstants.TF_IDF =>
                 val tf = new CountVectorizer()
                         .setInputCol(inputColumnName)
-                        .setOutputCol(outputColumn + "_tf_col")
+                        .setOutputCol(outputColumn + "_tfidf_col")
                         .setVocabSize(vectorSize)
                 val idf = new IDF()
                         .setInputCol(tf.getOutputCol)

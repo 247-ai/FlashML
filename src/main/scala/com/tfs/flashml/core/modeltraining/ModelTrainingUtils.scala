@@ -22,10 +22,11 @@ object ModelTrainingUtils
     val log: Logger = LoggerFactory.getLogger(getClass)
 
     lazy val isHyperParam = FlashMLConfig.hasKey(FlashMLConstants.HYPER_PARAM_OP) && FlashMLConfig.getBool(FlashMLConstants.HYPER_PARAM_OP)
-    private val algorithm: String = ConfigValues.mlAlgorithm
+    private val mlAlgorithm: String = ConfigValues.mlAlgorithm
 
+    // Variables needed for MLP
     // Question asking for better solution of the same, unanswered on StackOverflow since April 2017. URL: https://stackoverflow.com/questions/42984702/how-to-get-feature-vector-column-length-in-spark-pipeline
-    // When using ML Algorithm MultiLayerPerceptron, inputFeaturesSize value are to be computed internally and not accepted from the user
+    // When using ML Algorithm MultiLayerPerceptron, inputFeaturesSize value are computed internally and not accepted from the user
     // It is the first value in the MLP array Param 'Layers'
     // It is computed from a sample row of the vectorized training DF
     lazy val inputFeaturesSizeMLP = SavePointManager
@@ -45,14 +46,6 @@ object ModelTrainingUtils
             .distinct()
             .collect()
             .length
-
-    lazy val paramGridLayersMLP: Array[Array[Int]] = {
-        FlashMLConfig
-                .get2DArrayInt(FlashMLConstants.MLP_INTERMEDIATE_LAYERS)
-                .map(arr => {
-                    Array(inputFeaturesSizeMLP) ++ arr ++ Array(finalclassesMLP)
-                })
-    }
 
     def convertToDoubleList[T, U](list: Iterable[_]): Iterable[Double] =
     {
@@ -95,105 +88,87 @@ object ModelTrainingUtils
         algoName match
         {
             case "LogisticRegression" => new ParamGridBuilder()
-                    .addGrid(estimator.asInstanceOf[LogisticRegression].regParam, FlashMLConfig.getDoubleArray
-                    (FlashMLConstants.LR_REGULARISATION))
-                    .addGrid(estimator.asInstanceOf[LogisticRegression].maxIter, FlashMLConfig.getIntArray
-                    (FlashMLConstants.LR_ITERATIONS))
-                    .addGrid(estimator.asInstanceOf[LogisticRegression].elasticNetParam, FlashMLConfig.getDoubleArray
-                    (FlashMLConstants.LR_ELASTIC_NET))
-                    .addGrid(estimator.asInstanceOf[LogisticRegression].standardization, FlashMLConfig.getBoolArray
-                    (FlashMLConstants.LR_STANDARDIZATION))
+                    .addGrid(estimator.asInstanceOf[LogisticRegression].regParam, FlashMLConfig.getDoubleArray(FlashMLConstants.LR_REGULARISATION))
+                    .addGrid(estimator.asInstanceOf[LogisticRegression].maxIter, FlashMLConfig.getIntArray(FlashMLConstants.LR_ITERATIONS))
+                    .addGrid(estimator.asInstanceOf[LogisticRegression].elasticNetParam, FlashMLConfig.getDoubleArray(FlashMLConstants.LR_ELASTIC_NET))
+                    .addGrid(estimator.asInstanceOf[LogisticRegression].standardization, FlashMLConfig.getBoolArray(FlashMLConstants.LR_STANDARDIZATION))
                     .build()
 
             case "LinearSVC" => new ParamGridBuilder()
-                    .addGrid(estimator.asInstanceOf[LinearSVC].regParam, FlashMLConfig.getDoubleArray
-                    (FlashMLConstants.SVM_REGULARISATION))
-                    .addGrid(estimator.asInstanceOf[LinearSVC].maxIter, FlashMLConfig.getIntArray(FlashMLConstants
-                            .SVM_ITERATIONS))
-                    .addGrid(estimator.asInstanceOf[LinearSVC].standardization, FlashMLConfig.getBoolArray
-                    (FlashMLConstants.SVM_STANDARDIZATION))
+                    .addGrid(estimator.asInstanceOf[LinearSVC].regParam, FlashMLConfig.getDoubleArray(FlashMLConstants.SVM_REGULARISATION))
+                    .addGrid(estimator.asInstanceOf[LinearSVC].maxIter, FlashMLConfig.getIntArray(FlashMLConstants.SVM_ITERATIONS))
+                    .addGrid(estimator.asInstanceOf[LinearSVC].standardization, FlashMLConfig.getBoolArray(FlashMLConstants.SVM_STANDARDIZATION))
                     .build()
 
-            case "OneVsRestCustom" => if (algoName.equals(FlashMLConstants.LOGISTIC_REGRESSION))
-                new ParamGridBuilder()
-                        .addGrid(estimator.asInstanceOf[OneVsRestCustom].getClassifier
-                                .asInstanceOf[LogisticRegression].regParam, FlashMLConfig.getDoubleArray
-                        (FlashMLConstants.LR_REGULARISATION))
-                        .addGrid(estimator.asInstanceOf[OneVsRestCustom].getClassifier
-                                .asInstanceOf[LogisticRegression].maxIter, FlashMLConfig.getIntArray(FlashMLConstants
-                                .LR_ITERATIONS))
-                        .addGrid(estimator.asInstanceOf[OneVsRestCustom].getClassifier
-                                .asInstanceOf[LogisticRegression].elasticNetParam, FlashMLConfig.getDoubleArray
-                        (FlashMLConstants.LR_ELASTIC_NET))
-                        .addGrid(estimator.asInstanceOf[OneVsRestCustom].getClassifier
-                                .asInstanceOf[LogisticRegression].standardization, FlashMLConfig.getBoolArray
-                        (FlashMLConstants.LR_STANDARDIZATION))
-                        .build()
-            else if (algoName.equals(FlashMLConstants.SVM))
-                new ParamGridBuilder()
-                        .addGrid(estimator.asInstanceOf[OneVsRestCustom].getClassifier.asInstanceOf[LinearSVC]
-                                .regParam, FlashMLConfig.getDoubleArray(FlashMLConstants.SVM_REGULARISATION))
-                        .addGrid(estimator.asInstanceOf[OneVsRestCustom].getClassifier.asInstanceOf[LinearSVC]
-                                .maxIter, FlashMLConfig.getIntArray(FlashMLConstants.SVM_ITERATIONS))
-                        .addGrid(estimator.asInstanceOf[OneVsRestCustom].getClassifier.asInstanceOf[LinearSVC]
-                                .standardization, FlashMLConfig.getBoolArray(FlashMLConstants.SVM_STANDARDIZATION))
-                        .build()
-            else
-                new ParamGridBuilder().build()
-            case FlashMLConstants.NAIVE_BAYES => new ParamGridBuilder()
-                    .build()
+            case "OneVsRestCustom" =>
+                // In this case, we have to check the experiment.algorithm.value property
+                if (mlAlgorithm.equals(FlashMLConstants.LOGISTIC_REGRESSION))
+                {
+                    val lrClassifier = estimator.asInstanceOf[OneVsRestCustom].getClassifier.asInstanceOf[LogisticRegression]
+                    new ParamGridBuilder()
+                            .addGrid(lrClassifier.regParam, FlashMLConfig.getDoubleArray(FlashMLConstants.LR_REGULARISATION))
+                            .addGrid(lrClassifier.maxIter, FlashMLConfig.getIntArray(FlashMLConstants.LR_ITERATIONS))
+                            .addGrid(lrClassifier.elasticNetParam, FlashMLConfig.getDoubleArray(FlashMLConstants.LR_ELASTIC_NET))
+                            .addGrid(lrClassifier.standardization, FlashMLConfig.getBoolArray(FlashMLConstants.LR_STANDARDIZATION))
+                            .build()
+                }
+                else if (mlAlgorithm.equals(FlashMLConstants.SVM))
+                {
+                    val svmClassifier = estimator.asInstanceOf[OneVsRestCustom].getClassifier.asInstanceOf[LinearSVC]
+                    new ParamGridBuilder()
+                            .addGrid(svmClassifier.regParam, FlashMLConfig.getDoubleArray(FlashMLConstants.SVM_REGULARISATION))
+                            .addGrid(svmClassifier.maxIter, FlashMLConfig.getIntArray(FlashMLConstants.SVM_ITERATIONS))
+                            .addGrid(svmClassifier.standardization, FlashMLConfig.getBoolArray(FlashMLConstants.SVM_STANDARDIZATION))
+                            .build()
+                }
+                else
+                    new ParamGridBuilder().build()
 
             case "RandomForestClassifier" =>
                 new ParamGridBuilder()
-                        .addGrid(estimator.asInstanceOf[RandomForestClassifier].maxDepth, FlashMLConfig.getIntArray
-                        (FlashMLConstants.RF_MAXDEPTH))
-                        .addGrid(estimator.asInstanceOf[RandomForestClassifier].impurity, FlashMLConfig
-                                .getStringArray(FlashMLConstants.RF_IMPURITY))
-                        .addGrid(estimator.asInstanceOf[RandomForestClassifier].numTrees, FlashMLConfig.getIntArray
-                        (FlashMLConstants.RF_NUMBER_OF_TREES))
-                        .addGrid(estimator.asInstanceOf[RandomForestClassifier].featureSubsetStrategy, FlashMLConfig
-                                .getStringArray(FlashMLConstants.RF_FEATURESUBSETSTRATEGY))
+                        .addGrid(estimator.asInstanceOf[RandomForestClassifier].maxDepth, FlashMLConfig.getIntArray(FlashMLConstants.RF_MAXDEPTH))
+                        .addGrid(estimator.asInstanceOf[RandomForestClassifier].impurity, FlashMLConfig.getStringArray(FlashMLConstants.RF_IMPURITY))
+                        .addGrid(estimator.asInstanceOf[RandomForestClassifier].numTrees, FlashMLConfig.getIntArray(FlashMLConstants.RF_NUMBER_OF_TREES))
+                        .addGrid(estimator.asInstanceOf[RandomForestClassifier].featureSubsetStrategy, FlashMLConfig.getStringArray(FlashMLConstants.RF_FEATURESUBSETSTRATEGY))
                         .build()
 
             case "DecisionTreeClassifier" =>
                 new ParamGridBuilder()
-                        .addGrid(estimator.asInstanceOf[DecisionTreeClassifier].maxDepth, FlashMLConfig.getIntArray
-                        (FlashMLConstants.DT_MAX_DEPTH))
-                        .addGrid(estimator.asInstanceOf[DecisionTreeClassifier].impurity, FlashMLConfig
-                                .getStringArray(FlashMLConstants.DT_IMPURITY))
-                        .addGrid(estimator.asInstanceOf[DecisionTreeClassifier].maxBins, FlashMLConfig.getIntArray
-                        (FlashMLConstants.DT_MAX_BINS))
-                        .addGrid(estimator.asInstanceOf[DecisionTreeClassifier].cacheNodeIds, FlashMLConfig
-                                .getBoolArray(FlashMLConstants.DT_CACHE_NODE_ID_BOOL))
+                        .addGrid(estimator.asInstanceOf[DecisionTreeClassifier].maxDepth, FlashMLConfig.getIntArray(FlashMLConstants.DT_MAX_DEPTH))
+                        .addGrid(estimator.asInstanceOf[DecisionTreeClassifier].impurity, FlashMLConfig.getStringArray(FlashMLConstants.DT_IMPURITY))
+                        .addGrid(estimator.asInstanceOf[DecisionTreeClassifier].maxBins, FlashMLConfig.getIntArray(FlashMLConstants.DT_MAX_BINS))
+                        .addGrid(estimator.asInstanceOf[DecisionTreeClassifier].cacheNodeIds, FlashMLConfig.getBoolArray(FlashMLConstants.DT_CACHE_NODE_ID_BOOL))
                         .build()
 
             case "GBTClassifier" =>
                 new ParamGridBuilder()
-                        .addGrid(estimator.asInstanceOf[GBTClassifier].impurity, FlashMLConfig.getStringArray
-                        (FlashMLConstants.GBT_IMPURITY))
-                        .addGrid(estimator.asInstanceOf[GBTClassifier].maxDepth, FlashMLConfig.getIntArray
-                        (FlashMLConstants.GBT_MAX_DEPTH))
-                        .addGrid(estimator.asInstanceOf[GBTClassifier].featureSubsetStrategy, FlashMLConfig
-                                .getStringArray(FlashMLConstants.GBT_FEATURESUBSETSTRATEGY))
-                        .addGrid(estimator.asInstanceOf[GBTClassifier].maxIter, FlashMLConfig.getIntArray
-                        (FlashMLConstants.GBT_MAX_ITER))
+                        .addGrid(estimator.asInstanceOf[GBTClassifier].impurity, FlashMLConfig.getStringArray(FlashMLConstants.GBT_IMPURITY))
+                        .addGrid(estimator.asInstanceOf[GBTClassifier].maxDepth, FlashMLConfig.getIntArray(FlashMLConstants.GBT_MAX_DEPTH))
+                        .addGrid(estimator.asInstanceOf[GBTClassifier].featureSubsetStrategy, FlashMLConfig.getStringArray(FlashMLConstants.GBT_FEATURESUBSETSTRATEGY))
+                        .addGrid(estimator.asInstanceOf[GBTClassifier].maxIter, FlashMLConfig.getIntArray(FlashMLConstants.GBT_MAX_ITER))
                         .build()
 
             case "MultilayerPerceptronClassifier" =>
+            {
+                val paramGridLayersMLP: Array[Array[Int]] = {
+                    FlashMLConfig
+                            .get2DArrayInt(FlashMLConstants.MLP_INTERMEDIATE_LAYERS)
+                            .map(arr => {
+                                Array(inputFeaturesSizeMLP) ++ arr ++ Array(finalclassesMLP)
+                            })
+                }
+
                 new ParamGridBuilder()
-                        .addGrid(estimator.asInstanceOf[MultilayerPerceptronClassifier].maxIter, FlashMLConfig
-                                .getIntArray(FlashMLConstants.MLP_MAX_ITERATIONS))
-                        .addGrid(estimator.asInstanceOf[MultilayerPerceptronClassifier].blockSize, FlashMLConfig
-                                .getIntArray(FlashMLConstants.MLP_BLOCK_SIZE))
+                        .addGrid(estimator.asInstanceOf[MultilayerPerceptronClassifier].maxIter, FlashMLConfig.getIntArray(FlashMLConstants.MLP_MAX_ITERATIONS))
+                        .addGrid(estimator.asInstanceOf[MultilayerPerceptronClassifier].blockSize, FlashMLConfig.getIntArray(FlashMLConstants.MLP_BLOCK_SIZE))
                         .addGrid(estimator.asInstanceOf[MultilayerPerceptronClassifier].layers, paramGridLayersMLP)
                         .build()
+            }
 
             case "NaiveBayes" =>
                 new ParamGridBuilder()
-                        .addGrid(estimator.asInstanceOf[NaiveBayes].smoothing, FlashMLConfig.getDoubleArray
-                        (FlashMLConstants.NB_SMOOTHING))
-                        .addGrid(estimator.asInstanceOf[NaiveBayes].modelType, FlashMLConfig.getStringArray
-                        (FlashMLConstants.NB_MODEL_TYPE))
+                        .addGrid(estimator.asInstanceOf[NaiveBayes].smoothing, FlashMLConfig.getDoubleArray(FlashMLConstants.NB_SMOOTHING))
+                        .addGrid(estimator.asInstanceOf[NaiveBayes].modelType, FlashMLConfig.getStringArray(FlashMLConstants.NB_MODEL_TYPE))
                         .build()
         }
     }
@@ -224,7 +199,7 @@ object ModelTrainingUtils
                     .setLabelCol(ConfigValues.getIndexedResponseColumn)
         }
 
-        ConfigValues.mlAlgorithm match
+        mlAlgorithm match
         {
             case FlashMLConstants.LOGISTIC_REGRESSION =>
                 val lr = if (!isParamGridUsed)
@@ -290,7 +265,6 @@ object ModelTrainingUtils
                 }
 
             case FlashMLConstants.RANDOM_FOREST =>
-
                 val rf = if (!isParamGridUsed)
                 {
                     new RandomForestClassifier()
@@ -313,11 +287,10 @@ object ModelTrainingUtils
                             .setRawPredictionCol("rawPrediction")
                 }
 
-                    log.info(s"Model Training: Estimator is Random Forest")
-                    rf
+                log.info(s"Model Training: Estimator is Random Forest")
+                rf
 
             case FlashMLConstants.GRADIENT_BOOSTED_TREES =>
-
                 val gbt = if (!isParamGridUsed)
                 {
                     new GBTClassifier()
@@ -338,12 +311,10 @@ object ModelTrainingUtils
                             .setProbabilityCol("probability")
                             .setRawPredictionCol("rawPrediction")
                 }
-
-                    log.info(s"Model Training: Estimator is GBT")
-                    gbt
+                log.info(s"Model Training: Estimator is GBT")
+                gbt
 
             case FlashMLConstants.DECISION_TREES =>
-
                 val dt = if (!isParamGridUsed)
                 {
                     new DecisionTreeClassifier()
@@ -364,9 +335,8 @@ object ModelTrainingUtils
                             .setProbabilityCol("probability")
                             .setRawPredictionCol("rawPrediction")
                 }
-
-                    log.info(s"Model Training: Estimator is Decision Trees")
-                    dt
+                log.info(s"Model Training: Estimator is Decision Trees")
+                dt
 
             case FlashMLConstants.MULTILAYER_PERCEPTRON =>
                 val mlp = if (!isParamGridUsed)
@@ -376,7 +346,7 @@ object ModelTrainingUtils
                             .setLabelCol(ConfigValues.getIndexedResponseColumn)
                             .setBlockSize(FlashMLConfig.getInt(FlashMLConstants.MLP_BLOCK_SIZE))
                             .setMaxIter(FlashMLConfig.getInt(FlashMLConstants.MLP_MAX_ITERATIONS))
-                            .setLayers(Array(inputFeaturesSizeMLP)++FlashMLConfig.getIntArray(FlashMLConstants.MLP_INTERMEDIATE_LAYERS)++Array(finalclassesMLP))
+                            .setLayers(Array(inputFeaturesSizeMLP) ++ FlashMLConfig.getIntArray(FlashMLConstants.MLP_INTERMEDIATE_LAYERS) ++ Array(finalclassesMLP))
                             .setProbabilityCol("probability")
                             .setRawPredictionCol("rawPrediction")
                 }
@@ -388,12 +358,10 @@ object ModelTrainingUtils
                             .setProbabilityCol("probability")
                             .setRawPredictionCol("rawPrediction")
                 }
-
                 mlp
 
 
             case FlashMLConstants.NAIVE_BAYES =>
-
                 val nb = if(!isParamGridUsed){
                     new NaiveBayes()
                         .setLabelCol(ConfigValues.getIndexedResponseColumn)
@@ -407,9 +375,8 @@ object ModelTrainingUtils
                             .setProbabilityCol("probability")
                             .setRawPredictionCol("rawPrediction")
                 }
-
-                    log.info(s"Model Training: Estimator is Naive Bayes")
-                    nb
+                log.info(s"Model Training: Estimator is Naive Bayes")
+                nb
 
             case _ =>
             {
@@ -424,19 +391,15 @@ object ModelTrainingUtils
                                           paramRangeSpecifier: ParamRangeSpecifier): ParamRangeSpecifier =
     {
         paramRangeSpecifier.addGrid(param, value.asInstanceOf[Iterable[T]])
-        return paramRangeSpecifier
+        paramRangeSpecifier
     }
 
     private def updateParamRangeSpecifier[T, S](param: Param[T], configParam: S,
-                                                paramRangeSpecifier: ParamRangeSpecifier)(implicit
-                                                                                          paramTag: TypeTag[T],
-                                                                                          valueTag: TypeTag[S])
-    : ParamRangeSpecifier =
+                                                paramRangeSpecifier: ParamRangeSpecifier)
+                                               (implicit paramTag: TypeTag[T], valueTag: TypeTag[S]): ParamRangeSpecifier =
     {
-
         log.debug(s"type param tag is ${typeTag[T].tpe}")
         log.debug(s"type value tag is ${valueTag.tpe} & value is $configParam")
-
 
         configParam match
         {
@@ -450,8 +413,8 @@ object ModelTrainingUtils
                 paramRangeSpecifier
                         .addGrid(param.asInstanceOf[Param[Double]], castToDouble(a.get("min")), castToDouble(a.get
                         ("max")))
-            case a: java.util.HashMap[String, T]@unchecked => throw new ConfigValidatorException(s"invalid " +
-                    s"configuration values $a")
+
+            case a: java.util.HashMap[String, T]@unchecked => throw new ConfigValidatorException(s"invalid configuration values $a")
 
             /*case l:List[T] => println(s"list as param class is ${l.getClass}")
                 paramRangeSpecifier
@@ -477,10 +440,7 @@ object ModelTrainingUtils
                 //                log.debug(s"single value of type ${d.getClass()} paramTag class ${paramTag.tpe} ")
                 paramRangeSpecifier.addGrid(param, List(d))
             //TODO this condition doesn't even occur
-            case d => throw new ConfigValidatorException(s"config param doesn't support an object of type ${
-                d
-                        .getClass
-            }")
+            case d => throw new ConfigValidatorException(s"config param doesn't support an object of type ${d.getClass}")
         }
         paramRangeSpecifier
     }
@@ -492,7 +452,7 @@ object ModelTrainingUtils
         val paramRangeSpec = algoName match
         {
             case "GBTClassifier" =>
-                var paramRangeSpecifier = new ParamRangeSpecifier()
+                val paramRangeSpecifier = new ParamRangeSpecifier()
 
                 maxIterations = FlashMLConfig.getInt(FlashMLConstants.GBT_MAX_ITER)
 
@@ -523,7 +483,7 @@ object ModelTrainingUtils
             case "LogisticRegression" =>
                 maxIterations = FlashMLConfig.getInt(FlashMLConstants.LR_ITERATIONS)
 
-                var paramRangeSpecifier = new ParamRangeSpecifier()
+                val paramRangeSpecifier = new ParamRangeSpecifier()
 
                 updateParamRangeSpecifier(
                     estimator.asInstanceOf[LogisticRegression].regParam,
@@ -545,7 +505,7 @@ object ModelTrainingUtils
 
             case "LinearSVC" =>
                 maxIterations = FlashMLConfig.getInt(FlashMLConstants.SVM_ITERATIONS)
-                var paramRangeSpecifier =
+                val paramRangeSpecifier =
                     new ParamRangeSpecifier()
 
                 updateParamRangeSpecifier(
@@ -560,8 +520,8 @@ object ModelTrainingUtils
 
 
             case "OneVsRestCustom" =>
-                var paramRangeSpecifier = new ParamRangeSpecifier()
-                if (algorithm.equals(FlashMLConstants.LOGISTIC_REGRESSION))
+                val paramRangeSpecifier = new ParamRangeSpecifier()
+                if (mlAlgorithm.equals(FlashMLConstants.LOGISTIC_REGRESSION))
                 {
                     maxIterations = FlashMLConfig.getInt(FlashMLConstants.LR_ITERATIONS)
                     updateParamRangeSpecifier(estimator.asInstanceOf[OneVsRestCustom].getClassifier
@@ -575,7 +535,7 @@ object ModelTrainingUtils
                     (FlashMLConstants.LR_STANDARDIZATION), paramRangeSpecifier)
                 }
 
-                else if (algorithm.equals(FlashMLConstants.SVM))
+                else if (mlAlgorithm.equals(FlashMLConstants.SVM))
                 {
                     maxIterations = FlashMLConfig.getInt(FlashMLConstants.SVM_ITERATIONS)
 
@@ -593,7 +553,7 @@ object ModelTrainingUtils
 
 
             case FlashMLConstants.NAIVE_BAYES =>
-                var paramRangeSpecifier = new ParamRangeSpecifier()
+                val paramRangeSpecifier = new ParamRangeSpecifier()
 
                 updateParamRangeSpecifier(
                     estimator.asInstanceOf[NaiveBayes].smoothing,

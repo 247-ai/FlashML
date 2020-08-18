@@ -52,7 +52,8 @@
     },
     "cv": {
       "folds": 2,
-      "predictSavepoint": false
+      "predictSavepoint": false,
+      "metric": "f1"
     },
     "modelingMethod": [
       "multi_intent"
@@ -193,11 +194,6 @@
   },
   "pipeline": {
     "steps": [
-      "datareader",
-      "sampling",
-      "preprocessing",
-      "featuregeneration",
-      "vectorization",
       "modelling",
       "scoring"
     ]

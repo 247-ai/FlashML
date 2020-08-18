@@ -26,7 +26,6 @@ import scala.collection.mutable.ArrayBuffer
   * */
 object ModelTrainingEngine extends Engine with Validator
 {
-
     override val log: Logger = LoggerFactory.getLogger(getClass)
     val columnsNames = (ConfigValues.primaryKeyColumns ++ Array(ConfigValues.responseColumn,FlashMLConstants.FEATURES))
             .filter(_.nonEmpty)
@@ -134,10 +133,9 @@ object ModelTrainingEngine extends Engine with Validator
 
         log.info(s"Model Training: Adding String Indexer to the pipeline")
 
-        //String Indexer for indexing response variable
+        // String Indexer for indexing response variable
         val responseColumnIndexer = if (ConfigValues.isSingleIntent)
         {
-
             new StringIndexer()
                     .setInputCol(ConfigValues.responseColumn)
                     .setOutputCol(ConfigValues.getIndexedResponseColumn)
@@ -145,7 +143,6 @@ object ModelTrainingEngine extends Engine with Validator
         }
         else
         {
-
             new StringIndexer()
                     .setInputCol(ConfigValues.responseColumn)
                     .setOutputCol(ConfigValues.getIndexedResponseColumn)
@@ -241,7 +238,6 @@ object ModelTrainingEngine extends Engine with Validator
             allStages += topKIntents
         }
 
-
         // Add IndexToString transformer to convert prediction indexes to corresponding labels
         if (!ConfigValues.isSingleIntent)
         {
@@ -282,8 +278,6 @@ object ModelTrainingEngine extends Engine with Validator
                     .setStages(intermediateModel.stages)
         }
 
-
-
         // Fit the pipeline of the dataframe and then save
         val trainedModel = modelTrainingPipeline.fit(df)
         savePipelineModel(trainedModel, pageCount)
@@ -292,10 +286,8 @@ object ModelTrainingEngine extends Engine with Validator
 
     private def getCrossValidator(crossValidationFolds: Int): CrossValidatorCustom =
     {
-        def getAlgoName(algoStr: String) = algoStr.substring(algoStr.lastIndexOf(".") + 1)
-
         val evaluator = new MulticlassClassificationEvaluator()
-                .setMetricName("weightedPrecision")
+                .setMetricName(ConfigValues.cvEvalMetric)
                 .setLabelCol(ConfigValues.getIndexedResponseColumn)
 
         val estimator = ModelTrainingUtils.getEstimator
@@ -380,7 +372,6 @@ object ModelTrainingEngine extends Engine with Validator
             hyperband = hyperband.setEta(FlashMLConfig.getInt(FlashMLConstants.HYPERBAND_ETA))
         }
         if(FlashMLConfig.hasKey(FlashMLConstants.HYPERBAND_TRAIN_SIZE)){
-            //hyperband = hyperband.setTrainSize(FlashMLConfig.getDouble(FlashMLConstants.HYPERBAND_TRAIN_SIZE))
             hyperband = hyperband
                     .setTrainTestSplitter(new StratifiedTrainTestSplitter(FlashMLConfig.getDouble(FlashMLConstants.HYPERBAND_TRAIN_SIZE),responseVariable,seedValue))
         }

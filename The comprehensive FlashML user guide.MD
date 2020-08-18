@@ -33,6 +33,7 @@ FlashML serves as a prediction model building tool for the following use cases:
 		-   [QA Data Generation](#qa-data-generation)
 -   [Miscellaneous](#miscellaneous)
     -   [Running a Predict Job](#running-a-predict-job-on-new-dataset)
+    -   [Testing out a model interactively](#testing-out-a-model-interactively-running-predict-interactively)
     -   [Analysis of prediction DataFrame](#analysis-of-prediction-dataframe)
 
 ## How to run FlashML
@@ -1565,7 +1566,11 @@ The parameter `experiment.qa.dataPoints` accepts an Integer value and denotes th
 Certain additional topics of interest to users have been coverered here. Users can read the following to identify the Hadoop locations on which some data is written onto, after certain steps are computed on FlashML.
 
 ### Running a "predict" job on new dataset
-Let's say, you have build a prediction model by running FlashMLand now you would like to test the model on some newer data (perhaps out-of-sample data). In this case the you need to enter the value `predict` (case insensitive) for the key `experiment.type` in the config file. FlashML will use the model built (by loading the pipeline, i.e. the result of the model building done on the previous training data) and will 'score' the data, generating predictions and metrics.
+Let's say, you have build a prediction model by running FlashML and now you would like to test the model on some newer data (perhaps out-of-sample data). In this case you need to enter the value `predict` (case insensitive) for the key `experiment.type` in the config file. FlashML will use the model built (by loading the pipeline, i.e. the result of the model building done on the previous training data) and will 'score' the data, generating predictions and metrics.
+
+### Testing out a model interactively (running `predict` interactively)
+Let's say, you have build a prediction model, specially an NLP model, by running FlashML and now you would like to test the model interactively. You can do so by using the following steps:
+*  
 
 ### Analysis of prediction dataframe
 At the <code>scoring</code> pipeline step, FlashML generates predictions for the test data and then saves the entire dataframe in <code>parquet</code> format in the Hadoop directories assigned for the current project. The location of the directory for the current project is generated using parameters in the config file as follows: users can explore the hadoop path <code>/${FlashML.rootDirectory}/${project.id}/${model.id}/${experiment.retrainID}/${experiment.type}/</code> for accessing the current job related files. To load the result of the scoring dataset, the parquet files can be loaded onto a Spark DataFrame and analysed. Users should ensure that the Spark version used is the same as that of the currently used FlashML version. The command `spark.read.parquet(filePath)` loads the dataframe in Spark session.

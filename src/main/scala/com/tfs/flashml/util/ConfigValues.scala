@@ -15,14 +15,15 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
 
 
-/** Note: All variables whose values are extracted from config parameter
+/**
+  * Class collecting the values from the FlashML config file. <br />
+  * Note: All variables whose values are extracted from config parameter
   * need to be lazy val. This is because the config parameter Path is set in the main
   * and is "" by default.
   *
   */
 object ConfigValues
 {
-
     private val log = LoggerFactory.getLogger(getClass)
     var configFilePath = ""
 
@@ -65,9 +66,7 @@ object ConfigValues
 
     lazy val scopeTextVariables = variablesScope match
     {
-
         case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE => FlashMLConfig.getStringArray(FlashMLConstants.VARIABLES_TEXT_COL)
-
         case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE => FlashMLConfig.get2DStringArray(FlashMLConstants.VARIABLES_TEXT_COL)
     }
 
@@ -130,15 +129,15 @@ object ConfigValues
                             // We filter out the numerical columns that appear in binning
                             //the numerical columns mentioned in binning are moved to categorical variables
                             binningConfigPageVariables
-                                    .asInstanceOf[Array[Array[(String, String)]]]
-                                    .zipWithIndex
-                                    .map({
-                                        case (obj, index) =>
-                                        {
-                                            ConfigValues.scopeNumericalVariables.asInstanceOf[Array[String]]
-                                                    .filterNot(obj.map(_._1).toSet)
-                                        }
-                                    })
+                                .asInstanceOf[Array[Array[(String, String)]]]
+                                .zipWithIndex
+                                .map({
+                                    case (obj, index) =>
+                                    {
+                                        ConfigValues.scopeNumericalVariables.asInstanceOf[Array[String]]
+                                                .filterNot(obj.map(_._1).toSet)
+                                    }
+                                })
 
                         case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE =>
                             throw new Exception(s"For AllPage variable scope option, the only permitted Feature Generation scope options are AllPage and PerPage")
@@ -153,11 +152,11 @@ object ConfigValues
 
                         case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE =>
                             ConfigValues
-                                    .scopeNumericalVariables
-                                    .asInstanceOf[Array[String]]
-                                    .filterNot(binningConfigPageVariables
-                                            .asInstanceOf[Array[(String, String)]]
-                                            .map(_._1).toSet)
+                                .scopeNumericalVariables
+                                .asInstanceOf[Array[String]]
+                                .filterNot(binningConfigPageVariables
+                                    .asInstanceOf[Array[(String, String)]]
+                                    .map(_._1).toSet)
 
                         case _ =>
                             throw new Exception(s"with NoPage variable scope option, the only feature Generation permitted scope option is NoPage")
@@ -165,21 +164,20 @@ object ConfigValues
 
                 case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE =>
                     //Support only PerPage and AllPage feature Generation Scope parameter
-
                     featureGenScope match
                     {
                         case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE =>
 
                             ConfigValues
-                                    .scopeNumericalVariables
-                                    .indices
-                                    .map(pageIndex => ConfigValues
-                                            .scopeNumericalVariables(pageIndex)
-                                            .asInstanceOf[Array[String]]
-                                            .filterNot(binningConfigPageVariables(pageIndex)
-                                                    .asInstanceOf[Array[(String, String)]]
-                                                    .map(_._1)
-                                                    .toSet))
+                                .scopeNumericalVariables
+                                .indices
+                                .map(pageIndex => ConfigValues
+                                    .scopeNumericalVariables(pageIndex)
+                                    .asInstanceOf[Array[String]]
+                                    .filterNot(binningConfigPageVariables(pageIndex)
+                                        .asInstanceOf[Array[(String, String)]]
+                                        .map(_._1)
+                                        .toSet))
                                     .toArray
 
                         case _ =>
@@ -225,20 +223,18 @@ object ConfigValues
                         case FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE | FlashMLConstants.SCOPE_PARAMETER_PER_PAGE =>
 
                             ConfigValues
-                                    .binningConfigPageVariables
-                                    .asInstanceOf[Array[Array[(String, String)]]]
-                                    .zipWithIndex
-                                    .map(
-                                        { case (obj, index) =>
-                                        {
-                                            if (scopeCategoricalVariables.isEmpty)
-                                                obj.map(_._2)
-                                            else
-                                                obj.map(_._2) ++ scopeCategoricalVariables1DArray
-
-                                        }
-                                        }
-                                    )
+                                .binningConfigPageVariables
+                                .asInstanceOf[Array[Array[(String, String)]]]
+                                .zipWithIndex
+                                .map({
+                                    case (obj, index) =>
+                                    {
+                                        if (scopeCategoricalVariables.isEmpty)
+                                            obj.map(_._2)
+                                        else
+                                            obj.map(_._2) ++ scopeCategoricalVariables1DArray
+                                    }
+                                })
 
                         case _ => throw new Exception(s"For AllPage variable scope option, the only permitted Feature Generation scope options are 'allpage' and PerPage")
                     }
@@ -408,20 +404,17 @@ object ConfigValues
                 case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE =>
                 {
                     featureGenerationBinningConfig
-                            .asInstanceOf[Array[Array[util.HashMap[String, Any]]]]
-                            .zipWithIndex
-                            .map(
-                                { case (obj, index) =>
+                        .asInstanceOf[Array[Array[util.HashMap[String, Any]]]]
+                        .zipWithIndex
+                        .map({
+                            case (obj, index) =>
+                            {
+                                obj.map(l2Map =>
                                 {
-                                    obj
-                                            .map(l2Map =>
-                                            {
-                                                (l2Map(FlashMLConstants.INPUT_VARIABLE).toString, l2Map(FlashMLConstants.INPUT_VARIABLE).toString + "_page" + (index + 1) + "_binned")
-                                            }
-                                            )
-                                }
-                                }
-                            )
+                                    (l2Map(FlashMLConstants.INPUT_VARIABLE).toString, l2Map(FlashMLConstants.INPUT_VARIABLE).toString + "_page" + (index + 1) + "_binned")
+                                })
+                            }
+                        })
                 }
 
                 case FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE =>
@@ -725,14 +718,16 @@ object ConfigValues
     }
 
     lazy val randomVariable: String = if (!FlashMLConfig.getString(FlashMLConstants.RANDOM_VARIABLE).isEmpty)
-        FlashMLConfig.getString(FlashMLConstants.RANDOM_VARIABLE)
-    else if (FlashMLConfig.getString(FlashMLConstants.SAMPLING_TYPE) == FlashMLConstants.SAMPLING_TYPE_CONDITIONAL)
-        FlashMLConstants.RANDOM_VARIABLE_COLUMN_NAME
-    else ""
+            FlashMLConfig.getString(FlashMLConstants.RANDOM_VARIABLE)
+        else if (FlashMLConfig.getString(FlashMLConstants.SAMPLING_TYPE) == FlashMLConstants.SAMPLING_TYPE_CONDITIONAL)
+            FlashMLConstants.RANDOM_VARIABLE_COLUMN_NAME
+        else ""
 
     lazy val plattScalingEnabled = FlashMLConfig.getBool(FlashMLConstants.SVM_PLATT_SCALING_ENABLED)
 
     lazy val mlAlgorithm = FlashMLConfig.getString(FlashMLConstants.ALGORITHM)
+
+    lazy val cvEvalMetric = if(FlashMLConfig.hasKey(FlashMLConstants.CV_EVAL_METRIC)) FlashMLConfig.getString(FlashMLConstants.CV_EVAL_METRIC) else FlashMLConstants.CV_EVAL_METRIC_DEFAULT
 
     // Platt Scaling is enabled if the User chooses SVM, and sets the Platt Scaling Option
     // in the config file to True

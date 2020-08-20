@@ -5,7 +5,7 @@ This is a project from Data Science Engineering team at [[24]7.ai](https://www.2
 ## Dependencies
 0. JDK 8. OpenJDK 8 can be used without any issues.
 1. Hadoop (>2.9.x) and Hive (>2.3.x)
-   - The default installation of hive is with derby, a single-user database, as the backend. Follow the instructions in this page for using mysql as the backend: https://saurzcode.in/2015/01/configure-mysql-metastore-hive/
+   - The default installation of hive is with derby, a single-user database, as the backend. Follow the instructions in this page for using mysql as the backend: https://dzone.com/articles/how-configure-mysql-metastore
 2. Scala: Version 2.12.10
     - The binaries should be in the path
 3. Apache Spark: Version 2.4.x

@@ -19,9 +19,9 @@ import scala.collection.JavaConverters._
  * @since 25/8/18
  */
 class WordSubstitutionTransformer(override val uid: String)
-        extends UnaryTransformer[String, String, WordSubstitutionTransformer]
-                with Serializable
-                with DefaultParamsWritable
+    extends UnaryTransformer[String, String, WordSubstitutionTransformer]
+        with Serializable
+        with DefaultParamsWritable
 {
 
     def this() = this(Identifiable.randomUID("wordSubstitution"))
@@ -34,13 +34,13 @@ class WordSubstitutionTransformer(override val uid: String)
     val pattern: Param[String] = new Param(this, "pattern", "regex pattern used for tokenizing")
 
 
-    def getDictonary: Map[String, String] = $(wordDict)
+    def getDictionary: Map[String, String] = $(wordDict)
 
     def setDictionary(dictionary: Map[String, String]): this.type = set(wordDict, dictionary)
 
-    def setDelimiter(value: String): this.type = set(pattern, value)
-
     def getDelimiter: String = $(pattern)
+
+    def setDelimiter(value: String): this.type = set(pattern, value)
 
     /**
      * First replace the word found in the dictionary with their substitutions.
@@ -54,11 +54,12 @@ class WordSubstitutionTransformer(override val uid: String)
           .foldLeft(Seq[String]())((accumulator, subsToken) => accumulator ++ subsToken.split("\\s"))*/
     }
 
-  private def getSubstitution(line:String):String={
-    val delimiter = $(pattern) + "|(" +FlashMLConstants.CUSTOM_DELIMITER+ ")"
-    val words = delimiter.r.split(line).toSeq
-    words.flatMap(token => $(wordDict).getOrElse(token, token).split(delimiter)).mkString(FlashMLConstants.CUSTOM_DELIMITER)
-  }
+    private def getSubstitution(line: String): String =
+    {
+        val delimiter = $(pattern) + "|(" + FlashMLConstants.CUSTOM_DELIMITER + ")"
+        val words = delimiter.r.split(line).toSeq
+        words.flatMap(token => $(wordDict).getOrElse(token, token).split(delimiter)).mkString(FlashMLConstants.CUSTOM_DELIMITER)
+    }
 
     override protected def validateInputType(inputType: DataType): Unit =
     {
@@ -74,7 +75,7 @@ object WordSubstitutionTransformer extends DefaultParamsReadable[WordSubstitutio
 }
 
 class StringMapParam(parent: Params, name: String, doc: String, isValid: Map[String, String] => Boolean)
-        extends Param[Map[String, String]](parent, name, doc, isValid)
+    extends Param[Map[String, String]](parent, name, doc, isValid)
 {
 
     def this(parent: Params, name: String, doc: String) =
@@ -94,6 +95,5 @@ class StringMapParam(parent: Params, name: String, doc: String, isValid: Map[Str
         implicit val formats = DefaultFormats
         parse(json).extract[Seq[(String, String)]].toMap
     }
-
 }
 

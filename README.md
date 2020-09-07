@@ -105,8 +105,9 @@ To stop the history server:
    
 3. Test if the tables show up properly in hive:
     * Run hive: `hive`
+    * Use the flashml schema: `use flashml;`
     * Check tables: `show tables;`
-    * Count rows in the table just loaded
+    * Count rows in one of the table just loaded
     
 4. Run a particular test using the command below from the repo root folder.
 

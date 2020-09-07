@@ -38,8 +38,7 @@ trait Engine
       */
     def savePipelineModel(pipelineModel: PipelineModel, pageNumber: Int = 0, step: String): Unit =
     {
-        val pageString: String = if (pageNumber == 0) "noPage"
-        else "page" + pageNumber
+        val pageString: String = if (pageNumber == 0) "noPage" else "page" + pageNumber
         val pipelinePath = FlashMLConfig.getString(FlashMLConstants.NAME_NODE_URI) +
                 s"$basePath/$pageString/noSegment/pipeline/${step}_pipeline"
         pipelineModel
@@ -67,13 +66,12 @@ trait Engine
       */
     def loadPipelineModelChecked(pageNumber: Int, step: String): Option[PipelineModel] =
     {
-        val pageString: String = if (pageNumber == 0) "noPage"
-        else "page" + pageNumber
+        val pageString: String = if (pageNumber == 0) "noPage" else "page" + pageNumber
         val pipelinePath = FlashMLConfig.getString(FlashMLConstants.NAME_NODE_URI) +
                 s"$basePath/$pageString/noSegment/pipeline/${step}_pipeline"
-        // Some steps, although mentioned in the config file, might be skipped because nothing is mentioned,
-        // e.g., a vectorization block with no/empty options would skip the step, and would not save
-        // anything in the corresponding folder. So, we need to check first if the folder exists.
+        // Some steps, although mentioned in the config file, might be skipped because nothing is mentioned
+        // in the config, e.g., a vectorization block with no/empty options would skip the step, and would
+        // not save anything in the corresponding folder. So, we need to check first if the folder exists.
         val pipelineModel = if (ConfigValues.fs.exists(new Path(pipelinePath)))
         {
             val plModel = PipelineModel.load(pipelinePath)

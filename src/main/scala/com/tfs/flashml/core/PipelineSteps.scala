@@ -277,17 +277,15 @@ object PipelineSteps
             val format = FlashMLConfig.getString(FlashMLConstants.PUBLISH_FORMAT).toLowerCase()
             format match
             {
-                case FlashMLConstants.PUBLISH_JS => Publish.generateJS
-                //passing the df as parameter because we are fitting it again inside the function.
-                case FlashMLConstants.PUBLISH_MLEAP => Publish.generateMleapBundle(if (ConfigValues.isPageLevelModel) pageLevelDataFrameArray
-                else samplingDF)
-                case _ => new IllegalArgumentException(s"The value provided - '$format' is not supported for " +
-                        s"publishing")
+                case FlashMLConstants.PUBLISH_FORMAT_JS => Publish.generateJS
+                // For mleap publishing, passing the df as parameter because we are fitting it again inside the function.
+                case FlashMLConstants.PUBLISH_FORMAT_MLEAP => Publish.generateMleapBundle(if (ConfigValues.isPageLevelModel) pageLevelDataFrameArray else samplingDF)
+                case FlashMLConstants.PUBLISH_FORMAT_SPARK => Publish.generateSpark(if (ConfigValues.isPageLevelModel) pageLevelDataFrameArray else samplingDF)
+                case _ => new IllegalArgumentException(s"The value provided - '$format' is not supported for publishing")
             }
         }
 
-        if (steps.contains(FlashMLConstants.QA_DATA_GENERATION) && !FlashMLConfig.getString(FlashMLConstants
-                .QA_FORMAT).isEmpty)
+        if (steps.contains(FlashMLConstants.QA_DATA_GENERATION) && !FlashMLConfig.getString(FlashMLConstants.QA_FORMAT).isEmpty)
         {
             Publish.generateQAData
             log.info(s"Time till generating QA data for TIM: ${TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - startTime)} sec")

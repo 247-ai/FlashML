@@ -88,51 +88,49 @@ object SavePointManager
      */
     def loadData(process: String): Array[DataFrame] =
     {
-
         val inputData: Option[DataFrame] = Some(loadInputData)
-        inputData
-          .map(df => {
-              // This is used for positive class validation and data balance
-              if (ConfigValues.isSingleIntent) {
-                  val labels: Array[_] = TrainTestSampler.findResponseColumnLabels(df)
-                  TrainTestSampler.minorityClassLabel = labels(0)
-                  TrainTestSampler.majorityClassLabel = labels(1)
-              }
-          })
+        inputData.map(df =>
+        {
+            // This is used for positive class validation and data balance
+            if (ConfigValues.isSingleIntent)
+            {
+                val labels: Array[_] = TrainTestSampler.findResponseColumnLabels(df)
+                TrainTestSampler.minorityClassLabel = labels(0)
+                TrainTestSampler.majorityClassLabel = labels(1)
+            }
+        })
         val outputArrayDF: ArrayBuffer[DataFrame] = ArrayBuffer[DataFrame]()
         val dataframeCount = if (FlashMLConfig.getString(FlashMLConstants.SAMPLING_TYPE) == FlashMLConstants.SAMPLING_TYPE_CONDITIONAL) FlashMLConfig.getStringArray(FlashMLConstants.SAMPLE_CONDITION).length
         else FlashMLConfig.getIntArray(FlashMLConstants.SAMPLE_SPLIT).length
         val basePath = DirectoryCreator.getBasePath
-
         try
+        {
+            for (i <- 0 until dataframeCount)
             {
-                for (i <- 0 until dataframeCount)
+                if (modelingMethod.contains("page_level"))
                 {
-                    if (modelingMethod.contains("page_level"))
+                    for (x <- 1 to ConfigValues.numPages)
                     {
-                        for (x <- 1 to ConfigValues.numPages)
-                        {
-                            val path = FlashMLConfig.getString(FlashMLConstants.NAME_NODE_URI) + "/" + basePath.toString +
-                              s"/page$x/noSegment/data/$process${DataSetType(i)}"
-                            outputArrayDF.append(SparkSession.builder().getOrCreate().read.load(path + "/*.gz.parquet"))
-                            log.info(s"Loaded $process dataframe ${DataSetType(i)} page$x from savepoint location [$path].")
-                        }
-                    }
-                    else
-                    {
-                        val path = FlashMLConfig.getString(FlashMLConstants.NAME_NODE_URI) + "/" + basePath.toString + "/" + s"/noPage/noSegment/data/$process${DataSetType(i)}"
+                        val path = FlashMLConfig.getString(FlashMLConstants.NAME_NODE_URI) + "/" + basePath.toString +
+                            s"/page$x/noSegment/data/$process${DataSetType(i)}"
                         outputArrayDF.append(SparkSession.builder().getOrCreate().read.load(path + "/*.gz.parquet"))
-                        log.info(s"Loaded $process dataframe ${DataSetType(i)} noPage from savepoint location [$path].")
+                        log.info(s"Loaded $process dataframe ${DataSetType(i)} page$x from savepoint location [$path].")
                     }
                 }
+                else
+                {
+                    val path = FlashMLConfig.getString(FlashMLConstants.NAME_NODE_URI) + "/" + basePath.toString + "/" + s"/noPage/noSegment/data/$process${DataSetType(i)}"
+                    outputArrayDF.append(SparkSession.builder().getOrCreate().read.load(path + "/*.gz.parquet"))
+                    log.info(s"Loaded $process dataframe ${DataSetType(i)} noPage from savepoint location [$path].")
+                }
             }
+        }
         catch
-            {
-                case e: Throwable =>
-                    log.error(s"${process.capitalize} data does not exist - add preceding step to the pipeline")
-                    throw e
-            }
-
+        {
+            case e: Throwable =>
+                log.error(s"${process.capitalize} data does not exist - add preceding step to the pipeline")
+                throw e
+        }
         outputArrayDF.toArray
     }
 }

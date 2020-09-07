@@ -24,11 +24,7 @@ class ModelHealthMetricsEvaluator
 
     import ss.implicits._
 
-    private val udfComputeSI = udf((col1value: Double, col2value: Double) =>
-    {
-        (col1value - col2value) * Math.log(col1value / col2value) * 100
-    })
-
+    private val udfComputeSI = udf[Double, Double, Double]((col1value: Double, col2value: Double) => (col1value - col2value) * Math.log(col1value / col2value) * 100)
 
     /**
      * Module for calculating PSI (population stability index)

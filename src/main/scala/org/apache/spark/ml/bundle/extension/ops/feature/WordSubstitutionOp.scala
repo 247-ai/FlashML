@@ -20,7 +20,7 @@ class WordSubstitutionOp extends SimpleSparkOp[WordSubstitutionTransformer] {
                       (implicit context: BundleContext[SparkBundleContext]): Model = {
       assert(context.context.dataset.isDefined, BundleHelper.sampleDataframeMessage(klazz))
 
-      val (labels, values) = obj.getDictonary.toSeq.unzip
+      val (labels, values) = obj.getDictionary.toSeq.unzip
       val pattern = obj.getDelimiter
 
       // add the key and values to the Bundle model that

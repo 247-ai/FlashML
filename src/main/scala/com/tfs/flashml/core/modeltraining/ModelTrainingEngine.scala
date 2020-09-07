@@ -1,7 +1,7 @@
 package com.tfs.flashml.core.modeltraining
 
-import com.tfs.flashml.core.{Engine, Validator}
 import com.tfs.flashml.core.sampling.{StratifiedTrainTestSplitter, TrainTestSampler}
+import com.tfs.flashml.core.{Engine, Validator}
 import com.tfs.flashml.util.ConfigValues.{isUplift, upliftColumn}
 import com.tfs.flashml.util.conf.{ConfigValidatorException, FlashMLConstants}
 import com.tfs.flashml.util.{ConfigValues, FlashMLConfig}
@@ -10,8 +10,6 @@ import org.apache.spark.ml._
 import org.apache.spark.ml.classification._
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature._
-//import org.apache.spark.ml.tuning.generators.UniformParamGenerator
-import com.tfs.flashml.core.modeltraining.ModelTrainingUtils
 import org.apache.spark.ml.tuning.generators.RandomParamSetGenerator
 import org.apache.spark.ml.tuning.{CrossValidatorCustom, HyperBand}
 import org.apache.spark.sql.DataFrame
@@ -21,9 +19,8 @@ import org.slf4j.{Logger, LoggerFactory}
 import scala.collection.mutable.ArrayBuffer
 
 /**
-  * Fit the appropriate model on the dataframe
-  *
-  * */
+  * Fit the appropriate model on the dataframes
+  */
 object ModelTrainingEngine extends Engine with Validator
 {
     override val log: Logger = LoggerFactory.getLogger(getClass)
@@ -42,15 +39,11 @@ object ModelTrainingEngine extends Engine with Validator
             dfArray.map(_.select(columnsNames.map(col): _*).cache)
 
             val intermediateDF = ArrayBuffer[DataFrame]()
-            val minorityClassPercentRequired: Int = FlashMLConfig
-                    .getInt(FlashMLConstants.MINORITY_CLASS_PERCENT)
 
+            val minorityClassPercentRequired: Int = FlashMLConfig.getInt(FlashMLConstants.MINORITY_CLASS_PERCENT)
             if (minorityClassPercentRequired >= 50)
-            {
-                throw new Exception("Positive class percent mentioned in the config for data balance should be less " +
-                        "than 50")
-                return null
-            }
+                throw new SparkException("Positive class percent mentioned in the config for data balance should be less than 50")
+
             if (ConfigValues.isModel)
             {
                 if (ConfigValues.isPageLevelModel)
@@ -63,16 +56,14 @@ object ModelTrainingEngine extends Engine with Validator
                             log.info(s"Running positive class validation for page $pageNumber training data")
                             TrainTestSampler.validateMinorityClass(dfArray(pageNumber - 1))
 
-                            //Data Balance
-                            if (!minorityClassPercentRequired.equals(0) && FlashMLConfig
-                                    .getString(FlashMLConstants.BUILD_TYPE).toLowerCase == FlashMLConstants
-                                    .BUILD_TYPE_BINOMIAL)
+                            // Data Balance
+                            if (!minorityClassPercentRequired.equals(0) &&
+                                FlashMLConfig.getString(FlashMLConstants.BUILD_TYPE).toLowerCase == FlashMLConstants.BUILD_TYPE_BINOMIAL)
                             {
                                 // Data Balance
                                 log.info(s"Running data balance for page $pageNumber training data")
-                                intermediateDF
-                                        .append(TrainTestSampler.dataBalance(dfArray(pageNumber - 1), FlashMLConfig
-                                                .getString(FlashMLConstants.SAMPLING_TYPE)))
+                                intermediateDF.append(TrainTestSampler.dataBalance(dfArray(pageNumber - 1),
+                                    FlashMLConfig.getString(FlashMLConstants.SAMPLING_TYPE)))
                             }
                             else
                                 intermediateDF.append(dfArray(pageNumber - 1))
@@ -111,24 +102,29 @@ object ModelTrainingEngine extends Engine with Validator
         })
     }
 
+    /**
+     * Method to load the PipelineModel objects.
+     * @return
+     */
     def loadPipelineArray: Array[PipelineModel] =
     {
         if (ConfigValues.isPageLevelModel)
         {
-            (1 to ConfigValues.numPages)
-                    .foreach
-                    { pageNumber: Int =>
-                        pipelineModelArray += loadPipelineModel(pageNumber)
-                    }
+            (1 to ConfigValues.numPages).foreach(pageNumber => pipelineModelArray += loadPipelineModel(pageNumber))
         }
         else pipelineModelArray += loadPipelineModel(0)
 
         pipelineModelArray.toArray
     }
 
+    /**
+     * Method to build the PipelineModel object
+     * @param df        Dataframe on which the pipeline is fit
+     * @param pageCount Values should be 0 for non page level and page number for Page Level model
+     * @return PipelineModel containing the preprocessing steps.
+     */
     override def buildPipelineModel(df: DataFrame, pageCount: Int): PipelineModel =
     {
-
         val allStages = ArrayBuffer[PipelineStage]()
 
         log.info(s"Model Training: Adding String Indexer to the pipeline")
@@ -152,17 +148,16 @@ object ModelTrainingEngine extends Engine with Validator
 
         allStages += responseColumnIndexer
 
-        //Get ML Estimator
-        val crossValidationFolds = FlashMLConfig
-                .getInt(FlashMLConstants.CROSS_VALIDATION)
+        // Get ML Estimator
+        val crossValidationFolds = FlashMLConfig.getInt(FlashMLConstants.CROSS_VALIDATION)
 
         val doCrossValidate = crossValidationFolds > 1
 
         val estimator: Estimator[_] = if (isHyperParam)
-        { log.info("hyperparameter experiment")
+        {
+            //log.info("hyperparameter experiment")
             // hyperband is initialized as part of the validate step itself
             hyperband.getOrElse(getHyperParamOp)
-
         }
         else if (doCrossValidate) getCrossValidator(crossValidationFolds.toInt)
         else ModelTrainingUtils.getEstimator
@@ -170,7 +165,6 @@ object ModelTrainingEngine extends Engine with Validator
         allStages += estimator
 
         val isPlattScalingRequired = ConfigValues.isPlattScalingReqd
-
         if (isPlattScalingRequired)
         {
             log.info(s"Model Training: Adding PlattScaler to the pipeline")
@@ -223,7 +217,6 @@ object ModelTrainingEngine extends Engine with Validator
         // Add Top K Intent Derivation, if required
         if (ConfigValues.isTopKPossible)
         {
-
             val stringIndexerModel = intermediateModel
                     .stages(0)
                     .asInstanceOf[StringIndexerModel]
@@ -263,23 +256,21 @@ object ModelTrainingEngine extends Engine with Validator
         val modelTrainingPipeline = if (isPlattScalingRequired)
         {
             if (allStages.size > 3)
-                new Pipeline()
-                        .setStages(intermediateModel.stages ++ allStages.drop(3))
-
-            else new Pipeline()
-                    .setStages(intermediateModel.stages)
+                new Pipeline().setStages(intermediateModel.stages ++ allStages.drop(3))
+            else
+                new Pipeline().setStages(intermediateModel.stages)
         }
         else
         {
             if (allStages.size > 2)
-                new Pipeline()
-                        .setStages(intermediateModel.stages ++ allStages.drop(2))
-            else new Pipeline()
-                    .setStages(intermediateModel.stages)
+                new Pipeline().setStages(intermediateModel.stages ++ allStages.drop(2))
+            else
+                new Pipeline().setStages(intermediateModel.stages)
         }
 
         // Fit the pipeline of the dataframe and then save
         val trainedModel = modelTrainingPipeline.fit(df)
+        // Save the model training pipeline
         savePipelineModel(trainedModel, pageCount)
         trainedModel
     }

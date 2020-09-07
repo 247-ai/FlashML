@@ -209,7 +209,20 @@
   "publish" : {
     "validationList" : [
       {
+        "path" : "experiment.publish.format",
+        "pattern" : "spark|mleap|js",
+        "range" : "",
+        "canBeEmpty" : false,
+        "datatype" : "string"
+      },
+      {
         "path" : "project.data.schema.file",
+        "withConditions" : [
+          {
+            "path": "experiment.publish.format",
+            "reqdValue": "js"
+          }
+        ],
         "pattern" : ".*(/.*)*",
         "range" : "",
         "canBeEmpty" : false,
@@ -219,7 +232,6 @@
   },
   "qadatageneration" : {
     "validationList" : [
-
     ]
   }
 }

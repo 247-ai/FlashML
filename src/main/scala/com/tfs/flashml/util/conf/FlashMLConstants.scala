@@ -249,9 +249,9 @@ object FlashMLConstants
     val PUBLISH_PRECISION = "experiment.publish.precision"
 
     // Publish formats
-    val PUBLISH_JS = "js"
-    val PUBLISH_NL = "nl"
-    val PUBLISH_MLEAP = "mleap"
+    val PUBLISH_FORMAT_JS = "js"
+    val PUBLISH_FORMAT_MLEAP = "mleap"
+    val PUBLISH_FORMAT_SPARK = "spark"
 
     //QA Inputs
     val QA_DATAPOINTS = "experiment.qa.dataPoints"

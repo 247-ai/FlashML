@@ -12,6 +12,9 @@ import org.apache.spark.sql.SparkSession
 import org.scalatest.flatspec.AnyFlatSpec
 import org.slf4j.LoggerFactory
 
+/**
+ * MultiIntentSVMCVTest
+ */
 class MultiIntentSVMCVTest extends AnyFlatSpec{
 
   private val log = LoggerFactory.getLogger(getClass)

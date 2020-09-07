@@ -15,7 +15,22 @@ object ConfigValidator extends Validator
 {
     private val log = LoggerFactory.getLogger(getClass)
 
-    case class ConfigItem(path: String, pattern: String, range: String, canBeEmpty: Boolean, dataType: String)
+    /**
+     * Case class representing a ConfigItem
+     * @param path
+     * @param withConditions
+     * @param pattern
+     * @param range
+     * @param canBeEmpty
+     * @param dataType
+     */
+    case class ConfigItem(
+                             path: String,
+                             //withConditions: Array[Map[String,String]] = Array[Map[String,String]](),
+                             pattern: String, range: String,
+                             canBeEmpty: Boolean,
+                             dataType: String
+                         )
 
     /**
       * Validate the flashml config
@@ -100,7 +115,13 @@ object ConfigValidator extends Validator
     {
         val pathArr = path.split("\\.")
         var confList = generateNestedMap(config, pathArr).asArray.toList
-        confList.map(x => ConfigItem(x("path").asString, x("pattern").asString, x("range").asString, x("canBeEmpty").asBoolean, x("datatype").asString))
+        confList.map(x => ConfigItem(
+            x("path").asString,
+            x("pattern").asString,
+            x("range").asString,
+            x("canBeEmpty").asBoolean,
+            x("datatype").asString)
+        )
     }
 
     /**

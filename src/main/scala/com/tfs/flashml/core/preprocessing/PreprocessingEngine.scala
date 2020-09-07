@@ -54,31 +54,27 @@ object PreprocessingEngine extends Engine with Validator
      */
     def process(odfArray: Option[Array[DataFrame]]): Option[Array[DataFrame]] =
     {
+        // Returns ArrayBuffer because it is assigned to another object. If the object was an Array,
+        // then the size would have to be predefined.
 
-        //Returns ArrayBuffer because it is assigned to another object. If the object was an Array,
-        //then the size would have to be predefined.
+        // First we check what the Preprocessing Scope Variable is
+        // Then we convert the parameter accordingly to a Scala type
 
-        //First we check what the Preprocessing Scope Variable is
-        //Then we convert the parameter accordingly to a Scala type
+        odfArray.map(dfArray =>
+        {
+            if(ConfigValues.isModel)
+            {
+                if(ConfigValues.preprocessingVariablesScope == FlashMLConstants.PREPROCESSING_SCOPE_NONE)
+                    return Some(dfArray)
+                else
+                {
+                    log.info(s"Preprocessing: Loading config.")
 
-        odfArray
-          .map(dfArray =>
-          {
+                    if(ConfigValues.isPageLevelModel)
+                    {
+                        log.info(s"Preprocessing: Page Level Processing.")
 
-              if (ConfigValues.isModel)
-              {
-                  if (ConfigValues.preprocessingVariablesScope == FlashMLConstants.PREPROCESSING_SCOPE_NONE)
-                      return Some(dfArray)
-                  else
-                  {
-
-                      log.info(s"Preprocessing: Loading config.")
-
-                      if (ConfigValues.isPageLevelModel)
-                      {
-                          log.info(s"Preprocessing: Page Level Processing.")
-
-                          (1 to ConfigValues.numPages)
+                        (1 to ConfigValues.numPages)
                             .foreach
                             { pageNumber: Int =>
 
@@ -87,97 +83,92 @@ object PreprocessingEngine extends Engine with Validator
                                     pageNumber)
                             }
 
-                          dfArray
+                        dfArray
                             .indices
                             .foreach
                             { index: Int =>
                                 val currentDF = pipelineModelArray(index % ConfigValues.numPages)
-                                  .transform(dfArray(index))
+                                    .transform(dfArray(index))
 
                                 outputDFArrayBuffer += currentDF
                             }
 
-                          preprocessingSavePointing(isPageLevel = true, outputDFArrayBuffer.toArray)
-                      }
-                      else
-                      {
-                          //Non page level model
-                          pipelineModelArray += buildPipelineModel(dfArray(0), 0)
+                        preprocessingSavePointing(isPageLevel = true, outputDFArrayBuffer.toArray)
+                    }
+                    else
+                    {
+                        //Non page level model
+                        pipelineModelArray += buildPipelineModel(dfArray(0), 0)
 
-                          //For each object fetch all transformation maps and fetch all output column names
-                          // except the last
-                          dfArray
+                        //For each object fetch all transformation maps and fetch all output column names
+                        // except the last
+                        dfArray
                             .foreach
                             { df: DataFrame =>
                                 val currentDF = pipelineModelArray(0)
-                                  .transform(df)
+                                    .transform(df)
                                 outputDFArrayBuffer += currentDF
                             }
 
-                          preprocessingSavePointing(isPageLevel = false, outputDFArrayBuffer.toArray)
-                      }
-                  }
-              }
-              else
-              {
+                        preprocessingSavePointing(isPageLevel = false, outputDFArrayBuffer.toArray)
+                    }
+                }
+            }
+            else
+            {
+                log.info(s"Preprocessing: Loading config.")
 
-                  log.info(s"Preprocessing: Loading config.")
+                if(ConfigValues.isPageLevelModel)
+                {
+                    //Page Level Model requires an ArrayBuffer[ArrayBuffer[String]] to denote required
+                    // intermediate columns to be dropped
+                    (1 to ConfigValues.numPages).foreach
+                    { pageNumber: Int =>
+                        pipelineModelArray += loadPipelineModel(pageNumber)
+                    }
 
-                  if (ConfigValues.isPageLevelModel)
-                  {
-                      //Page Level Model requires an ArrayBuffer[ArrayBuffer[String]] to denote required
-                      // intermediate columns to be dropped
-                      (1 to ConfigValues.numPages).foreach
-                      { pageNumber: Int =>
-                          pipelineModelArray += loadPipelineModel(pageNumber)
-
-                      }
-
-                      dfArray
+                    dfArray
                         .indices
                         .foreach
                         { index: Int =>
                             val currentDF = pipelineModelArray(index % ConfigValues.numPages)
-                              .transform(dfArray(index))
+                                .transform(dfArray(index))
                             outputDFArrayBuffer += currentDF
                         }
 
-                      //SAVE
-                      preprocessingSavePointing(isPageLevel = true, outputDFArrayBuffer.toArray)
-                  }
-                  else
-                  {
-                      //Non Page Level model
-                      pipelineModelArray += loadPipelineModel(0)
-                      dfArray
-                        .foreach
-                        { df: DataFrame =>
-                            val currentDF = pipelineModelArray(0)
-                              .transform(df)
-
+                    // Save
+                    preprocessingSavePointing(isPageLevel = true, outputDFArrayBuffer.toArray)
+                }
+                else
+                {
+                    // Non Page Level model
+                    pipelineModelArray += loadPipelineModel(0)
+                    dfArray.foreach
+                    {
+                        df: DataFrame =>
+                            val currentDF = pipelineModelArray(0).transform(df)
                             outputDFArrayBuffer += currentDF
-                        }
+                    }
 
-                      preprocessingSavePointing(isPageLevel = false, outputDFArrayBuffer.toArray)
-
-                  }
-              }
-              outputDFArrayBuffer.toArray
-          })
+                    preprocessingSavePointing(isPageLevel = false, outputDFArrayBuffer.toArray)
+                }
+            }
+            outputDFArrayBuffer.toArray
+        })
     }
 
     def preprocessingConfigLoader(pageNum: Int) =
     {
 
-        if (ConfigValues.isPageLevelModel && ConfigValues.preprocessingVariablesScope == FlashMLConstants
-          .SCOPE_PARAMETER_PER_PAGE)
-            loadPreprocessingConfig(if (pageNum == 0) 0
+        if(ConfigValues.isPageLevelModel && ConfigValues.preprocessingVariablesScope == FlashMLConstants
+            .SCOPE_PARAMETER_PER_PAGE)
+            loadPreprocessingConfig(if(pageNum == 0) 0
             else pageNum - 1).isInstanceOf[customArrayHashMap]
 
-        if (ConfigValues.preprocessingVariablesScope == FlashMLConstants.SCOPE_PARAMETER_NO_PAGE || ConfigValues
-          .preprocessingVariablesScope == FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE)
+        if(ConfigValues.preprocessingVariablesScope == FlashMLConstants.SCOPE_PARAMETER_NO_PAGE || ConfigValues
+            .preprocessingVariablesScope == FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE)
             loadPreprocessingConfig
-              .asInstanceOf[Array[util.HashMap[String, Any]]]
+                .asInstanceOf[Array[util.HashMap[String, Any]]]
     }
 
 
@@ -186,30 +177,26 @@ object PreprocessingEngine extends Engine with Validator
      *
      * @return
      */
-    def loadPreprocessingConfig = ConfigValues
-      .preprocessingVariablesScope match
+    def loadPreprocessingConfig = ConfigValues.preprocessingVariablesScope match
     {
-
-        case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE =>
-            FlashMLConfig
-              .config
-              .getList(FlashMLConstants.EXPERIMENT_PREPROCESSING_STEPS)
-              .unwrapped()
-              .asInstanceOf[java.util.ArrayList[util.HashMap[String, Any]]]
-              .asScala
-              .toArray
-              .asInstanceOf[Array[util.HashMap[String, Any]]]
-
+        case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE => FlashMLConfig
+            .config
+            .getList(FlashMLConstants.EXPERIMENT_PREPROCESSING_STEPS)
+            .unwrapped()
+            .asInstanceOf[java.util.ArrayList[util.HashMap[String, Any]]]
+            .asScala
+            .toArray
+            .asInstanceOf[Array[util.HashMap[String, Any]]]
 
         case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE => FlashMLConfig
-          .config
-          .getList(FlashMLConstants.EXPERIMENT_PREPROCESSING_STEPS)
-          .asScala
-          .map(_.unwrapped()
-            .asInstanceOf[java.util.ArrayList[util.HashMap[String, Any]]]
-            .asScala.toArray)
-          .toArray
-          .asInstanceOf[Array[Array[util.HashMap[String, Any]]]]
+            .config
+            .getList(FlashMLConstants.EXPERIMENT_PREPROCESSING_STEPS)
+            .asScala
+            .map(_.unwrapped()
+                .asInstanceOf[java.util.ArrayList[util.HashMap[String, Any]]]
+                .asScala.toArray)
+            .toArray
+            .asInstanceOf[Array[Array[util.HashMap[String, Any]]]]
 
         case _ =>
             log.info(ConfigValues.scopeProcessingErrorMessage)
@@ -221,13 +208,12 @@ object PreprocessingEngine extends Engine with Validator
 
         val preProcessingMapArray =
         {
-
             ConfigValues.preprocessingVariablesScope match
             {
                 case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE =>
 
-                    if (ConfigValues.isPageLevelModel)
-                        loadPreprocessingConfig(if (pageCount == 0) 0
+                    if(ConfigValues.isPageLevelModel)
+                        loadPreprocessingConfig(if(pageCount == 0) 0
                         else pageCount - 1)
                     else
                         loadPreprocessingConfig
@@ -241,21 +227,21 @@ object PreprocessingEngine extends Engine with Validator
         val allStages = ArrayBuffer[PipelineStage]()
 
         preProcessingMapArray
-          .asInstanceOf[Array[util.HashMap[String, Any]]]
-          .zipWithIndex
-          .foreach(obj =>
-          {
-              val indexNum = obj._2
-              allStages ++= getPipelineStagesForColumn(obj._1, indexNum + 1, pageCount)
-          })
+            .asInstanceOf[Array[util.HashMap[String, Any]]]
+            .zipWithIndex
+            .foreach(obj =>
+            {
+                val indexNum = obj._2
+                allStages ++= getPipelineStagesForColumn(obj._1, indexNum + 1, pageCount)
+            })
 
         //Build Pipeline
         val preProcessPipeline = new Pipeline()
-          .setStages(allStages.toArray)
+            .setStages(allStages.toArray)
 
         //Fit the pipeline of the dataframe and then save
         val preProcessModel: PipelineModel = preProcessPipeline
-          .fit(df)
+            .fit(df)
         savePipelineModel(preProcessModel, pageCount)
 
         preProcessModel
@@ -270,203 +256,200 @@ object PreprocessingEngine extends Engine with Validator
      * @param map Preprocessing Operations for a particular column
      * @return ArrayBuffer containing the PipelineStage
      */
-    private def getPipelineStagesForColumn(map: util.HashMap[String, Any], indexValue: Int, pgNum : Int) =
+    private def getPipelineStagesForColumn(map: util.HashMap[String, Any], indexValue: Int, pgNum: Int) =
     {
 
         val inputColumnName = map
-          .get(FlashMLConstants.INPUT_VARIABLE)
-          .toString
+            .get(FlashMLConstants.INPUT_VARIABLE)
+            .toString
 
         val outputColName = map
-          .getOrDefault(FlashMLConstants.OUTPUT_VARIABLE, "")
-          .toString
+            .getOrDefault(FlashMLConstants.OUTPUT_VARIABLE, "")
+            .toString
 
         val transformations: Array[mutable.Map[String, Any]] = map
-          .get(FlashMLConstants.PREPROCESSING_TRANSFORMATIONS)
-          .asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
-          .asScala
-          .map(_.asScala)
-          .toArray
+            .get(FlashMLConstants.PREPROCESSING_TRANSFORMATIONS)
+            .asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
+            .asScala
+            .map(_.asScala)
+            .toArray
 
-        val pageNum = if(pgNum == 0) 0 else pgNum -1
+        val pageNum = if(pgNum == 0) 0 else pgNum - 1
 
         val tokenizerMap = transformations
-          .filter(_ (FlashMLConstants.PREPROCESSING_TYPE).asInstanceOf[String].equals(FlashMLConstants.TOKENIZER))
-        val delimiter = if (tokenizerMap.nonEmpty) tokenizerMap(0)
-          .getOrElse(FlashMLConstants.PREPROCESSING_METHOD_PARAMETER, "\\s")
-          .toString + "|(" + FlashMLConstants.CUSTOM_DELIMITER + ")"
+            .filter(_ (FlashMLConstants.PREPROCESSING_TYPE).asInstanceOf[String].equals(FlashMLConstants.TOKENIZER))
+        val delimiter = if(tokenizerMap.nonEmpty) tokenizerMap(0)
+            .getOrElse(FlashMLConstants.PREPROCESSING_METHOD_PARAMETER, "\\s")
+            .toString + "|(" + FlashMLConstants.CUSTOM_DELIMITER + ")"
         else ""
 
         log.info(s"Preprocessing: Processing variable '$inputColumnName'.")
 
-
-        def getPreprocessingStages(transformations: Array[mutable.Map[String, Any]], inputColumn: String,
-                                   outputCol: String) =
+        /**
+         * Method to get all the preprocessing stages. The processing involves looping through the config and
+         * creating intermediate columns, which is why this is encapsulated in a method.
+         * @param transformations
+         * @param inputColumn
+         * @param outputCol
+         * @return
+         */
+        def getPreprocessingStages(transformations: Array[mutable.Map[String, Any]], inputColumn: String, outputCol: String) =
         {
-
             var inputCol = inputColumn
             val transformationsCount = transformations.length
 
             transformations
-              .zipWithIndex
-              .foldLeft(ArrayBuffer[PipelineStage]())
-              {
+                .zipWithIndex
+                .foldLeft(ArrayBuffer[PipelineStage]())
+                {
+                    (pipelineStages, indexedTupleObj) =>
 
-                  (pipelineStages, indexedTupleObj) =>
+                        val transformationDetail: mutable.Map[String, Any] = indexedTupleObj._1
+                        val idx: Int = indexedTupleObj._2
 
-                      val transformationDetail: mutable.Map[String, Any] = indexedTupleObj._1
-                      val idx: Int = indexedTupleObj._2
+                        val preprocessingType = transformationDetail(FlashMLConstants.PREPROCESSING_TYPE)
+                            .toString
+                            .toLowerCase
 
-                      val preprocessingType = transformationDetail(FlashMLConstants.PREPROCESSING_TYPE)
-                        .toString
-                        .toLowerCase
+                        log.info(s"Adding $preprocessingType to the pipeline")
 
-                      log.info(s"Adding $preprocessingType to the pipeline")
+                        val newOutputColName =
+                            if(idx < transformationsCount - 1)
+                            {
+                                val intermediateCol = s"${ inputCol }_Col${ indexValue }_${ preprocessingMarkers.getOrElse(preprocessingType, "") }"
 
-                      val newOutputColName =
-                          if (idx < transformationsCount - 1)
-                          {
-                              val intermediateCol =  s"${inputCol}_Col${indexValue}_${preprocessingMarkers.getOrElse(preprocessingType, "")}"
+                                ConfigValues.pagewisePreprocessingIntVariables(pageNum) += intermediateCol
+                                intermediateCol
+                            }
+                            else outputCol
 
-                              ConfigValues.pagewisePreprocessingIntVariables(pageNum) += intermediateCol
-                              intermediateCol
-                          }
-                          else outputCol
+                        val (stage, nextInputColumnName) = preprocessingType match
+                        {
+                            case FlashMLConstants.TOKENIZER =>
+                                val stage: PipelineStage =
+                                    new RegexTokenizer()
+                                        .setInputCol(inputCol)
+                                        .setOutputCol(newOutputColName)
+                                        .setPattern(delimiter)
+                                        .setToLowercase(false)
 
-                      val (stage, nextInputColumnName) = preprocessingType match
-                      {
+                                (stage, newOutputColName)
 
-                          case FlashMLConstants.TOKENIZER =>
+                            case FlashMLConstants.STEMMING =>
+                                val exceptions: Array[String] = PreprocessingStageLoader
+                                    .getExceptions(transformationDetail(FlashMLConstants
+                                        .PREPROCESSING_METHOD_PARAMETER))
 
-                              val stage: PipelineStage =
-                                  new RegexTokenizer()
+                                val stage: PipelineStage = new PorterStemmingTransformer()
                                     .setInputCol(inputCol)
                                     .setOutputCol(newOutputColName)
-                                    .setPattern(delimiter)
-                                    .setToLowercase(false)
+                                    .setExceptions(exceptions)
+                                    .setDelimiter(delimiter)
 
-                              (stage, newOutputColName)
+                                (stage, newOutputColName)
 
-                          case FlashMLConstants.STEMMING =>
+                            case FlashMLConstants.CONTRACTIONS_REPLACEMENT | FlashMLConstants.LEMMATIZE =>
+                                val dictionary: Map[String, String] = PreprocessingStageLoader
+                                    .getWordReplacements(transformationDetail(FlashMLConstants
+                                        .PREPROCESSING_METHOD_PARAMETER))
 
-                              val exceptions: Array[String] = PreprocessingStageLoader
-                                .getExceptions(transformationDetail(FlashMLConstants
-                                  .PREPROCESSING_METHOD_PARAMETER))
+                                val stage: PipelineStage = new WordSubstitutionTransformer()
+                                    .setInputCol(inputCol)
+                                    .setOutputCol(newOutputColName)
+                                    .setDictionary(dictionary)
+                                    .setDelimiter(delimiter)
 
-                              val stage: PipelineStage = new PorterStemmingTransformer()
-                                .setInputCol(inputCol)
-                                .setOutputCol(newOutputColName)
-                                .setExceptions(exceptions)
-                                .setDelimiter(delimiter)
+                                (stage, newOutputColName)
 
-                              (stage, newOutputColName)
+                            case FlashMLConstants.SENTENCE_MARKER =>
+                                val stage: PipelineStage = new SentenceMarker()
+                                    .setInputCol(inputCol)
+                                    .setOutputCol(newOutputColName)
 
-                          case FlashMLConstants.CONTRACTIONS_REPLACEMENT | FlashMLConstants.LEMMATIZE =>
+                                (stage, newOutputColName)
 
-                              val dictionary: Map[String, String] = PreprocessingStageLoader
-                                .getWordReplacements(transformationDetail(FlashMLConstants
-                                  .PREPROCESSING_METHOD_PARAMETER))
+                            case FlashMLConstants.STOPWORDS =>
+                                val stopWords: Array[String] = PreprocessingStageLoader
+                                    .getStopWords(transformationDetail(FlashMLConstants
+                                        .PREPROCESSING_METHOD_PARAMETER))
 
-                              val stage: PipelineStage = new WordSubstitutionTransformer()
-                                .setInputCol(inputCol)
-                                .setOutputCol(newOutputColName)
-                                .setDictionary(dictionary)
-                                .setDelimiter(delimiter)
+                                val stage: PipelineStage = new StopWordsRemoverCustom()
+                                    .setInputCol(inputCol)
+                                    .setOutputCol(newOutputColName)
+                                    .setStopWords(stopWords)
+                                    .setDelimiter(delimiter)
 
-                              (stage, newOutputColName)
+                                (stage, newOutputColName)
 
-                          case FlashMLConstants.SENTENCE_MARKER =>
+                            case FlashMLConstants.NULL_CHECK =>
+                                val replaceValue = transformationDetail(FlashMLConstants
+                                    .PREPROCESSING_METHOD_PARAMETER)
+                                    .toString
 
-                              val stage: PipelineStage = new SentenceMarker()
-                                .setInputCol(inputCol)
-                                .setOutputCol(newOutputColName)
+                                val stage: PipelineStage = new ImputerCustom()
+                                    .setInputCol(inputCol)
+                                    .setReplacementValue(replaceValue)
+                                // This is an inplace transformation, so we return the input column.
+                                (stage, inputCol)
 
-                              (stage, newOutputColName)
+                            case FlashMLConstants.WORD_CLASSES_REPLACEMENT =>
 
-                          case FlashMLConstants.STOPWORDS =>
+                                val wordClasses: Seq[(String, String)] = PreprocessingStageLoader
+                                    .getWordClassReplacements(transformationDetail(FlashMLConstants
+                                        .PREPROCESSING_METHOD_PARAMETER))
+                                    .sortBy(-_._1.length)
+                                val wordRegexSeq = PreprocessingStageLoader.computeWordRegexSeq(wordClasses)
 
-                              val stopWords: Array[String] = PreprocessingStageLoader
-                                .getStopWords(transformationDetail(FlashMLConstants
-                                  .PREPROCESSING_METHOD_PARAMETER))
+                                val stage: PipelineStage = new RegexReplacementTransformer()
+                                    .setInputCol(inputCol)
+                                    .setOutputCol(newOutputColName)
+                                    .setRegexReplacements(wordRegexSeq)
 
-                              val stage: PipelineStage = new StopWordsRemoverCustom()
-                                .setInputCol(inputCol)
-                                .setOutputCol(newOutputColName)
-                                .setStopWords(stopWords)
-                                .setDelimiter(delimiter)
+                                (stage, newOutputColName)
 
-                              (stage, newOutputColName)
+                            case FlashMLConstants.REGEX_REMOVAL =>
+                                val regexClasses: Seq[(String, String)] = PreprocessingStageLoader
+                                    .getRegexRemovalPatterns(transformationDetail(FlashMLConstants
+                                        .PREPROCESSING_METHOD_PARAMETER))
 
-                          case FlashMLConstants.NULL_CHECK =>
+                                val stage: PipelineStage = new RegexReplacementTransformer()
+                                    .setInputCol(inputCol)
+                                    .setOutputCol(newOutputColName)
+                                    .setRegexReplacements(regexClasses)
+                                    .setDelimiter(delimiter)
 
-                              val replaceValue = transformationDetail(FlashMLConstants
-                                .PREPROCESSING_METHOD_PARAMETER)
-                                .toString
+                                (stage, newOutputColName)
 
-                              val stage: PipelineStage = new ImputerCustom()
-                                .setInputCol(inputCol)
-                                .setReplacementValue(replaceValue)
-                              // This is an inplace transformation, so we return the input column.
-                              (stage, inputCol)
+                            case FlashMLConstants.REGEX_REPLACEMENT =>
+                                val regexClasses: Seq[(String, String)] = PreprocessingStageLoader
+                                    .getRegexes(transformationDetail(FlashMLConstants
+                                        .PREPROCESSING_METHOD_PARAMETER))
 
-                          case FlashMLConstants.WORD_CLASSES_REPLACEMENT =>
+                                val stage: PipelineStage = new RegexReplacementTransformer()
+                                    .setInputCol(inputCol)
+                                    .setOutputCol(newOutputColName)
+                                    .setRegexReplacements(regexClasses)
+                                    .setDelimiter(delimiter)
 
-                              val wordClasses: Seq[(String, String)] = PreprocessingStageLoader
-                                .getWordClassReplacements(transformationDetail(FlashMLConstants
-                                  .PREPROCESSING_METHOD_PARAMETER))
-                                .sortBy(-_._1.length)
-                              val wordRegexSeq = PreprocessingStageLoader.computeWordRegexSeq(wordClasses)
+                                (stage, newOutputColName)
 
-                              val stage: PipelineStage = new RegexReplacementTransformer()
-                                .setInputCol(inputCol)
-                                .setOutputCol(newOutputColName)
-                                .setRegexReplacements(wordRegexSeq)
+                            case FlashMLConstants.CASE_NORMALIZATON =>
+                                val stage: PipelineStage = new CaseNormalizationTransformer()
+                                    .setInputCol(inputCol)
+                                    .setOutputCol(newOutputColName)
 
-                              (stage, newOutputColName)
+                                (stage, newOutputColName)
 
-                          case FlashMLConstants.REGEX_REMOVAL =>
-                              val regexClasses: Seq[(String, String)] = PreprocessingStageLoader
-                                .getRegexRemovalPatterns(transformationDetail(FlashMLConstants
-                                  .PREPROCESSING_METHOD_PARAMETER))
+                            case _ => throwException("Unidentified Preprocessing Method chosen! Please select a valid Preprocessing method and try again.")
+                        }
 
-                              val stage: PipelineStage = new RegexReplacementTransformer()
-                                .setInputCol(inputCol)
-                                .setOutputCol(newOutputColName)
-                                .setRegexReplacements(regexClasses)
-                                .setDelimiter(delimiter)
+                        //Setting up for the next iteration
+                        if(idx != transformationsCount - 1)
+                            inputCol = nextInputColumnName
 
-                              (stage, newOutputColName)
-                          case FlashMLConstants.REGEX_REPLACEMENT =>
-                              val regexClasses: Seq[(String, String)] = PreprocessingStageLoader
-                                .getRegexes(transformationDetail(FlashMLConstants
-                                  .PREPROCESSING_METHOD_PARAMETER))
-
-                              val stage: PipelineStage = new RegexReplacementTransformer()
-                                .setInputCol(inputCol)
-                                .setOutputCol(newOutputColName)
-                                .setRegexReplacements(regexClasses)
-                                .setDelimiter(delimiter)
-
-                              (stage, newOutputColName)
-                          case FlashMLConstants.CASE_NORMALIZATON =>
-
-                              val stage: PipelineStage = new CaseNormalizationTransformer()
-                                .setInputCol(inputCol)
-                                .setOutputCol(newOutputColName)
-
-                              (stage, newOutputColName)
-                          case _ => throwException("Unidentified Preprocessing Method chosen! Please select a " +
-                            "valid Preprocessing method and try again.")
-                      }
-
-                      //Setting up for the next iteration
-                      if (idx != transformationsCount - 1)
-                          inputCol = nextInputColumnName
-
-                      pipelineStages += stage
-              }
-              .toArray
-
+                        pipelineStages += stage
+                }
+                .toArray
         }
 
         getPreprocessingStages(transformations, inputColumnName, outputColName)
@@ -478,11 +461,9 @@ object PreprocessingEngine extends Engine with Validator
         throw new SparkException(msg)
     }
 
-    val savePipelineModel: (PipelineModel, Int) => Unit = savePipelineModel(_: PipelineModel, _: Int,
-        FlashMLConstants.PREPROCESSING)
+    val savePipelineModel: (PipelineModel, Int) => Unit = savePipelineModel(_: PipelineModel, _: Int, FlashMLConstants.PREPROCESSING)
 
     val loadPipelineModel: Int => PipelineModel = loadPipelineModel(_: Int, FlashMLConstants.PREPROCESSING)
-
 
     /**
      * Validating flashml preprocessing configuration for checking whether the input variable is part of text or
@@ -508,47 +489,48 @@ object PreprocessingEngine extends Engine with Validator
         // loading the preprocessing steps
         val preprocessingSteps = loadPreprocessingConfig
         // Validating based on page level and scope
-        if (ConfigValues.isPageLevelModel)
-            (0 until ConfigValues.numPages)
-              .foreach(pageNumber =>
-              {
-                  // fetching the text variables
-                  val textVariables = ConfigValues.variablesScope match
-                  {
-                      case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE => ConfigValues.scopeTextVariables
-                      case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE => ConfigValues.scopeTextVariables(pageNumber)
-                  }
-                  // fetching the categorical variables
-                  val categoricalVariables = ConfigValues.variablesScope match
-                  {
-                      case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE => ConfigValues.scopeCategoricalVariables
-                      case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE => ConfigValues.scopeCategoricalVariables(pageNumber)
-                  }
-                  // fetching numerical variables
-                  val numericalVariables = ConfigValues.variablesScope match
-                  {
-                      case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE => ConfigValues.scopeNumericalVariables
-                      case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE => ConfigValues.scopeNumericalVariables(pageNumber)
-                  }
+        if(ConfigValues.isPageLevelModel)
+        {
+            (0 until ConfigValues.numPages).foreach(pageNumber =>
+            {
+                // fetching the text variables
+                val textVariables = ConfigValues.variablesScope match
+                {
+                    case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE => ConfigValues.scopeTextVariables
+                    case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE => ConfigValues.scopeTextVariables(pageNumber)
+                }
+                // fetching the categorical variables
+                val categoricalVariables = ConfigValues.variablesScope match
+                {
+                    case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE => ConfigValues.scopeCategoricalVariables
+                    case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE => ConfigValues.scopeCategoricalVariables(pageNumber)
+                }
+                // fetching numerical variables
+                val numericalVariables = ConfigValues.variablesScope match
+                {
+                    case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE => ConfigValues.scopeNumericalVariables
+                    case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE => ConfigValues.scopeNumericalVariables(pageNumber)
+                }
 
-                  var variableUnion = textVariables.asInstanceOf[Array[String]].toSet ++ numericalVariables.asInstanceOf[Array[String]].toSet ++ categoricalVariables.asInstanceOf[Array[String]].toSet
+                val variableUnion = textVariables.asInstanceOf[Array[String]].toSet ++ numericalVariables.asInstanceOf[Array[String]].toSet ++ categoricalVariables.asInstanceOf[Array[String]].toSet
 
-                  // fetching preprocessing steps based on preprocessing scope
-                  val preprocessingStepsPageWise = ConfigValues.preprocessingVariablesScope match
-                  {
-                      case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE => preprocessingSteps(pageNumber)
-                      case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE => preprocessingSteps
-                  }
-                  // functions call to validate
-                  variableDependencyValidation(preprocessingStepsPageWise.asInstanceOf[Array[util.HashMap[String, Any]]], variableUnion.asInstanceOf[Set[String]], transformations)
-              })
+                // fetching preprocessing steps based on preprocessing scope
+                val preprocessingStepsPageWise = ConfigValues.preprocessingVariablesScope match
+                {
+                    case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE => preprocessingSteps(pageNumber)
+                    case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE => preprocessingSteps
+                }
+                // functions call to validate
+                variableDependencyValidation(preprocessingStepsPageWise.asInstanceOf[Array[util.HashMap[String, Any]]], variableUnion.asInstanceOf[Set[String]], transformations)
+            })
+        }
         else
         {
             //throwing an error if the scope is perpage or allpage for non page level variables
             ConfigValues.preprocessingVariablesScope match
             {
                 case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE | FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE =>
-                    val msg = s"Scope cannot be ${ConfigValues.preprocessingVariablesScope} for non page level model"
+                    val msg = s"Scope cannot be ${ ConfigValues.preprocessingVariablesScope } for non page level model"
                     log.error(msg)
                     throw new ConfigValidatorException(msg)
                 case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE =>
@@ -561,69 +543,64 @@ object PreprocessingEngine extends Engine with Validator
     /**
      * Validating whether the preprocessing steps input variable is part of text, numerical or categorical variables and whether the transformations are valid
      *
-     *
-     *
      * @param preprocessingSteps Preprocessing Step array
      * @param variableUnion      List of valid text variables on which preprocessing can be applied
      * @param transformations    List of valid transformations
      */
     def variableDependencyValidation(preprocessingSteps: Array[util.HashMap[String, Any]], variableUnion: Set[String], transformations: List[String]): Unit =
     {
-        //iterating through preprocessing steps and validating the input variables and transformations
+        // Iterating through preprocessing steps and validating the input variables and transformations
         preprocessingSteps
-          .asInstanceOf[Array[util.HashMap[String, Any]]]
-          .zipWithIndex
-          .foreach(step =>
-          {
-              val inputvar = step._1
-                .get(FlashMLConstants.INPUT_VARIABLE)
-                .toString
+            .asInstanceOf[Array[util.HashMap[String, Any]]]
+            .zipWithIndex
+            .foreach(step =>
+            {
+                val inputvar = step._1
+                    .get(FlashMLConstants.INPUT_VARIABLE)
+                    .toString
 
-              if (!variableUnion.contains(inputvar))
-              {
-                  val msg = s"$inputvar Input Variable is not part of the text variables"
-                  log.error(msg)
-                  throw new ConfigValidatorException(msg)
-              }
-              step._1
-                .get(FlashMLConstants.PREPROCESSING_TRANSFORMATIONS)
-                .asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
-                .asScala
-                .map(_.asScala)
-                .foreach(transform =>
+                if(!variableUnion.contains(inputvar))
                 {
-                    if (!transformations.contains(transform(FlashMLConstants.PREPROCESSING_TYPE)))
+                    val msg = s"$inputvar Input Variable is not part of the text variables"
+                    log.error(msg)
+                    throw new ConfigValidatorException(msg)
+                }
+                step._1
+                    .get(FlashMLConstants.PREPROCESSING_TRANSFORMATIONS)
+                    .asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
+                    .asScala
+                    .map(_.asScala)
+                    .foreach(transform =>
                     {
-                        val msg = s"Transformation ${transform(FlashMLConstants.PREPROCESSING_TYPE)} is not supported"
-                        log.error(msg)
-                        throw new ConfigValidatorException(msg)
-                    }
-                })
-          })
+                        if(!transformations.contains(transform(FlashMLConstants.PREPROCESSING_TYPE)))
+                        {
+                            val msg = s"Transformation ${ transform(FlashMLConstants.PREPROCESSING_TYPE) } is not supported"
+                            log.error(msg)
+                            throw new ConfigValidatorException(msg)
+                        }
+                    })
+            })
     }
 
     def preprocessingSavePointing(isPageLevel: Boolean, dfArray: Array[DataFrame]): Unit =
     {
-
-        if (isPageLevel)
+        if(isPageLevel)
         {
             dfArray
-              .indices
-              .foreach(x =>
-              {
-                  SavePointManager
-                    .saveDataFrame(dfArray(x), x % ConfigValues.numPages + 1, DataSetType(x / ConfigValues.numPages), FlashMLConstants.PREPROCESSING)
-              })
+                .indices
+                .foreach(x =>
+                {
+                    SavePointManager.saveDataFrame(dfArray(x), x % ConfigValues.numPages + 1, DataSetType(x / ConfigValues.numPages), FlashMLConstants.PREPROCESSING)
+                })
         }
         else
         {
             dfArray
-              .indices
-              .foreach(x =>
-              {
-                  SavePointManager
-                    .saveDataFrame(dfArray(x), pageCount = 0, DataSetType(x), FlashMLConstants.PREPROCESSING)
-              })
+                .indices
+                .foreach(x =>
+                {
+                    SavePointManager.saveDataFrame(dfArray(x), pageCount = 0, DataSetType(x), FlashMLConstants.PREPROCESSING)
+                })
         }
     }
 
@@ -637,94 +614,93 @@ object PreprocessingEngine extends Engine with Validator
     def populatePreprocessingIntermediateColumnNames =
     {
 
-        def computeIntermediateVariables(map : util.HashMap[String,Any], index : Int, pgNum: Int): Unit ={
+        def computeIntermediateVariables(map: util.HashMap[String, Any], index: Int, pgNum: Int): Unit =
+        {
 
             var inputColumnName = map
-              .get(FlashMLConstants.INPUT_VARIABLE)
-              .toString
+                .get(FlashMLConstants.INPUT_VARIABLE)
+                .toString
 
             val outputColName = map
-              .get(FlashMLConstants.OUTPUT_VARIABLE)
-              .toString
+                .get(FlashMLConstants.OUTPUT_VARIABLE)
+                .toString
 
             val transformations = map.get(FlashMLConstants.PREPROCESSING_TRANSFORMATIONS)
-              .asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
-              .asScala
-              .map(_.asScala)
-              .toArray
+                .asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
+                .asScala
+                .map(_.asScala)
+                .toArray
 
             val transformationsCount = transformations.length
 
             transformations
-              .zipWithIndex
-              .foreach(
-                  obj => {
+                .zipWithIndex
+                .foreach(
+                    obj =>
+                    {
+                        val preprocessingType = obj._1(FlashMLConstants.PREPROCESSING_TYPE)
+                            .toString
+                            .toLowerCase
 
-                      val preprocessingType = obj._1(FlashMLConstants.PREPROCESSING_TYPE)
-                        .toString
-                        .toLowerCase
+                        val idx = obj._2
 
-                      val idx = obj._2
+                        val newOutputColName =
+                            if(idx < transformationsCount - 1)
+                            {
+                                val intermediateCol = s"${ inputColumnName }_Col${ index }_${ preprocessingMarkers.getOrElse(preprocessingType, "") }"
 
-                      val newOutputColName =
-                          if (idx < transformationsCount - 1)
-                          {
-                              val intermediateCol =  s"${inputColumnName}_Col${index}_${preprocessingMarkers.getOrElse(preprocessingType, "")}"
-
-                              ConfigValues.pagewisePreprocessingIntVariables(pgNum) += intermediateCol
-                              intermediateCol
-                          }
-                          else outputColName
-
-                  })
-
+                                ConfigValues.pagewisePreprocessingIntVariables(pgNum) += intermediateCol
+                                intermediateCol
+                            }
+                            else outputColName
+                    })
         }
 
         FlashMLConfig
-          .getString(FlashMLConstants.PREPROCESSING_SCOPE)
-          .toLowerCase match {
-
+            .getString(FlashMLConstants.PREPROCESSING_SCOPE)
+            .toLowerCase match
+        {
             case FlashMLConstants.SCOPE_PARAMETER_NO_PAGE =>
                 loadPreprocessingConfig
-                  .asInstanceOf[Array[util.HashMap[String,Any]]]
-                  .zipWithIndex
-                  .foreach(obj=>{
-                      val indx = obj._2
-                      computeIntermediateVariables(obj._1, indx, 0)
-                  })
+                    .asInstanceOf[Array[util.HashMap[String, Any]]]
+                    .zipWithIndex
+                    .foreach(obj =>
+                    {
+                        val indx = obj._2
+                        computeIntermediateVariables(obj._1, indx, 0)
+                    })
 
             case FlashMLConstants.SCOPE_PARAMETER_PER_PAGE =>
                 loadPreprocessingConfig
-                  .asInstanceOf[Array[Array[util.HashMap[String,Any]]]]
-                  .zipWithIndex
-                  .foreach(pagewiseObj =>
-                  {
-                      //ZipWithIndex ensures indexing starts from zero
-                      val pgNum = pagewiseObj._2
-                      val pgWiseTransformations = pagewiseObj._1
-                      pgWiseTransformations
-                        .zipWithIndex
-                        .foreach(obj => {
-                            val colIndx = obj._2
-                            computeIntermediateVariables(obj._1, colIndx, pgNum)
-                        })
+                    .asInstanceOf[Array[Array[util.HashMap[String, Any]]]]
+                    .zipWithIndex
+                    .foreach(pagewiseObj =>
+                    {
+                        //ZipWithIndex ensures indexing starts from zero
+                        val pgNum = pagewiseObj._2
+                        val pgWiseTransformations = pagewiseObj._1
+                        pgWiseTransformations
+                            .zipWithIndex
+                            .foreach(obj =>
+                            {
+                                val colIndx = obj._2
+                                computeIntermediateVariables(obj._1, colIndx, pgNum)
+                            })
+                    })
 
-                  })
-
-            case FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE => val preprocessingConfig = loadPreprocessingConfig
-              .asInstanceOf[Array[util.HashMap[String,Any]]]
+            case FlashMLConstants.SCOPE_PARAMETER_ALL_PAGE =>
+                val preprocessingConfig = loadPreprocessingConfig.asInstanceOf[Array[util.HashMap[String, Any]]]
                 (0 until ConfigValues.numPages)
-                  .foreach(pGindx => {
-                      preprocessingConfig
-                        .zipWithIndex
-                        .foreach(obj => {
-                            val colIndx = obj._2
-                            computeIntermediateVariables(obj._1,colIndx, pGindx)
-                        })
-                  })
-
+                    .foreach(pGindx =>
+                    {
+                        preprocessingConfig
+                            .zipWithIndex
+                            .foreach(obj =>
+                            {
+                                val colIndx = obj._2
+                                computeIntermediateVariables(obj._1, colIndx, pGindx)
+                            })
+                    })
         }
-
     }
-
 }

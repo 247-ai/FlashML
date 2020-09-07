@@ -465,7 +465,7 @@ The perPage option allows the user to custom-specify preprocessing config parame
 }
 ```
 
-For **text columns**, it is required that the last transformation step be tokenization so as to convert the data into an array of tokens, and then follow subsequent steps. The transformations supported are listed below, and the way they needs to be mentioned are provided in parenthesis.
+For **text columns**, it is required that the last transformation step be tokenization so as to convert the data into an array of tokens, and then follow subsequent steps. The transformations supported are listed below, and the way they needs to be mentioned are provided in parentheses.
 <br />
 </li>
 
@@ -671,7 +671,7 @@ The user is not required to pass any arguments in this preprocessing type. Refer
 
 <li><h4>Word Classes Replacement</h4> (<code>word_classes_replacement</code>)
 
-This step allows users to define a label as a replacement for multiple string values. The `parameter` key allows the user to enter either a string (denoting a filepath) or a HashMap mapping the labels to arrays of strings (denoting the similar words that should be replaced with the common label). In case of the file approach, the HashMap can be directly entered in the text file. A few sample lines include:
+This step allows users to define a label as a replacement for multiple string values. The `parameter` key allows the user to enter either a string (denoting a filepath), or a HashMap mapping the labels to arrays of strings (denoting the similar words that should be replaced with the common label). In case of the file approach, the HashMap can be directly entered in the text file in JSON format. The lines in the file can be as shown below.
 
 ```
 {
@@ -692,7 +692,7 @@ A sample config snippet listing the same input directly in the configuration fil
 }
 ```
 
-The word-class replacement function is not supported by FlashML's Publish module at this time. Users can pick this preprocessing option and build prediction models and run upto Metrics steps.
+The word-class replacement function is not supported by FlashML's Publish module at this time, if the publish format is chosen as javascript. Users can pick this preprocessing option and build prediction models and run upto Metrics steps. Other formats (spark native or mleap) supports this.
 </li>
 
 <li><h4>Sentence Marker</h4> (<code>sentence_marker</code>)
@@ -713,7 +713,7 @@ luckier,lucky
 luckiest,lucky
 ```
 
-The contractions-replacement function is not supported by FlashML's Publish module at this time. Users can pick this preprocessing option and build prediction models and run upto Metrics steps.
+The contractions-replacement function is not supported by FlashML's Publish module at this time, if the publish format is chosen as javascript. Users can pick this preprocessing option and build prediction models and run upto Metrics steps. Other formats (spark native or mleap) supports this.
 </li>
 
 <li><h4>Null check</h4> (<code>nullcheck</code>)
@@ -940,9 +940,8 @@ Applying Ngrams of size 2 yields the Array of strings: `[("The","assignments"),(
 <br />
 Applying Ngrams of size 3 yields the Array of strings: `[("The","assignments","are"),("assignments","are","due"),("are","due","next"),("due","next","Thursday")]`
 
-The N-Grams function is not supported by FlashML's Publish module at this time. Users can pick this preprocessing option and build prediction models and run upto Metrics steps.
+The N-Grams function is not supported by FlashML's Publish module at this time, if the publish format is chosen as javascript. Users can pick this preprocessing option and build prediction models and run upto Metrics steps. Other formats (spark native or mleap) supports this.
 
-<br />
 The above two intermediate generated columns are appended with the parent one dimensional sequence of strings and saved in the user specified parameter <code>outputVariable</code> for the page specific transformation in <code>experiment.featureGeneration.steps</code>.
 
 
@@ -958,10 +957,7 @@ The above two intermediate generated columns are appended with the parent one di
             "outputVariable": "lineText2",
             "transformations": [
               {
-                "ngram": [
-                  2,
-                  3
-                ]
+                "ngram": [2, 3]
               }
             ]
          }
@@ -971,11 +967,9 @@ The above two intermediate generated columns are appended with the parent one di
 }
 ```
 
-In the case of `Skip Gram` the tokenized sequence of strings is used to build tuples with a distance of `n` tokens between each other, and these tuples are appended to the `inputVariable` and stored in the additional column name `outputVariable`. Refer config. snippet 9.
-Consider the above declared sequence of strings labelled `LineText1`.
-Windows are made from size 3, to the value specified in the parameter `skip_gram` and then the first and last elements are joined to form a string.
-All such pairs are stored in a one dimensional array and renamed with the `outputVariable` parameter specified.
-Applying Skip grams yields the following Array : `["The","assignments","are","due","next","Thursday","The & are","assignments & due","are & next","due & Thursday","The & due","assignments & next","are & Thursday"]`
+In the case of `Skip Gram`, the tokenized sequence of strings is used to build tuples with a distance of `n` tokens between each other, and these tuples are appended to the `inputVariable` and stored in the additional column name `outputVariable`. Refer config. snippet 9.
+
+As an illustration, consider the above declared sequence of strings labelled `LineText1`. Windows are made from size 3, to the value specified in the parameter `skip_gram` and then the first and last elements are joined to form a string. All such pairs are stored in a one dimensional array and renamed with the `outputVariable` parameter specified. Applying Skip grams yields the following Array : `["The","assignments","are","due","next","Thursday","The & are","assignments & due","are & next","due & Thursday","The & due","assignments & next","are & Thursday"]`
 <br />
 
 ##### Config. snippet 18. Sample feature generation block for Skip Grams
@@ -991,7 +985,7 @@ Applying Skip grams yields the following Array : `["The","assignments","are","du
             "outputVariable": "lineText3",
             "transformations": [
               {
-                "SKIP_GRAM": 4
+                "skip_gram": 4
               }
             ]
           }
@@ -1006,23 +1000,16 @@ In case no text processing is required, the `featureGeneration.grams` can be lef
 "featuregeneration": { "grams": [] }
 ```
 
-FlashML also supports <code>Binning</code> of numerical variables at a pagewise level.
+FlashML also supports binning of numerical variables at a pagewise level.
 The types of binning supported are:
-<ul>
- <li>Custom Intervals</li>
-    The binning intervals can be directly entered in this option(in ascending order).
- <li>Equi - Distant Intervals</li>
-    Users can enter the required number of buckets and the bins generated will have boundary intervals equidistant.
- <li>Equi - area Intervals</li>
-    Users can enter the required number of buckets and the bins generated will have roughly the same number of values.
-</ul>
 
-The parameter <code>"featuregeneration.binning"</code> accepts a pagewise list of binning options to be applied to variables that the user declared in the numerical variables parameter.
+* Custom Intervals: The binning intervals can be directly entered in this option(in ascending order)
+* Equi-distant Intervals: Users can enter the required number of buckets and the bins generated will have boundary intervals equidistant.
+* Equi-area Intervals: Users can enter the required number of buckets and the bins generated will have roughly the same number of values.
 
-Sample Config. snippets listed here will aid the user in selecting among the available options:
+The parameter <code>"featuregeneration.binning"</code> accepts a pagewise list of binning options to be applied to variables that the user declared in the numerical variables parameter. Sample configuration snippets listed here will aid the user in selecting among the available options.
 
-In the following config snippet, the binning boundaries are directly entered by the user, in ascending order.
-FlashML adds -Infinity and +Infinity to the intervals in order and bins the values.
+In the following config snippet, the binning boundaries are directly entered by the user, in ascending order. FlashML adds `-Infinity` and `+Infinity` to the intervals in order and bins the values.
 
 ##### Config. snippet 19. Sample binning config. for intervals
 ```
@@ -1068,9 +1055,7 @@ The boundaries are later saved and used in the <code>Publish</code> step for dep
 }
 ```
 
-In the following config snippet, the user enters the required number of bins and enters the option <code>equiDistant</code>
-The boundaries generated for the given input variable are equidistant.
-The boundary intervals (also called splits) are saved for use in the <code>Publish</code> step for model deployment.
+In the following config snippet, the user enters the required number of bins and enters the option <code>equiDistant</code>. The boundaries generated for the given input variable are equidistant. The boundary intervals (also called splits) are saved for use in the <code>Publish</code> step for model deployment.
 
 ##### Config. snippet 21. Sample binning config. for equi-distant binning
 ```
@@ -1090,14 +1075,24 @@ The boundary intervals (also called splits) are saved for use in the <code>Publi
 ```
 
 Users can read more about feature transformation with Spark here at <br /> https://spark.apache.org/docs/latest/ml-features.html#feature-transformers <br />
-<li>
-<h4 id="vectorization">Vectorization</h4></li>
-The parameter block <code>experiment.vectorization</code> is to be filled listing a pagewise sequence of required extraction and transformation of features.
+
+<li><h4 id="vectorization">Vectorization</h4>
+The parameter block `experiment.vectorization` controls the specific algorithm(s) used to vectorize the features generated so far. This step converts the text content to numbers (each unique key assigned one number) and builds arrays of given size. 
+
+FlashML currently supports the following methods to generate term frequency vectors(Case insensitive):
+
+* HashingTF (config key: `hashingtf`)
+* Count Vectorizer (config key: `count_vectorizer`)
+* Word2Vec (config key: `word2vec`)
+* TF-IDF (config key: `tfidf`)
+
+It is required that the number of slots selected (target feature dimension, i.e. number of buckets on the hash table) for the term frequency vectors are sufficient enough to avoid hash collision. 
 
 Scope declaration for text variables in the vectorization section of the config. file is supported. They key `experiment.vectorization.text.scope` accepts the conventional scope declaration options (case insensitive).
 
-Using `allPage` scope option here allows the user to declare config. parameters for one page, and mark them to be repeated for all the other pages (Used for a multi page level model).
-The same config. snippet listed below could also be used for `noPage` scope option when building a non-page level model, provided the option `noPage` is marked in the key `experiment.vectorization.text.scope`.
+Using `allPage` scope option here allows the user to declare config. parameters for one page, and mark them to be repeated for all the other pages (used for a multi-page models). The same config snippet listed below could also be used for `noPage` scope option when building a non-page level model, provided the option `noPage` is marked in the key `experiment.vectorization.text.scope`.
+
+In the example below, the one text variable (`current_page_url1`) and the one categorical variable (`referrer1`) is converted to sparse vectors of length 2000 each.
 
 ##### Config. snippet 22. allPage scope declaration
 ```
@@ -1129,7 +1124,7 @@ The same config. snippet listed below could also be used for `noPage` scope opti
 }
 ```
 
-The following code snippet shows the user using the `noPage` option of scope declaration to custom specify vectorization steps at a multi-page level. In the example, there is no vectorization (of text columns) applied for page 2. (In the example, it is presumed that the user is building a 2 page level model)
+The following code snippet shows using the `perPage` option of scope declaration to custom specify vectorization steps at a multi-page level. In the example, there is no vectorization (of text columns) applied for page 2. (In the example, it is presumed that the user is building a 2 page level model)
 
 ##### Config. snippet 23. perPage scope for vectorization of text variables
 ```
@@ -1163,9 +1158,9 @@ The following code snippet shows the user using the `noPage` option of scope dec
 }
 ```
 
+The following code snippet shows a similar example but with a non-page-level model. These would be traditional NLP models.
 
-
-##### Config. snippet 24. Sample config. for feature vectorization
+##### Snippet 24. Sample config for feature vectorization
 
 ```
 {
@@ -1191,35 +1186,23 @@ The following code snippet shows the user using the `noPage` option of scope dec
 }
 ```
 
-The vectorization step converts the text content to numbers (each unique key assigned one number) and builds arrays of given size. For the above given example the vector built is of length 5000 (from the two text based variables from the categorical variable).
-
-FlashML currently supports the following methods to generate term frequency vectors(Case insensitive):
-<br />
-<ul>
- <li><code>HASHINGTF</code></li>
- <li><code>COUNT_VECTORIZER</code></li>
- <li><code>WORD2VEC</code></li>
- <li><code>TFIDF</code></li>
-</ul>
-
-It is required that the number of slots selected (target feature dimension, i.e. number of buckets on the hash table) for the term frequency vectors are sufficient enough to avoid hash collision. Users can read more about the way Spark supports feature extraction and transformation with these resources:
+Users can read more about the way Spark supports feature extraction and transformation with these resources:
 <ul>
  <li>https://spark.apache.org/docs/latest/ml-features.html#countvectorizer</li>
  <li>https://spark.apache.org/docs/latest/ml-features.html#word2vec</li>
  <li>https://spark.apache.org/docs/latest/ml-features.html#tf-idf</li>
 </ul>
-<br />
+</li>
 
 <li><h4 id="modeling">Modeling</h4>
 
-The parameter <code>experiment.modelingMethod</code> accepts an array of string values.
-The accepted values are case insensitive and include:
-<ul>
- <li><code>single_intent</code></li>
- <li><code>multi_intent</code></li>
- <li><code>uplift</code></li>
- <li><code>page_level</code></li>
-</ul>
+The parameter <code>experiment.modelingMethod</code> accepts an array of string values. The accepted values are case-insensitive and include:
+
+* `single_intent`
+* `multi_intent`
+* `uplift`
+* `page_level`
+
 <br />
 
 By <code>Single Intent</code> it is understood that the prediction model involves data of only two intents, usually used to identify proactive intervention targets.
@@ -1337,9 +1320,9 @@ Other **optional parameters** that can be modified for hyperband experiment are 
       "trainSize":0.8
     }
 ```
-For description about these parameters refer to - [Configuration parameters list](Configuration%20parameters%20table.MD)
+For description about these parameters refer to [Configuration parameters list](Configuration%20parameters%20table.MD)
 
-If hyperband is being used, then `regparam` & `elasticnetparam` can be specified as either as a **single value**, **list** or as a **dictionary** with the following key values *min* & *max* - 
+If hyperband is being used, then `regparam` & `elasticnetparam` can be specified either as a **single value**, **list** or as a **dictionary** with the following key values *min* & *max* - 
 ```
 "elasticnetparam": 0.5
 	
@@ -1360,26 +1343,28 @@ If hyperband is being used, then `regparam` & `elasticnetparam` can be specified
         }
 
 ```
-*standardization* can be specified as a single value or as a list
-*maxiter* **will have to specified as an int value**
+The `standardization` parameter can be specified as a single value or as a list, however `maxiter` will have to specified as an int value.
 
 ```
-"logistic": {
-        "regparam":[0.01, 0.1, 1, 10, 100],
-        "maxiter":1000,
-        "standardization": true,
-        "elasticnetparam": {
-          "min":0.0,
-          "max":1.0
-        }
-      }	
+"logistic": 
+{
+    "regparam":[0.01, 0.1, 1, 10, 100],
+    "maxiter":1000,
+    "standardization": true,
+    "elasticnetparam": 
+    {
+      "min":0.0,
+      "max":1.0
+    }
+}	
       
-"svm": {
-	"regparam": [0.01, 0.1, 1, 10, 100],
-	"maxiter": 1000,
-	"standardization": [
-		true, false
-	]
+"svm": 
+{
+    "regparam": [0.01, 0.1, 1, 10, 100],
+    "maxiter": 1000,
+    "standardization": [
+        true, false
+    ]
 }      
 ```
 The parameter `multiIntent.maxTopIntents` accepts an Integer value and the specified number of intents will be listed based on descending order of their probability values. These intents will be stored under the column name provided by the user for the parameter `experiment.multiIntent.topIntentsColumn`. Sample code block listed below for reference.
@@ -1412,15 +1397,14 @@ Depending on the <code>savePointing.required</code> boolean parameter entered by
 </li>
 
 <li><h4 id="standard metrics">Standard Metrics</h4>
-Once the standard metrics are computed, the scores are saved in the project directory on HDFS, at the location
-```$"rootDirectory"+"/metrics/standardMetrics/stdMetrics.json"```
+Once the standard metrics are computed, the scores are saved in the project directory on HDFS, at the location [$"rootDirectory"+"/metrics/standardMetrics/stdMetrics.json"]
 
 The following scores are computed as Standard Metrics for both the Train and Test Datasets:
-<br />
-<ul>
- <li>AUROC</li>
- <li>F2 scores</li>
-</ul>
+* Accuracy
+* Precision
+* Recall
+* F1 score
+* F2 score
 
 Users can read more about AUROC and related metrics at these resources.
 <ul>
@@ -1431,18 +1415,14 @@ Users can read more about AUROC and related metrics at these resources.
 </li>
 
 <li><h4 id="custom metrics">Custom Metrics</h4>
-
- The parameter `experiment.customMetrics.type` accepts the following String entries:
+FlashML calculates a set of custom metrics that are specific to web journey related problems. The parameter `experiment.customMetrics.type` accepts the following String entries:
 <ul>
  <li>customProbAndTopBased</li>
  <li>customProbBased</li>
 </ul>
 
-The parameter `experiment.customMetrics.topVariable` accepts the string variable containing the required parameter. In this case FlashML contains the 'Time on page' value (i.e. time spent on each page).
-
- The parameter `experiment.customMetrics.topList` contains the pagewise lower bound threshold for the dataPoint to qualify as a 'proactive intervention target'.
- Also the pagewise lower bound threshold for probability is also used to screen dataPoints for qualifying as a proactive intervention target.
- The parameter `experiment.customMetrics.thresholds` accepts an array of Float values, denoting the pagewise probability thresholds.
+The parameter `experiment.customMetrics.topVariable` accepts the string variable containing the required parameter. In this case FlashML contains the 'Time on page' value (i.e. time spent on each page). The parameter `experiment.customMetrics.topList` contains the pagewise lower bound threshold for the dataPoint to qualify as a 'proactive intervention target'.
+ Also the pagewise lower bound threshold for probability is also used to screen dataPoints for qualifying as a proactive intervention target. The parameter `experiment.customMetrics.thresholds` accepts an array of Float values, denoting the pagewise probability thresholds.
 
 ```
 {
@@ -1470,23 +1450,44 @@ The parameter `experiment.customMetrics.topVariable` accepts the string variable
 </li>
 
 <li><h4 id="publish">Publish</h4>
-In this step, a JavaScript file is generated which contains the model parameters (preprocessing, vectorization, model algorithms, information on pagewise parameters, if any) containing functions needed to operate on input data to generate required information.
-The schema file path is to be loaded in the parameter `project.data.schema.file` and should contain the mapping of each of the variables to the specified format view .
-</li>
-<br />
-<br />
+In this final step, FlashML publishes the trained models in files, in preparation for deployment. Currently the following formats are supported:
 
-Users can generate execution-ready scripts using the parameter `experiment.publish`
-A sample snippet is listed here for reference.
-The parameter `publish.format` accepts the values:
-<ul>
-<li> <code>JS</code> </li>
-The option to generate execution ready scripts for web journey based prediction models.
-</ul>
-<br />
+ * Spark native format
+ * [Mleap format](https://github.com/combust/mleap)
+ * Javascript format
 
-In case the user requires script to serve a page level model, the required values are to be specified for the respective page numbers. In this case, the user requires script to handle page numbers 1 to 4, operating on the probability thresholds specified (to be considered a priority-intervention-target).
-The key `experiment.publish.precision` allows the user to custom set the co-efficients' precision of the trained classifiers which will be filled in the ready-to-execute deployment script.
+The parameter `experiment.publish.format` accepts the following values:
+
+* `spark`
+*  `mleap`
+* `js`
+
+
+For generating models in native Spark format, the following snippet would be sufficient. The on-screen log provides the location of the saved model file(s).
+```
+{
+    "experiment": {
+        "publish": {
+          "format": "spark"	  
+        }
+    }
+}
+```
+Similarly, for publishing in `mleap` format, the  following snippet would be sufficient. The on-screen log provides the location of the saved model file(s).
+```
+{
+    "experiment": {
+        "publish": {
+          "format": "mleap"	  
+        }
+    }
+}
+```
+For generating JS files, the schema file path is to be loaded in the parameter `project.data.schema.file` and should contain the mapping of each of the variables to the specified format view . A sample snippet is listed here for reference.
+
+In case the user requires script to serve a page level model, the required values are to be specified for the respective page numbers. In the following example, the user requires script to handle page numbers 1 to 4, operating on the probability thresholds specified (to be considered a priority-intervention-target). 
+
+The key `experiment.publish.precision` allows the user to custom set the co-efficients' precision of the trained classifiers which will be filled in the ready-to-execute deployment script. This is only available for models published in the JS format.
 
 ```
 {
@@ -1535,14 +1536,11 @@ Users can also specify the deployment script for a single page.
 }
 ```
 
-Users may note that some Preprocessing and Feature Generation options are not supported in the Publish Step.
-Unsupported Preprocessing transformation(s): Stemming, Contractions Replacement, Word class replacement
-Unsupported Feature Generation transformation(s): NGrams
+Some Preprocessing and Feature Generation options, mostly the ones associated with NLP modeling, are not supported for publishing in JS format. Unsupported Preprocessing transformation(s): Stemming, Contractions Replacement, Word class replacement. Unsupported Feature Generation transformation(s): NGrams
+</li>
 
 <li><h4 id="qa data generation">QA Data Generation</h4>
-
-The Quality Analysis related data is saved at this step, in the specified format.
-The parameter `experiment.qa.format` accepts the following string values (Case insensitive):
+The Quality Analysis related data is saved at this step, in the specified format. The parameter `experiment.qa.format` accepts the following string values (Case insensitive):
 <ul>
  <li>json</li>
  <li>csv</li>
@@ -1570,7 +1568,23 @@ Let's say, you have build a prediction model by running FlashML and now you woul
 
 ### Testing out a model interactively (running `predict` interactively)
 Let's say, you have build a prediction model, specially an NLP model, by running FlashML and now you would like to test the model interactively. You can do so by using the following steps:
-*  
+*  Add the publish step in the config file, with publish format as `spark`. See [publish](#publish) step for more details. Run just the publish step, or all the steps, and then note down the folder where the model is published.
+* Load spark-shell with the FlashML jar: `spark-shell --jars /path/to/FlashML/jar`
+* Load the `PipelineModel` from the folder mentioned above.
+* Set up a test dataframe, and call the `transform()` method
+
+Here is a sample session snapshot.
+```
+scala> import org.apache.spark.ml._
+import org.apache.spark.ml._
+
+scala> val model = PipelineModel.load("/jobs/.../pipeline/publish_pipeline")
+model: org.apache.spark.ml.PipelineModel = pipeline_66018005a2ff                
+
+scala> val testdf = ...
+
+scala> model.transform(test).show(false)
+```
 
 ### Analysis of prediction dataframe
 At the <code>scoring</code> pipeline step, FlashML generates predictions for the test data and then saves the entire dataframe in <code>parquet</code> format in the Hadoop directories assigned for the current project. The location of the directory for the current project is generated using parameters in the config file as follows: users can explore the hadoop path <code>/${FlashML.rootDirectory}/${project.id}/${model.id}/${experiment.retrainID}/${experiment.type}/</code> for accessing the current job related files. To load the result of the scoring dataset, the parquet files can be loaded onto a Spark DataFrame and analysed. Users should ensure that the Spark version used is the same as that of the currently used FlashML version. The command `spark.read.parquet(filePath)` loads the dataframe in Spark session.
